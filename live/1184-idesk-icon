@@ -1,0 +1,83 @@
+#!/bin/sh
+
+## (c) 2014 Frédéric Gaudet. Based on :
+## live-config(7) - System Configuration Scripts
+## Copyright (C) 2006-2013 Daniel Baumann <daniel@debian.org>
+##
+## Copyright (C) 2017 Paweł Pijanowski <pavroo@onet.eu>
+##
+## This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
+## This is free software, and you are welcome to redistribute it
+## under certain conditions; see COPYING for details.
+
+Idesk_icon ()
+{
+    if [ -e /usr/bin/openbox-session ] && [ -e /usr/bin/idesk ]; then
+	if [ ! -e /home/${LIVE_USERNAME}/.idesktop ]; then
+            mkdir -p /home/${LIVE_USERNAME}/.idesktop
+        fi
+
+	# live installer icon
+	if [ -e /usr/bin/live-installer ] && [ -e /usr/share/sparkybackup/idesk/live-* ]; then
+        	cp /usr/share/sparkybackup/idesk/live-* /home/${LIVE_USERNAME}/.idesktop/
+        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/live-*
+    	fi
+    
+	# calamares icon
+	if [ -e /usr/bin/calamares ] && [ -e /usr/share/sparkybackup/idesk/calamares-* ]; then
+        	cp /usr/share/sparkybackup/idesk/calamares-* /home/${LIVE_USERNAME}/.idesktop/
+        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/calamares-*
+    	fi
+
+	# advanced installer icon
+	if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/advanced-* ]; then
+        	cp /usr/share/sparkybackup/idesk/advanced-* /home/${LIVE_USERNAME}/.idesktop/
+        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/advanced-*
+    	fi
+
+	# installer guide icon
+	if [ -e /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg ]; then
+		convert --resize 48x48 /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg /home/${LIVE_USERNAME}/.idesktop/application-info.png
+	fi
+
+	if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/installer-* ]; then
+        	cp /usr/share/sparkybackup/idesk/installer-* /home/${LIVE_USERNAME}/.idesktop/
+        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/installer-*
+    	fi
+
+	if [ -e /usr/share/sparkybackup/idesk/ideskrc ]; then
+		cp /usr/share/sparkybackup/idesk/ideskrc /home/${LIVE_USERNAME}/.ideskrc
+	fi
+
+	# autostart idesk in live system
+	if [ -e /home/${LIVE_USERNAME}/.config/openbox/autostart.sh ]; then
+		echo "idesk &" >> /home/${LIVE_USERNAME}/.config/openbox/autostart.sh
+	fi
+	
+	chown ${LIVE_USERNAME}:${LIVE_USERNAME} "/home/${LIVE_USERNAME}/.idesktop" -R
+	chown ${LIVE_USERNAME}:${LIVE_USERNAME} "/home/${LIVE_USERNAME}/.ideskrc"
+
+	# remove .desktop installers icons from desktop
+	if [ -e /home/${LIVE_USERNAME}/Desktop/live-installer.desktop ]; then
+		rm -f /home/${LIVE_USERNAME}/Desktop/live-installer.desktop
+	fi
+
+	if [ -e /home/${LIVE_USERNAME}/Desktop/calamares.desktop ]; then
+		rm -f /home/${LIVE_USERNAME}/Desktop/calamares.desktop
+	fi
+
+	if [ -e /home/${LIVE_USERNAME}/Desktop/sparkylinux-installer.desktop ]; then
+		rm -f /home/${LIVE_USERNAME}/Desktop/sparkylinux-installer.desktop
+	fi
+
+	if [ -e /home/${LIVE_USERNAME}/Desktop/sparky-installation-guide.desktop ]; then
+		rm -f /home/${LIVE_USERNAME}/Desktop/sparky-installation-guide.desktop
+	fi
+
+    fi
+
+    # Creating state file
+    touch /var/lib/live/config/idesk-icon
+}
+
+Idesk_icon

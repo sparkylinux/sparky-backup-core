@@ -1,0 +1,726 @@
+#!/bin/bash
+
+# remastersys script can make an installable livecd/dvd 
+# from a Debian installed and customized system
+# Created by Tony "Fragadelic" Brijeski
+# Copyright 2007-2012 Under the GNU GPL2 License
+# Originally Created February 12th, 2007
+#
+# Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
+# Copyright 2013-2017 under the GNU GPL2 License
+# Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
+#
+# Last update 2017/08/17 by pavroo
+
+. /etc/sparkybackup/sparkybackup.version
+
+# exit_with_message usage: exit_with_message "message text" exit_code
+function exit_with_message {
+	echo $1
+	exit $2
+}
+
+# output_usage usage: output_usage (no parameters)
+function output_usage {
+	echo "Usage of sparkybackup $SPARKYBACKUPVERSION is as follows:"
+	echo " "
+	echo "   sudo sparkybackup clean|dist [cdfs|iso] [filename.iso]"
+	echo " "
+	echo " "
+	echo "Examples:"
+	echo " "
+	echo "   sudo sparkybackup clean    (to clean up temporary files of sparkybackup)"
+	echo " "
+	echo "   sudo sparkybackup dist     (to make a distributable livecd/dvd of your system)"
+	echo " "
+	echo "   sudo sparkybackup dist cdfs"
+	echo "                             (to make a distributable livecd/dvd filesystem only)"
+	echo " "
+	echo "   sudo sparkybackup dist iso custom.iso"
+	echo "                             (to make a distributable iso named custom.iso but only"
+	echo "                              if the cdfs is already present)"
+	echo " "
+	echo "   cdfs and iso options should only be used if you wish to modify something on the"
+	echo "   cd before the iso is created.  An example of this would be to modify the isolinux"
+	echo "   portion of the livecd/dvd"
+	exit_with_message " " 1
+}
+
+# log_info usage: log_info "message text"
+function log_info {
+	echo $1
+	if [ ! -d $WORKDIR ]
+	then
+		mkdir -p $WORKDIR
+	fi
+	echo "INFO: $1" >> $WORKDIR/sparkybackup.log
+}
+
+# log_debug usage: log_debug "message text"
+function log_debug {
+	if [ ! -d $WORKDIR ]
+	then
+		mkdir -p $WORKDIR
+	fi
+	echo "DEBUG: $1" >> $WORKDIR/sparkybackup.log
+}
+
+# checking to make sure script is running with root privileges
+testroot="`whoami`"
+if [ "$testroot" != "root" ]
+then
+	output_usage
+fi
+
+# if Live system just quit, do nothing
+TESTMODE=`grep "live" /etc/passwd`
+if [ "$TESTMODE" != "" ]
+then
+	exit_with_message "It's Live system! Install Sparky on a hard drive then remaster it. Exiting now..." 1
+fi
+
+# load the sparkybackup.conf file 
+. /etc/sparkybackup/sparkybackup.conf
+
+# if the sparkybackup.conf file is incorrect or missing, make sure to set defaults
+if [ "$LIVEUSER" = "" ]
+then
+	LIVEUSER="custom"
+fi
+
+#make sure live user is all lowercase
+LIVEUSER="`echo $LIVEUSER | awk '{print tolower ($0)}'`"
+
+if [ "$WORKDIR" = "" ]
+then
+	BASEWORKDIR="/home/sparkybackup-sys"
+	WORKDIR="$BASEWORDDIR/sparkybackup-sys"
+else
+	BASEWORKDIR="$WORKDIR"
+	WORKDIR="$WORKDIR/sparkybackup-sys"
+fi
+
+if [ "$LIVECDLABEL" = "" ]
+then
+	LIVECDLABEL="Custom Live CD"
+fi
+
+if [ "$2" = "cdfs" ]
+then
+	log_info "Creating the cd filesystem only"
+elif [ "$2" = "iso" ]
+then
+	log_info "Creating the iso file only"
+elif [ "$2" = "" ]
+then
+	log_info " "
+else
+	CUSTOMISO="$2"
+fi
+
+if [ "$3" != "" ]
+then
+	CUSTOMISO="$3"
+fi
+
+if [ "$CUSTOMISO" = "" ]
+then
+	CUSTOMISO="custom$1.iso"
+fi
+
+case $1 in
+	clean)
+		log_info "Removing the build directory now..."
+		rm -rf $WORKDIR
+		exit_with_message "Done... Exiting" 0
+		;;
+
+	dist)
+		log_info "Distribution Mode Selected"
+		;;
+
+	*)
+		output_usage
+		;;
+esac
+
+function cdfs {
+	# Step 3 - Create the CD tree in $WORKDIR/ISOTMP
+	log_info "Checking if the $WORKDIR folder has been created"
+	if [ -d "$WORKDIR" ]
+	then
+		rm -rf $WORKDIR/dummysys/var/*
+		rm -rf $WORKDIR/dummysys/etc/*
+	fi
+
+	# make sure that directories exist
+	mkdir -p $WORKDIR/ISOTMP/live
+	mkdir -p $WORKDIR/dummysys/dev
+	mkdir -p $WORKDIR/dummysys/etc/live
+	mkdir -p $WORKDIR/dummysys/home
+	mkdir -p $WORKDIR/dummysys/proc
+	mkdir -p $WORKDIR/dummysys/tmp
+	mkdir -p $WORKDIR/dummysys/sys
+	mkdir -p $WORKDIR/dummysys/mnt
+	mkdir -p $WORKDIR/dummysys/media
+	#mkdir -p $WORKDIR/dummysys/root ### don't create it, starting from Debian Stretch
+	mkdir -p $WORKDIR/dummysys/run
+	mkdir -p $WORKDIR/dummysys/var
+	chmod ug+rwx,o+rwt $WORKDIR/dummysys/tmp
+
+	log_info "Copying /var and /etc to temp area..."
+
+	#if [ -f $WORKDIR/varexcludes ]
+	#then
+	#	rm -f $WORKDIR/varexcludes
+	#fi
+
+	if [ -f $WORKDIR/etcexcludes ]
+	then
+		rm -f $WORKDIR/etcexcludes
+	fi
+
+	#if [ -f $WORKDIR/squashexcludes ]
+	#then
+	#	rm -f $WORKDIR/squashexcludes
+	#fi
+
+#	cat > $WORKDIR/varexcludes <<FOO
+#*.log.*
+#*.pid
+#*.bak
+#*.[0-9].gz
+#*.deb
+#kdecache*
+#FOO
+
+#	cat > $WORKDIR/squashexcludes <<FOO
+#root/.thumbnails
+#root/.cache
+#root/.bash_history
+#root/.lesshst
+#root/.nano_history
+#boot/grub
+#$BASEWORKDIR
+#FOO
+
+	#EXCLUDES=`echo $EXCLUDES | sed -e 's/  / /g' | sed -e 's/^ $//g'`
+
+	#if [ "$EXCLUDES" != "" ]
+	#then
+	#	for i in $EXCLUDES
+	#	do
+		
+	#		echo $i | sed -e 's/^\/var\///g' | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/varexcludes
+	#		echo $i | sed -e 's/^\/etc\///g' | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/etcexcludes
+			#echo $i | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/squashexcludes
+	#	done
+	#	VAREXCLUDES="--exclude-from=$WORKDIR/varexcludes "
+		
+	#fi
+		
+	VAREXCLUDES="--exclude '*.log' --exclude '*.pid' --exclude '*.bak' --exclude '*.[0-9].gz' --exclude '*.deb' --exclude 'kdecache*' "
+	#ETCEXCLUDES="--exclude-from=$WORKDIR/etcexcludes "
+	SQUASHEXCLUDES="-e /initrd.img.old /vmlinuz.old /root/.synaptic/log/*.log /root/.bash_history"
+
+	# copy trackerd stuff as live-initramfs disables it
+	if [ -f /etc/xdg/autostart/tracker-applet.desktop ]
+	then
+		cp /etc/xdg/autostart/tracker-applet.desktop /usr/lib/sparkybackup
+	fi
+	if [ -f /etc/xdg/autostart/trackerd.desktop ]
+	then
+		cp /etc/xdg/autostart/trackerd.desktop.xdg /usr/lib/sparkybackup
+	fi
+	if [ -f /usr/share/autostart/trackerd.desktop ]
+	then
+		cp /usr/share/autostart/trackerd.desktop.share /usr/lib/sparkybackup
+	fi
+
+	#cleanup leftover live script if it exists
+	if [ -f /etc/profile.d/zz-live.sh ]
+	then
+		rm -f /etc/profile.d/zz-live.sh
+	fi
+
+	# remove live/mount dir which is created by live scripts in live mode
+	if [ -d /lib/live/mount ]
+	then
+		rm -rf /lib/live/mount
+	fi
+
+	# copy /var and /etc dirs
+	rsync $VAREXCLUDES-a /var/. $WORKDIR/dummysys/var/.
+	rsync -a /etc/. $WORKDIR/dummysys/etc/.
+
+	if [ "$1" = "dist" ]
+	then
+		rm -f $WORKDIR/dummysys/etc/X11/xorg.conf
+		#CHECKMINICLI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+		#if [ "$CHECKMINICLI" = "" ]
+		#then
+		rm -f $WORKDIR/dummysys/etc/resolv.conf
+		#fi
+		rm -f $WORKDIR/dummysys/etc/hosts
+		rm -f $WORKDIR/dummysys/etc/hostname
+	fi
+
+	rm -f $WORKDIR/dummysys/etc/mtab
+	rm -f $WORKDIR/dummysys/etc/fstab
+	rm -f $WORKDIR/dummysys/etc/udev/rules.d/70-persistent*
+	rm -f $WORKDIR/dummysys/etc/initramfs-tools/conf.d/resume
+	ls $WORKDIR/dummysys/var/lib/apt/lists | grep -v ".gpg" | grep -v "lock" | grep -v "partial" | xargs -i rm $WORKDIR/dummysys/var/lib/apt/lists/{} ; 
+
+	if [ "$1" = "dist" ]
+	then
+		if [ -f $WORKDIR/dummysys/etc/gdm3/daemon.conf ]
+		then
+			sed -i -e '/AutomaticLoginEnable/d' $WORKDIR/dummysys/etc/gdm3/daemon.conf
+		fi
+
+		if [ ! -d $WORKDIR/dummysys/etc/skel/Desktop ]
+		then
+			mkdir -p $WORKDIR/dummysys/etc/skel/Desktop
+		fi
+
+		#if [ -f /usr/bin/live-installer ] || [ -f /usr/bin/calamares ]
+		#then
+		#	log_info "new installer is installed so not copying the old installer desktop launcher"
+		#else
+		#	if [ -f /usr/share/applications/sparkylinux-installer.desktop ]
+		#	then
+		#		cp /usr/share/applications/sparkylinux-installer.desktop $WORKDIR/dummysys/etc/skel/Desktop/
+		#		log_info "new installer is NOT installed so copying the old installer desktop launcher"
+		#	fi
+		#fi
+
+		rm -f $WORKDIR/dummysys/etc/group
+		rm -f $WORKDIR/dummysys/etc/group-
+		rm -f $WORKDIR/dummysys/etc/passwd
+		rm -f $WORKDIR/dummysys/etc/passwd-
+		rm -f $WORKDIR/dummysys/etc/shadow
+		rm -f $WORKDIR/dummysys/etc/shadow-
+		rm -f $WORKDIR/dummysys/etc/gshadow
+		rm -f $WORKDIR/dummysys/etc/gshadow-
+		rm -f $WORKDIR/dummysys/etc/wicd/wired-settings.conf
+		rm -f $WORKDIR/dummysys/etc/wicd/wireless-settings.conf
+		rm -rf $WORKDIR/dummysys/etc/NetworkManager/system-connections/*
+		rm -f $WORKDIR/dummysys/etc/printcap
+		if [ -f $WORKDIR/dummysys/etc/cups/printers.conf ]
+		then
+			rm -f $WORKDIR/dummysys/etc/cups/printers.conf
+		fi
+		touch $WORKDIR/dummysys/etc/printcap
+		if [ ! -d $WORKDIR/dummysys/etc/cups ]
+		then
+			mkdir -p $WORKDIR/dummysys/etc/cups
+		fi
+		touch $WORKDIR/dummysys/etc/cups/printers.conf
+		rm -rf $WORKDIR/dummysys/var/cache/gdm/*
+		rm -rf $WORKDIR/dummysys/var/lib/sudo/*
+		rm -rf $WORKDIR/dummysys/var/run/console/*
+		rm -f $WORKDIR/dummysys/var/lib/kdm/kdmsts
+		rm -f $WORKDIR/dummysys/var/lib/AccountsService/users/*
+		rm -f $WORKDIR/dummysys/etc/gdm/gdm.conf-custom
+		rm -f $WORKDIR/dummysys/etc/gdm/custom.conf
+		rm -f $WORKDIR/dummysys/etc/cups/ssl/server.crt
+		rm -f $WORKDIR/dummysys/etc/cups/ssl/server.key
+		rm -f $WORKDIR/dummysys/etc/ssh/ssh_host_rsa_key
+		rm -f $WORKDIR/dummysys/etc/ssh/ssh_host_dsa_key.pub
+		rm -f $WORKDIR/dummysys/etc/ssh/ssh_host_dsa_key
+		rm -f $WORKDIR/dummysys/etc/ssh/ssh_host_rsa_key.pub
+
+		find $WORKDIR/dummysys/var/run $WORKDIR/dummysys/var/log $WORKDIR/dummysys/var/mail $WORKDIR/dummysys/var/spool $WORKDIR/dummysys/var/lock $WORKDIR/dummysys/var/backups $WORKDIR/dummysys/var/tmp -type f -exec rm '{}' \;
+
+		#further cleanup
+		rm -rf $WORKDIR/dummysys/var/cache/gdm/*
+		rm -rf $WORKDIR/dummysys/var/tmp/kdecache*
+		rm -rf $WORKDIR/dummysys/var/spool/gfax/*
+		rm -rf $WORKDIR/dummysys/var/run/gdm3/*
+		rm -rf $WORKDIR/dummysys/var/lib/sudo/*
+		rm -rf $WORKDIR/dummysys/var/lib/polkit-1/localauthority/10-vendor.d/10-live-cd.pkla
+		
+		#fix for live scripts setup Contributed by AnthLee of SalineOS
+		rm -rf $WORKDIR/dummysys/var/lib/live/config/*
+
+		for i in dpkg.log lastlog mail.log syslog auth.log daemon.log faillog lpr.log mail.warn user.log boot debug mail.err messages wtmp bootstrap.log dmesg kern.log mail.info
+		do
+			touch $WORKDIR/dummysys/var/log/${i}
+		done
+
+		# remove the non system users on the passwd and group files and copy them to dummysys
+		# see if any temp users left over from previous versions of sparkybackup as the process has now changed
+
+		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print "/usr/sbin/userdel -f",$1}'> $WORKDIR/cleantmpusers
+		. $WORKDIR/cleantmpusers
+
+		grep '^[^:]*:[^:]*:[0-9]:' /etc/passwd >> $WORKDIR/dummysys/etc/passwd
+		grep '^[^:]*:[^:]*:[0-9][0-9]:' /etc/passwd >> $WORKDIR/dummysys/etc/passwd
+		grep '^[^:]*:[^:]*:[0-9][0-9][0-9]:' /etc/passwd >> $WORKDIR/dummysys/etc/passwd
+		grep '^[^:]*:[^:]*:[3-9][0-9][0-9][0-9][0-9]:' /etc/passwd >> $WORKDIR/dummysys/etc/passwd
+
+		grep '^[^:]*:[^:]*:[0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
+		grep '^[^:]*:[^:]*:[0-9][0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
+		grep '^[^:]*:[^:]*:[0-9][0-9][0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
+		grep '^[^:]*:[^:]*:[3-9][0-9][0-9][0-9][0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
+
+		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers1
+		grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers2
+		grep '^[^:]*:[^:]*:[1-2][0-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers3
+
+		cat $WORKDIR/tmpusers1 $WORKDIR/tmpusers2 $WORKDIR/tmpusers3 > $WORKDIR/tmpusers
+		cat $WORKDIR/tmpusers | while read LINE;
+		do
+			echo $LINE | xargs -i sed -e 's/,{}//g' $WORKDIR/dummysys/etc/group > $WORKDIR/dummysys/etc/group.new1
+			echo $LINE | xargs -i sed -e 's/{},//g' $WORKDIR/dummysys/etc/group.new1 > $WORKDIR/dummysys/etc/group.new2
+			echo $LINE | xargs -i sed -e 's/{}//g' $WORKDIR/dummysys/etc/group.new2 > $WORKDIR/dummysys/etc/group
+			rm -rf $WORKDIR/dummysys/etc/group.new1 $WORKDIR/dummysys/etc/group.new2
+		done
+	fi
+
+	# copy isolinux files
+	mkdir -p $WORKDIR/ISOTMP/isolinux
+	cp /usr/lib/sparkybackup/isolinux/* $WORKDIR/ISOTMP/isolinux/
+
+	# replace old memtest86+ with the latest one if available
+	if [ -f $WORKDIR/ISOTMP/isolinux/memtest* ]
+	then
+		rm -f $WORKDIR/ISOTMP/isolinux/memtest*
+	fi
+	cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
+	
+	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+
+	if [ ! -d /etc/plymouth ]
+	then
+		sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	fi
+
+	cp /usr/lib/sparkybackup/live/filesystem.packages-remove $WORKDIR/ISOTMP/live/filesystem.packages-remove
+	
+	# copy grub-efi live files for dual-booting isolinux and grub-efi
+	# but don't copy the stuff if building iso with bios support only
+	# the stuff is required for building sparky rescue edition
+	EFI_PARAMS=
+	if [ -f /home/offline/efibootmgr* ] || [ -f /usr/bin/sparky-chrooter ]
+	then
+		rsync -a /usr/lib/sparkybackup/boot $WORKDIR/ISOTMP/
+		rsync -a /usr/lib/sparkybackup/EFI $WORKDIR/ISOTMP/
+		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
+		EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot"
+	fi
+	
+	# check Sparky version (4 based on Debian stable 9; 5 on Debian testing "Buster")
+	SPARKYVERCHECK="`cat /etc/issue | grep 5`"
+	if [ "$SPARKYVERCHECK" != "" ]
+	then
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub.png
+		mv $WORKDIR/ISOTMP/boot/grub/grub5.png $WORKDIR/ISOTMP/boot/grub/grub.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background.png
+		mv $WORKDIR/ISOTMP/isolinux/background5.png $WORKDIR/ISOTMP/isolinux/background.png
+	else
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
+	fi
+
+	# replace isolinux and grub configs for rescue edition
+	CHECKRESCUE=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+	if [ "$CHECKRESCUE" = "" ]
+	then
+		rm -f $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+		rm -f $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg
+	else
+		rm -f $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		mv $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		mv $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		
+		# remove some stuff if building sparky rescue edition
+		#if [ -f /usr/bin/sparkylinux-installer* ]
+		#then
+		#	rm -f /usr/bin/sparkylinux-installer
+		#fi
+		if [ -f /usr/share/applications/sparkylinux-installer.desktop* ]
+		then
+			rm -f /usr/share/applications/sparkylinux-installer.desktop
+		fi
+		if [ -f /usr/share/menu/sparkylinux-installer* ]
+		then
+			rm -f /usr/share/menu/sparkylinux-installer
+		fi
+		if [ -f /usr/share/menu/sparky-installation-guide* ]
+		then
+			rm -f /usr/share/menu/sparky-installation-guide
+		fi
+		if [ -f /usr/share/applications/sparky-installation-guide.desktop* ]
+		then
+			rm -f /usr/share/applications/sparky-installation-guide.desktop
+		fi
+		if [ -f $WORKDIR/dummysys/etc/Desktop/sparkylinux-installer.desktop* ]
+		then
+			rm -f $WORKDIR/dummysys/etc/Desktop/sparkylinux-installer.desktop
+		fi
+		if [ -f $WORKDIR/dummysys/etc/Desktop/sparky-installation-guide.desktop* ]
+		then
+			rm -f $WORKDIR/dummysys/etc/sparky-installation-guide.desktop
+		fi
+	fi
+
+	# add minimal file to the iso to let the netinstall installer detect it
+	# and run the advanced installtion in live environment
+	CHECKMINIMALISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimal`
+	if [ "$CHECKMINIMALISO" != "" ]
+	then
+		cp /usr/lib/sparkybackup/live/minimal $WORKDIR/ISOTMP/live/minimal
+	fi
+
+	# make sure you have all the efi grub related files and libs in 'offline' dir:
+	# efibootmgr, libefiboot1, libefivar1, grub-efi, grub-efi-amd-64|grub-efi-ia32, grub-efi-amd64-bin|grub-efi-ia32-bin
+	if [ -f /home/offline/efibootmgr* ]
+	then
+		rsync -a /home/offline $WORKDIR/ISOTMP/
+	fi
+
+	# do not show pacman's desktop's pref in openbox editions
+	if [ -f /usr/bin/openbox-session ] && [ -f /usr/bin/idesk ] && [ -f /usr/share/applications/pcmanfm-desktop-pref.desktop ]
+	then
+		CHECKPREF=`cat /usr/share/applications/pcmanfm-desktop-pref.desktop | grep NoDisplay`
+		if [ "$CHECKPREF" = "" ]
+		then
+			echo "NoDisplay=true" >> /usr/share/applications/pcmanfm-desktop-pref.desktop
+		fi
+	fi
+
+	# create empty fstab due to issue in live system
+	cat > $WORKDIR/dummysys/etc/fstab <<FOO
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+FOO
+	
+	sleep 1
+
+	# Step 4 - Prepare live.conf
+	if [ ! -d /etc/live ]
+	then
+		mkdir -p /etc/live
+	fi
+
+	echo "export LIVE_USERNAME=\"$LIVEUSER\"" > /etc/live/config.conf
+	echo "export LIVE_USER_FULLNAME=\"Live session user\"" >> /etc/live/config.conf
+	echo "export LIVE_HOSTNAME=\"$LIVEUSER\"" >> /etc/live/config.conf
+
+	#fix for a bug in the debian live boot scripts that starts a second X server
+	if [ "$1" = "dist" ] && [ -f /etc/X11/default-display-manager ]
+	then
+		echo "export LIVE_NOCONFIGS=\"xinit\"" >> /etc/live/config.conf
+	fi
+
+	cp /etc/live/config.conf $WORKDIR/dummysys/etc/live/
+
+	sleep 1
+
+	#fix for policy kit in live
+	sed -i -e 's/ResultAny=no/ResultAny=yes/g' /lib/live/config/*policykit
+	sed -i -e 's/ResultInactive=no/ResultInactive=yes/g' /lib/live/config/*policykit
+
+	log_info "Setting up live options for $1 mode"
+
+	# make a new initial ramdisk including the live scripts
+	update-initramfs -t -c -k $(uname -r)
+
+	log_info "Copying your kernel and initrd for the livecd"
+	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
+	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
+
+	# Step 5 - Make filesystem.squashfs
+
+	if [ -f $WORKDIR/ISOTMP/live/filesystem.squashfs ]
+	then
+		rm -f $WORKDIR/ISOTMP/live/filesystem.squashfs
+	fi
+
+	log_info "Creating filesystem.squashfs... This will take a while so be patient."
+
+	if [ "$SQUASHFSOPTS" = "" ]
+	then
+		SQUASHFSOPTS="-no-recovery -comp xz -always-use-fragments -b 1M"
+	fi
+
+	REALFOLDERS=""
+
+	for d in `ls -d $WORKDIR/dummysys/*`
+	do
+		REALFOLDERS="$REALFOLDERS $d"
+	done
+
+	for d in `ls / | grep -v etc | grep -v run | grep -v tmp | grep -v sys | grep -v var | grep -v dev | grep -v media | grep -v mnt | grep -v lost+found | grep -v proc | grep -v home`
+	do
+		REALFOLDERS="$REALFOLDERS /$d"
+	done
+	
+	# Make sure we aren't including a folder the user wants to exclude as it will override the excludes
+	for e in $EXCLUDES
+	do
+		REALFOLDERS=`echo $REALFOLDERS | sed -e 's!'"$e"'!!g'`
+	done
+
+	mksquashfs $REALFOLDERS $WORKDIR/ISOTMP/live/filesystem.squashfs -no-duplicates $SQUASHFSOPTS $SQUASHEXCLUDES 2>> $WORKDIR/sparkybackup.log
+
+	sleep 1
+
+	#add some stuff the log in case of problems so I can troubleshoot it easier
+	log_debug "------------------------------------------------------"
+	log_debug "Mount information"
+	mount >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "df information"
+	df -h >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/sparkybackup/sparkybackup.conf info"
+	cat /etc/sparkybackup/sparkybackup.conf >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/live/config.conf info"
+	cat /etc/live/config.conf >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/passwd info"
+	cat $WORKDIR/dummysys/etc/passwd >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/group info"
+	cat $WORKDIR/dummysys/etc/group >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/skel info"
+	find /etc/skel/ >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "/etc/X11/default-display-manager info"
+	cat /etc/X11/default-display-manager >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "SparkyBackup Version info"
+	cat /etc/sparkybackup/sparkybackup.version >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "Command-line options = $@"
+	log_debug "------------------------------------------------------"
+
+	log_debug "------------------------------------------------------"
+	log_debug "memtest info"
+	if [ -f $WORKDIR/ISOTMP/isolinux/memtest ]
+	then
+		log_debug "memtest copied ok"
+	else
+		log_debug "memtest not copied"
+	fi
+	log_debug "------------------------------------------------------"
+	
+	sleep 1
+
+	#checking the size of the compressed filesystem to ensure it meets the iso9660 spec for a single file" 
+	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
+	if [ "$SQUASHFSSIZE" -gt "3999999" ]
+	then
+		log_info " The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
+		exit 1
+	fi
+}
+
+function iso {
+	CREATEISO="`which xorriso`"
+	ARCH=`uname -r | grep "amd64" | awk '{print $1}'`
+
+	# check to see if the cd filesystem exists
+	if [ ! -f "$WORKDIR/ISOTMP/live/filesystem.squashfs" ]
+	then
+		log_info "The cd filesystem is missing.  Either there was a problem creating the compressed filesystem or you are trying to run sudo sparkybackup dist iso before sudo sparkybackup dist cdfs"
+		exit 1
+	fi
+
+	#checking the size of the compressed filesystem to ensure it meets the iso9660 spec for a single file" 
+	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
+	if [ "$SQUASHFSSIZE" -gt "3999999" ]
+	then
+		log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
+		exit 1
+	fi
+
+	sleep 1
+
+	# Step 6 - Make the ISO file
+	log_info "Creating $CUSTOMISO in $WORKDIR using $CREATEISO"
+	cd $WORKDIR/ISOTMP
+
+	if [ "$ARCH" = "" ]
+	then
+		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID32BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+		# create hybrid iso so it can be dd installed to a usb flash drive
+		log_info "Making 32bit iso into a hybrid image so it can be imaged to a usb key or burned to optical media"
+	else
+		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID64BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+	fi
+
+	# create hybrid iso so it can be dd installed to a usb flash drive
+	log_info "Making 64bit iso into a hybrid image so it can be imaged to a usb key or burned to optical media"
+	isohybrid -u $WORKDIR/$CUSTOMISO
+
+	# create the md5, sha1, sha256 and sha512 sums file so the user doesn't have to - this is good so the iso file can later be tested to ensure it hasn't become corrupted
+	log_info "Creating $CUSTOMISO.allsums.txt in $WORKDIR"
+
+	cd $WORKDIR
+	echo "# md5sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	md5sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	log_info "md5sum done"
+
+	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "# sha1sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	sha1sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	log_info "sha1sum done"
+
+	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "# sha256sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	sha256sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	log_info "sha256sum done"
+
+	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "# sha512sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
+	sha512sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	log_info "sha512sum done"
+
+	sleep 1
+
+	# create package-list.txt file
+	log_info "Creating $CUSTOMISO.package-list.txt in $WORKDIR"
+	dpkg-query -l > $CUSTOMISO.package-list.txt
+
+	log_info "$WORKDIR/$CUSTOMISO is ready to be burned or tested in a virtual machine."
+	log_info " "
+	log_info "Check the size and if it is larger than 700MB you will need to burn it to a dvd"
+	log_info " "
+	ls -hs $WORKDIR/$CUSTOMISO
+	ls -hs $WORKDIR/$CUSTOMISO >> $WORKDIR/sparkybackup.log
+	log_info " " 
+	log_info "It is recommended to run 'sudo sparkybackup clean' once you have burned and tested the $CUSTOMISO"
+	log_info " "
+}
+
+# check to see if either iso or cdfs options have been invoked and proceed accordingly
+if [ "$2" = "iso" ]
+then
+	iso $@
+elif [ "$2" = "cdfs" ]
+then
+	cdfs $@
+else
+	cdfs $@
+	iso $@
+fi
+
+exit 0

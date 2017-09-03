@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Sparky (Advanced) Installer
+GenericName=Sparky (Advanced) Installer
+Comment=Sparky (Advanced) Installer
+Exec=remsu /usr/bin/sparkylinux-installer gui
+Icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png
+Terminal=false
+MultipleArgs=false
+Type=Application
+Categories=Applications;System
+
