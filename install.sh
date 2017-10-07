@@ -30,6 +30,7 @@ if [ "$1" = "uninstall" ]; then
 	rm -f /lib/live/config/1183-installer-guide-icon
 	rm -f /lib/live/config/1184-idesk-icon
 	rm -rf /usr/share/sparkybackup/idesk
+	rm -f /usr/bin/spb
 else
 	if [ ! -d /etc/skel/Desktop ]; then
 		mkdir -p /etc/skel/Desktop

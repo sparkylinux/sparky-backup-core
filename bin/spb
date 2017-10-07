@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Shortcuts to 'sparkybackup' command
+# Copyright 2017 under the GNU GPL2 License by pavroo <pavroo@onet.eu>
+# Last update 2017/10/08 by pavroo
+
+testroot="`whoami`"
+if [ "$testroot" != "root" ]
+then
+	echo "Must be root. Exiting now..."
+	exit 1
+fi
+
+if [ "$1" = "clean" ]
+then
+	/usr/bin/sparkybackup clean
+else
+	/usr/bin/sparkybackup dist
+fi
+
+exit 0

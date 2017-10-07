@@ -1251,7 +1251,7 @@ if [ -f /TARGET/etc/sparkybackup/trackerd.desktop.share ]; then
 fi
 
 #restore original inittab as live-initramfs changes it
-cp /TARGET/usr/share/sysvinit/inittab /TARGET/etc/inittab
+#cp /TARGET/usr/share/sysvinit/inittab /TARGET/etc/inittab
 
 #check if this is a backup livecd or a dist livecd
 if [ "$TARGETUSER" != "" ]; then
