@@ -14,6 +14,9 @@ fi
 if [ "$1" = "clean" ]
 then
 	/usr/bin/sparkybackup clean
+elif [ "$1" = "edit" ]
+then
+	nano /etc/sparkybackup/sparkybackup.conf
 else
 	/usr/bin/sparkybackup dist
 fi
