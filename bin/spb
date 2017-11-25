@@ -2,7 +2,7 @@
 
 # Shortcuts to 'sparkybackup' command
 # Copyright 2017 under the GNU GPL2 License by pavroo <pavroo@onet.eu>
-# Last update 2017/10/08 by pavroo
+# Last update 2017/11/18 by pavroo
 
 testroot="`whoami`"
 if [ "$testroot" != "root" ]
@@ -14,11 +14,31 @@ fi
 if [ "$1" = "clean" ]
 then
 	/usr/bin/sparkybackup clean
+
 elif [ "$1" = "edit" ]
 then
 	nano /etc/sparkybackup/sparkybackup.conf
-else
+
+elif [ "$1" = "dist" ]
+then
 	/usr/bin/sparkybackup dist
+
+else
+	echo "spb is a shorter commad to sparkybackup"
+	echo "Usage of spb is as follows:"
+	echo ""
+	echo "sudo spb dist|edit|clean"
+	echo ""
+	echo "Examples:"
+	echo ""
+	echo "    sudo spb dist"
+	echo "which makes a distributable livecd/dvd of your system"
+	echo ""
+	echo "    sudo spb edit"
+	echo "which edits the tool's configuration file"
+	echo ""
+	echo "    sudo spb clean"
+	echo "which cleans up files of sparkybackup working directory"
 fi
 
 exit 0
