@@ -2,7 +2,7 @@
 
 # Shortcuts to 'sparkybackup' command
 # Copyright 2017 under the GNU GPL2 License by pavroo <pavroo@onet.eu>
-# Last update 2017/11/18 by pavroo
+# Last update 2017/12/17 by pavroo
 
 testroot="`whoami`"
 if [ "$testroot" != "root" ]
@@ -24,7 +24,7 @@ then
 	/usr/bin/sparkybackup dist
 
 else
-	echo "spb is a shorter commad to sparkybackup"
+	echo "spb is a shorter command to sparkybackup"
 	echo "Usage of spb is as follows:"
 	echo ""
 	echo "sudo spb dist|edit|clean"

@@ -7,8 +7,8 @@
 #
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2017 Under the GNU GPL2 License
-# Last update 2017/12/13
+# Copyright 2013-2018 Under the GNU GPL2 License
+# Last update 2018/01/16
 #
 # This script requires either yad or dialog to run
 
@@ -1203,6 +1203,17 @@ FOO
 	fi
 	
 fi
+
+# add swap uuid to resume
+if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
+	mkdir -p /TARGET/etc/initramfs-tools/conf.d
+fi
+if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
+	rm -f /TARGET/etc/initramfs-tools/conf.d/resume
+fi
+cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
+RESUME=UUID=$UUIDSWAP
+FOO
 
 # remove the old live installer desktop file 
 if [ -f /TARGET/etc/skel/Desktop/sparkylinux-installer.desktop ]; then
