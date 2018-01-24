@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2017 under the GNU GPL2 License
+# Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2017/08/17 by pavroo
+# Last update 2018/01/24 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -387,10 +387,79 @@ function cdfs {
 	then
 		rm -f $WORKDIR/ISOTMP/isolinux/memtest*
 	fi
-	cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
-	
-	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+
+	# copy memtest86+ to rescue edition only
+	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+	if [ "$CHECKRESCUEISO" != "" ]
+	then
+		cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
+	fi
+
+	# set live iso label depends of edition
+	CHECKXFCEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep xfce`
+	CHECKLXDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxde`
+	CHECKLXQTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxqt`
+	CHECKMATEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep mate`
+	CHECKMINIMALGUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalgui`
+	CHECKMINIMALCLIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
+	CHECKMULTIMEDIAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep multimedia`
+	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+	CHECKNUMBERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO | cut -f2 -d"=" | cut -f2 -d"-"`
+	CHECKI686ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep i686`
+	CHECKX8664ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep x86_64`
+
+	if [ "$CHECKXFCEISO" != "" ]
+	then
+		LIVEVERSION="Xfce"
+	elif [ "$CHECKLXDEISO" != "" ]
+	then
+		LIVEVERSION="LXDE"
+	elif [ "$CHECKLXQTISO" != "" ]
+	then
+		LIVEVERSION="LXQt"
+	elif [ "$CHECKMATEISO" != "" ]
+	then
+		LIVEVERSION="MATE"
+	elif [ "$CHECKMINIMALGUIISO" != "" ]
+	then
+		LIVEVERSION="MinimalGUI"
+	elif [ "$CHECKMINIMALCLIISO" != "" ]
+	then
+		LIVEVERSION="MinimalCLI"
+	elif [ "$CHECKGAMEOVERISO" != "" ]
+	then
+		LIVEVERSION="GameOver"
+	elif [ "$CHECKMULTIMEDIAISO" != "" ]
+	then
+		LIVEVERSION="Multimedia"
+	elif [ "$CHECKRESCUEISO" != "" ]
+	then
+		LIVEVERSION="Rescue"
+	else
+		LIVEVERSION=""
+	fi
+
+	if [ "$CHECKNUMBERISO" != "" ]
+	then
+		LIVENUMBER="$CHECKNUMBERISO"
+	else
+		LIVENUMBER=""
+	fi
+
+	if [ "$CHECKI686ISO" != "" ]
+	then
+		LIVEARCH="32bit"
+	elif [ "$CHECKX8664ISO" != "" ]
+	then
+		LIVEARCH="64bit"
+	else
+		LIVEARCH=""
+	fi
+
+	ISOLABEL="$LIVECDLABEL $LIVEVERSION $LIVENUMBER $LIVEARCH"
+	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
 
 	if [ ! -d /etc/plymouth ]
 	then
