@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/01/24 by pavroo
+# Last update 2018/02/02 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -457,7 +457,7 @@ function cdfs {
 		LIVEARCH=""
 	fi
 
-	ISOLABEL="$LIVECDLABEL $LIVEVERSION $LIVENUMBER $LIVEARCH"
+	ISOLABEL="$LIVECDLABEL $LIVENUMBER $LIVEVERSION $LIVEARCH"
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
 
