@@ -43,7 +43,7 @@ rsync
 sed
 sparky-backup-desktop
 squashfs-tools
-syslinux, syslinux-utils
+syslinux-utils
 systemd, systemd-sysv
 util-linux
 x11-utils
@@ -61,7 +61,7 @@ sparky-backup-sys (<= 20160203)
 
 Suggests:
 -------------
-grub-pc | grub-efi
+grub-pc
 yad
 
 Install:
