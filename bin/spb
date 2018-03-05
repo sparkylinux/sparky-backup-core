@@ -11,7 +11,7 @@ then
 	exit 1
 fi
 
-TESTAPITUDE="`which aptitude`"
+TESTAPTITUDE="`which aptitude`"
 
 if [ "$1" = "clean" ]
 then
