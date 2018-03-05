@@ -1,15 +1,17 @@
 #!/bin/bash
 
 # Shortcuts to 'sparkybackup' command
-# Copyright 2017 under the GNU GPL2 License by pavroo <pavroo@onet.eu>
-# Last update 2017/12/17 by pavroo
+# Copyright 2017-2018 under the GNU GPL2 License by pavroo <pavroo@onet.eu>
+# Last update 2018/03/05 by pavroo
 
-testroot="`whoami`"
-if [ "$testroot" != "root" ]
+TESTROOT="`whoami`"
+if [ "$TESTROOT" != "root" ]
 then
-	echo "Must be root. Exiting now..."
+	echo "Must be root...Exiting now..."
 	exit 1
 fi
+
+TESTAPITUDE="`which aptitude`"
 
 if [ "$1" = "clean" ]
 then
@@ -23,11 +25,21 @@ elif [ "$1" = "dist" ]
 then
 	/usr/bin/sparkybackup dist
 
+elif [ "$1" = "cache" ]
+then
+	apt-get autoremove
+	apt-get clean
+
+	if [ "$TESTAPTITUDE" != "" ]
+	then
+		aptitude purge ~c
+	fi
+
 else
 	echo "spb is a shorter command to sparkybackup"
 	echo "Usage of spb is as follows:"
 	echo ""
-	echo "sudo spb dist|edit|clean"
+	echo "sudo spb dist|edit|clean|cache"
 	echo ""
 	echo "Examples:"
 	echo ""
@@ -39,6 +51,9 @@ else
 	echo ""
 	echo "    sudo spb clean"
 	echo "which cleans up files of sparkybackup working directory"
+	echo ""
+	echo "    sudo spb cache"
+	echo "which cleans up apt cache"
 fi
 
 exit 0

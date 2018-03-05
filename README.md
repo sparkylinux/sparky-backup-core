@@ -61,6 +61,7 @@ sparky-backup-sys (<= 20160203)
 
 Suggests:
 -------------
+aptitude
 grub-pc
 yad
 
