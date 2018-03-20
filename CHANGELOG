@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
+  Version 20180320 (2018-03-20)
+-------------------------------------------------------------------------------
+  * Changed sparky-xterm settings
+  * Added info about upgrading advanced installer in the first window
+  * Fixed locale configuration in gui mode
+
+-------------------------------------------------------------------------------
   Version 20180312 (2018-03-12)
 -------------------------------------------------------------------------------
   * Added 'users' group to the target user to advanced installer

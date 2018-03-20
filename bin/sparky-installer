@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/01/24
+# Last update 2018/03/20
 #
 # This script requires either yad or dialog to run
 
@@ -43,6 +43,13 @@ PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 
+if [ -f /usr/bin/sparky-terminal ]
+then
+	SPARKYXTERM="/usr/bin/sparky-terminal"
+else
+	SPARKYXTERM="x-terminal-emulator"
+fi
+
 if [ "$1" = "gui" -o "$2" = "gui" ]
 then
 	GUI="$DISPLAY"
@@ -52,13 +59,6 @@ if [ "$GUI" != "" ]
 then
 
 	testyad=`which yad`
-
-	if [ -f /opt/sparky/sparky-xterm ]
-	then
-		. /opt/sparky/sparky-xterm
-	else
-		SPARKYXTERM="x-terminal-emulator"
-	fi
 
 	if [ "$testyad" != "" ]
 	then
@@ -91,11 +91,13 @@ then
 	exit 1
 fi
 
+INSTALLTEXT0="This is an advanced live installer.\n\nIt is highly suggested to quit the installer and check for a newer version, using commands:\nsudo apt update\nsudo apt install sparky-desktop-core\n\nIgnore this message if you already done it.\n\nChoose YES to continue installation or NO to quit the installer."
+
 if [ -f /lib/live/mount/medium/live/minimal ]
 then
-	INSTALLTEXT1="This is an advanced live installer.\n\nIt lets you install the live system to your hard drive.\n\nIt also lets you install your favorite desktop with\na minimal set of applications, if you wish.\nIt will be possible if the network connection is on.\n\n\nDo you want to continue?"
+	INSTALLTEXT1="The advanced live installer lets you install the live system to your hard drive.\n\nIt also lets you install your favorite desktop with\na minimal set of applications, if you wish.\nIt will be possible if the network connection is on.\n\n\nDo you want to continue?"
 else
-	INSTALLTEXT1="This is an advanced live installer.\n\nIt lets you install the live system to your hard drive as it is.\n\nDo you want to continue?"
+	INSTALLTEXT1="The advanced live installer lets you install the live system to your hard drive as it is.\n\nDo you want to continue?"
 fi
 
 TESTEFI=`lsmod | grep efi`	
@@ -127,6 +129,11 @@ GUILOG="cli"
 ##########TEXT MODE##########
 
 #inform them what this is and ask if they want to continue
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT0" $HEIGHT $WIDTH
+
+	if [ $? != 0 ]; then
+		exit 0
+	fi
 
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
 
@@ -216,7 +223,11 @@ GUILOG="cli"
 	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
 	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
 	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
-	TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	if [ "$TARGETEFI" != "" ]; then
+		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
+	else
+		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	fi
 	for i in $TARGETSWAP; do
 		swappart="$i"
 		swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -241,9 +252,14 @@ GUILOG="cli"
 	#choose the partition to install to
 	#CKLIVE=`mount | grep "live" | grep -v "loop"  | awk '{print $1}' | awk -F "/" '{print $3}'`
 	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-	PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
-	PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
-	PARTINST=`echo $PARTINSTTEMP`
+	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	if [ "$TARGETEFI" != "" ]; then
+		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
+	else
+		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $SWAP`
+	fi
+	#PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
+	PARTINST=`echo $PARTITIONS`
 	#for i in $PARTITIONS; do
 	#	tempsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
 	#	if [ "$tempsize" = "1" ]; then
@@ -542,6 +558,12 @@ GUILOG="yad"
 		exit 1
 	fi
 
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT0"
+
+	if [ $? != 0 ]; then
+		exit 0
+	fi
+
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1"
 
 	if [ $? != 0 ]; then
@@ -551,7 +573,7 @@ GUILOG="yad"
 	#FRONTTEST=`cat /etc/X11/default-display-manager | grep sddm`
 
 	#if [ "$FRONTTEST" = "" ]; then
-		FRONTEND="gnome"
+	#	FRONTEND="gnome"
 	#else
 	#	FRONTEND="kde"
 	#fi
@@ -560,10 +582,10 @@ GUILOG="yad"
 
 	if [ $? = 0 ]; then
 
-		dpkg-reconfigure -f $FRONTEND locales
-		dpkg-reconfigure -f $FRONTEND console-data
+		$SPARKYXTERM -e dpkg-reconfigure locales
+		$SPARKYXTERM -e dpkg-reconfigure console-data
 		#dpkg-reconfigure -f $FRONTEND console-setup
-		dpkg-reconfigure -f $FRONTEND keyboard-configuration
+		$SPARKYXTERM -e dpkg-reconfigure keyboard-configuration
 
 	fi
 
@@ -636,7 +658,12 @@ GUILOG="yad"
 	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
 	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
 	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
-	TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	if [ "$TARGETEFI" != "" ]; then
+		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
+	else
+		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	fi
 	for i in $TARGETSWAP; do
 		swappart="$i"
 		swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -659,9 +686,14 @@ GUILOG="yad"
 	#choose the partition to install to
 	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}'`
 	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-	PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
-	PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
-	PARTINST=`echo $PARTINSTTEMP`
+	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	if [ "$TARGETEFI" != "" ]; then
+		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
+	else
+		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $SWAP`
+	fi
+	#PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
+	PARTINST=`echo $PARTITIONS`
 	#for i in $PARTINST; do
 	#	tempsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
 	#	if [ "$tempsize" = "1" ]; then
