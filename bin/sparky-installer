@@ -91,7 +91,7 @@ then
 	exit 1
 fi
 
-INSTALLTEXT0="This is an advanced live installer.\n\nIt is highly suggested to quit the installer and check for a newer version, using commands:\nsudo apt update\nsudo apt install sparky-desktop-core\n\nIgnore this message if you already done it.\n\nChoose YES to continue installation or NO to quit the installer."
+INSTALLTEXT0="This is an advanced live installer.\n\nIt is highly suggested to quit the installer and check for a newer version, using commands:\nsudo apt update\nsudo apt install sparky-backup-core\n\nIgnore this message if you already done it.\n\nChoose YES to continue installation or NO to quit the installer."
 
 if [ -f /lib/live/mount/medium/live/minimal ]
 then
