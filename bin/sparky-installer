@@ -8,24 +8,20 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/03/20
+# Last update 2018/03/26
 #
 # This script requires either yad or dialog to run
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
-if [ "$testroot" != "root" ]
-then
-	echo " Must be run as root - exiting"
+if [ "$testroot" != "root" ]; then
+	echo "Must be run as root...Exiting now..."
 	exit 1
 fi
 
-# if NOT Live system just quit, do nothing
-testmode=`grep "1000" /etc/passwd | grep -v "Live"`
-if [ "$testmode" != "" ]
-then
-	echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
-	exit 1
+# remove stored language setting if any
+if [ -f /tmp/sparky-advanced-installer ]; then
+	rm -f /tmp/sparky-advanced-installer
 fi
 
 # set options depending on mode - text or gui
@@ -43,25 +39,21 @@ PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 
-if [ -f /usr/bin/sparky-terminal ]
-then
+if [ -f /usr/bin/sparky-terminal ]; then
 	SPARKYXTERM="/usr/bin/sparky-terminal"
 else
 	SPARKYXTERM="x-terminal-emulator"
 fi
 
-if [ "$1" = "gui" -o "$2" = "gui" ]
-then
+if [ "$1" = "gui" -o "$2" = "gui" ]; then
 	GUI="$DISPLAY"
 fi
 
-if [ "$GUI" != "" ]
-then
+if [ "$GUI" != "" ]; then
 
 	testyad=`which yad`
 
-	if [ "$testyad" != "" ]
-	then
+	if [ "$testyad" != "" ]; then
 		DIALOGMENU="`which yad` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=600 --height=400 --fixed --center"
 		DIALOG="`which yad` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=450 --fixed --center"
 		TITLE="--always-print-result --dialog-sep --image=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --title="
@@ -74,8 +66,7 @@ then
 		PASSWORD="--entry --hide-text "
 		
 		testgparted=`which gparted`
-		if [ "$testgparted" = "" ]
-		then
+		if [ "$testgparted" = "" ]; then
 			PARTITIONPROG="$SPARKYXTERM -e cfdisk"
 		else
 			PARTITIONPROG="gparted"
@@ -85,27 +76,95 @@ then
 
 fi
 
-if [ "$DIALOG" = "" ]
-then
-	echo "Cannot find dialog or yad.  Exiting."
-	exit 1
+# if NOT Live system just quit, do nothing
+testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+if [ "$testmode" != "" ]; then
+	if [ "$GUI" != "" ]; then
+		xmessage "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
+		exit 1
+	else
+		echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
+		exit 1
+	fi
 fi
 
-INSTALLTEXT0="This is an advanced live installer.\n\nIt is highly suggested to quit the installer and check for a newer version, using commands:\nsudo apt update\nsudo apt install sparky-backup-core\n\nIgnore this message if you already done it.\n\nChoose YES to continue installation or NO to quit the installer."
+# if no dialog or yad installed just quit
+if [ "$DIALOG" = "" ]; then
+	if [ "$GUI" != "" ]; then
+		xmessage "Cannot find dialog or yad. Exiting now..."
+		exit 1
+	else
+		echo "Cannot find dialog or yad. Exiting now..."
+		exit 1
+	fi
+fi
 
+# choose installer language
+if [ -f /tmp/sparky-advanced-installer ]; then
+	rm -f /tmp/sparky-advanced-installer
+fi
+
+if [ "$GUI" != "" ]; then
+
+DEFLANGS=`$DIALOGMENU $TITLE"$TITLETEXT" $YESNO $MENU $TEXT"Please choose the Advanced Installer language:" \
+English "English" \
+Polish "Polski" \
+Exit "Exiting now..."`
+
+	if [ "$?" = "0" ]; then
+		DEFLANGS=`echo $DEFLANGS | cut -d "|" -f 1`
+		echo "$DEFLANGS" > /tmp/sparky-advanced-installer
+	fi
+
+	if [ "$DEFLANGS" = "English" ]; then
+		DEFLANG="English"
+	elif [ "$DEFLANGS" = "Polish" ]; then
+		DEFLANG="Polish"
+	elif [ "$DEFLANGS" = "Exit" ]; then
+		exit 1
+	else
+		exit 1
+	fi
+
+elif [ "$GUI" = "" ]; then
+
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT English "English" Polish "Polski" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+
+	if [ "$?" = "0" ]; then
+		DEFLANG=`cat /tmp/sparky-advanced-installer`
+	else
+		DEFLANG="Exit"
+	fi
+
+	if [ "$DEFLANG" = "Exit" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Exiting the Installer now..." $HEIGHT $WIDTH
+		exit 1
+	fi
+	
+fi
+
+# get default's locale file
+DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
+if [ "$DEFLANG" = "Polish" ]; then
+. $DEFLOCDIR/pl
+else
+. $DEFLOCDIR/en
+fi
+
+# the first dialog window
 if [ -f /lib/live/mount/medium/live/minimal ]
 then
-	INSTALLTEXT1="The advanced live installer lets you install the live system to your hard drive.\n\nIt also lets you install your favorite desktop with\na minimal set of applications, if you wish.\nIt will be possible if the network connection is on.\n\n\nDo you want to continue?"
+	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
-	INSTALLTEXT1="The advanced live installer lets you install the live system to your hard drive as it is.\n\nDo you want to continue?"
+	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 fi
 
 TESTEFI=`lsmod | grep efi`	
 if [ "$TESTEFI" != "" ]
 then
-	PARTITIONTEXT="We need to prepare a swap and install partition now.\n\n$PARTITIONPROG will allow you to create the new partitions.\n\nYou must create or have 1 install partition and 1 swap partition.\n\nYou also need 100 MB vfat formatted partition with 'boot' flag, type 'EFI System' if you are installing the system on a machine with UEFI motherboard.\n\nIf you already have partitions setup then just quit $PARTITIONPROG and installation will continue.\n\nClick OK to continue."
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 else
-	PARTITIONTEXT="We need to prepare a swap and install partition now.\n\n$PARTITIONPROG will allow you to create the new partitions.\n\nYou must create or have 1 install partition and 1 swap partition.\n\nIf you already have partitions setup then just quit $PARTITIONPROG and installation will continue.\n\nClick OK to continue."
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 fi
 
 progressbar () {
@@ -114,35 +173,20 @@ tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-bu
 
 . /etc/live/config.conf
 . /etc/sparkybackup/sparkybackup.conf
-#if [ "$LIVECDLABEL" != "" ]; then
-#	TITLETEXT="$LIVECDLABEL (Advanced) Installer"
-#fi
-
-if [ -f /etc/sparkybackup/sparkylinux-installer.conf ]; then
 . /etc/sparkybackup/sparkylinux-installer.conf
-fi
-
 
 if [ "$GUI" = "" ]; then
 GUILOG="cli"
 
 ##########TEXT MODE##########
 
-#inform them what this is and ask if they want to continue
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT0" $HEIGHT $WIDTH
-
-	if [ $? != 0 ]; then
-		exit 0
-	fi
-
+	#inform them what this is and ask if they want to continue
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
-
 	if [ $? != 0 ]; then
 		exit 0
 	fi
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"The Live Installer uses US English locale and keyboard layout by default.\n\nWould you like to install with different locale or keyboard settings?\n\nPress YES to change it or NO to keep present configuration." $HEIGHT $WIDTH
-
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18" $HEIGHT $WIDTH
 	if [ $? = 0 ]; then
 
 		dpkg-reconfigure locales
@@ -153,7 +197,6 @@ GUILOG="cli"
 	fi
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
-
 	#choose the drive to partition
 	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
@@ -165,7 +208,7 @@ GUILOG="cli"
 		partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
 	done
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a drive to partition.\nIf the only option you see is to Quit the installer then no drives were found." $HEIGHT $WIDTH $MENUHEIGHT Exit "Quit the installer" $partdrivemenu 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL19\n$LOCAL20" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partdrivemenu 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		PARTDRIVE=`cat /tmp/choice.$$`
@@ -176,7 +219,7 @@ GUILOG="cli"
 	rm /tmp/choice.$$
 
 	if [ "$PARTDRIVE" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now." $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 		exit 1
 	fi
 
@@ -192,7 +235,7 @@ GUILOG="cli"
 			efipartmenu="$efipartmenu $efipart $efipartsize"
 		done
 		
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a partition to install EFI image to.\nIf the only option you see is to Quit the installer then no EFI partitions were found." $HEIGHT $WIDTH $MENUHEIGHT Exit "Quit the installer" $efipartmenu 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL23\n$LOCAL24" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $efipartmenu 2>/tmp/choice.$$
 
 		if [ "$?" = "0" ]; then
 			TARGETEFI=`cat /tmp/choice.$$`
@@ -203,12 +246,12 @@ GUILOG="cli"
 		rm /tmp/choice.$$
 
 		if [ "$TARGETEFI" = "Exit" ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now." $HEIGHT $WIDTH
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 			exit 1
 		fi
 
 		#format the efi partition?
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Format the EFI partition?" $HEIGHT $WIDTH $MENUHEIGHT noformatefi "Do Not Format if you have other OS installed" formatefi "Format- Sparky will be only one OS on the hard drive now" 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL25" $HEIGHT $WIDTH $MENUHEIGHT noformatefi "$LOCAL26" formatefi "$LOCAL27" 2>/tmp/choice.$$
 
 		if [ "$?" = "0" ]; then
 			FORMATEFIPART=`cat /tmp/choice.$$`
@@ -234,8 +277,7 @@ GUILOG="cli"
 		swappartmenu="$swappartmenu $swappart $swappartsize"
 	done
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a swap partition to use.\nIf the only option you see is to Quit the installer then no swap partitions were found." $HEIGHT $WIDTH $MENUHEIGHT Exit "Quit the installer" $swappartmenu 2>/tmp/choice.$$
-
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		SWAP=`cat /tmp/choice.$$`
 	else
@@ -245,7 +287,7 @@ GUILOG="cli"
 	rm /tmp/choice.$$
 
 	if [ "$SWAP" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now." $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 		exit 1
 	fi
 
@@ -273,7 +315,7 @@ GUILOG="cli"
 		partmenu="$partmenu $part $partsize"
 	done
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a partition to install the root system to.\nIf the only option you see is to Quit the installer then no partitions were found." $HEIGHT $WIDTH $MENUHEIGHT Exit "Quit the installer" $partmenu 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL30\n$LOCAL31" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partmenu 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		TARGETPART=`cat /tmp/choice.$$`
@@ -284,12 +326,12 @@ GUILOG="cli"
 	rm /tmp/choice.$$
 
 	if [ "$TARGETPART" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now." $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 		exit 1
 	fi
 
 	#choose filesystem type
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select filesystem type for the root partition" $HEIGHT $WIDTH $MENUHEIGHT ext2 "Ext2 filesystem" ext3 "Ext3 filesystem" ext4 "Ext4 filesystem" 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		FSTYPE=`cat /tmp/choice.$$`
@@ -307,7 +349,7 @@ GUILOG="cli"
 		homepartmenu="$homepartmenu $homepart $homepartsize"
 	done
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a partition to install /home to.\nIf the only option you see is root then no extra partitions were found." $HEIGHT $WIDTH $MENUHEIGHT root "put /home on the root partition" $homepartmenu 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL34\n$LOCAL35" $HEIGHT $WIDTH $MENUHEIGHT root "$LOCAL36" $homepartmenu 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		HOMEPART=`cat /tmp/choice.$$`
@@ -319,7 +361,7 @@ GUILOG="cli"
 
 	if [ "$HOMEPART" != "root" ]; then
 		#choose filesystem type
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select filesystem type for the home partition" $HEIGHT $WIDTH $MENUHEIGHT noformat "Do Not Format the home partition - not recommended unless you know what you are doing" ext2 "Ext2 filesystem" ext3 "Ext3 filesystem" ext4 "Ext4 filesystem" 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
 
 		if [ "$?" = "0" ]; then
 			HFSTYPE=`cat /tmp/choice.$$`
@@ -342,7 +384,7 @@ GUILOG="cli"
 
 		while [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; do
 
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Please enter the password for root." $HEIGHT $WIDTH 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL39" $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				TARGETROOTPASS=`cat /tmp/choice.$$`
 			else
@@ -350,7 +392,7 @@ GUILOG="cli"
 			fi
 
 			rm /tmp/choice.$$
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Please enter the password for root again." $HEIGHT $WIDTH 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL40" $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				TARGETROOTPASS2=`cat /tmp/choice.$$`
 			else
@@ -360,7 +402,7 @@ GUILOG="cli"
 			rm /tmp/choice.$$
 
 			if [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; then
-				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Passwords do not match. Lets try again." $HEIGHT $WIDTH
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL41" $HEIGHT $WIDTH
 			fi
 
 		done
@@ -368,8 +410,7 @@ GUILOG="cli"
 		rm /tmp/choice.$$
 
 		#username input secton
-
-		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"Please enter the new user's real name to be setup on the installed system." $HEIGHT $WIDTH 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL42" $HEIGHT $WIDTH 2>/tmp/choice.$$
 		if [ "$?" = "0" ]; then
 			TARGETUSERFULLNAME=`cat /tmp/choice.$$`
 		else
@@ -378,7 +419,7 @@ GUILOG="cli"
 
 		rm /tmp/choice.$$
 
-		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"Please enter the new username to be setup on the installed system.\nMust be in lowercase letters only." $HEIGHT $WIDTH 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL43\n$LOCAL44" $HEIGHT $WIDTH 2>/tmp/choice.$$
 		if [ "$?" = "0" ]; then
 			TARGETUSER=`cat /tmp/choice.$$`
 		else
@@ -397,7 +438,7 @@ GUILOG="cli"
 
 		while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
 
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Please enter the password for $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				TARGETPASS=`cat /tmp/choice.$$`
 			else
@@ -406,7 +447,7 @@ GUILOG="cli"
 
 			rm /tmp/choice.$$
 
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Please enter the password for $TARGETUSER again." $HEIGHT $WIDTH 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				TARGETPASS2=`cat /tmp/choice.$$`
 			else
@@ -416,7 +457,7 @@ GUILOG="cli"
 			rm /tmp/choice.$$
 
 			if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
-				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Passwords do not match. Lets try again." $HEIGHT $WIDTH
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
 			fi
 
 		done
@@ -426,7 +467,7 @@ GUILOG="cli"
 	fi
 
 	#hostname setup
-	$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"Please enter the hostname for the installed system.\nOnly small leters, no special characters, no white spaces!" $HEIGHT $WIDTH 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL65\n$LOCAL66" $HEIGHT $WIDTH 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		TARGETHOSTNAME=`cat /tmp/choice.$$`
 	else
@@ -448,14 +489,14 @@ GrubSelectText () {
 		PartDrive="$i"
 
 		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
-			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "Master boot record of disk")
+			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
 		fi
 	done
 
-	GrubMenu=( "${GrubMenu[@]}" "root" "Root partition - safe choice if you use a different boot manager" "rootmbr" "MBR of the root partition - for a usb install" "nogrub" "Do not install GRUB")
+	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70")
 
 	#grub location
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select where to install grub to.\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		GRUBLOCTEST=`cat /tmp/choice.$$`
@@ -464,18 +505,18 @@ GrubSelectText () {
 	rm /tmp/choice.$$
 
 	if [ "$GRUBLOCTEST" = "nogrub" ]; then
-		GRUBLOCTEXT="no device, means the GRUB will be NOT installed"
+		GRUBLOCTEXT="$LOCAL72"
 	elif [ "$GRUBLOCTEST" = "root" ]; then
-		GRUBLOCTEXT="root partition of $TARGETPART"
+		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
 		GRUBLOC="/dev/$TARGETPART"
 	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
-		GRUBLOCTEXT="mbr of root partition of $TARGETPART"
+		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
 		GRUBLOC="/dev/$PARTDRIVE"
 	elif [ "$GRUBLOCTEST" = "" ]; then
 		GrubSelectText
 		exit 0
 	else
-		GRUBLOCTEXT="master boot record of $GRUBLOCTEST"
+		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
 		GRUBLOC="/dev/$GRUBLOCTEST"
 	fi
 
@@ -485,8 +526,7 @@ GrubSelectText
 
 	#dpkg-reconfigure tzdata
 	#Timezone setting
-
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Is your system clock set to your current local time?\n\nAnswering no will indicate it is set to UTC" $HEIGHT $WIDTH
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77" $HEIGHT $WIDTH
 	if [ $? = 0 ]; then
 		if [ "$(grep "UTC" /etc/adjtime)" != "" ]; then
 			sed -i -e "s|UTC|LOCALTIME|g" /etc/adjtime
@@ -504,8 +544,7 @@ GrubSelectText
 
 	rm /tmp/sparkylinux-installer.zoneinfo
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please select a timezone for your system" $HEIGHT $WIDTH $MENUHEIGHT Exit "Quit the installer" $ZONES 2>/tmp/choice.$$
-
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL78" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $ZONES 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		ZONESINFO=`cat /tmp/choice.$$`
 	else
@@ -515,7 +554,7 @@ GrubSelectText
 	rm /tmp/choice.$$
 
 	if [ "$ZONESINFO" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now." $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 		exit 1
 	fi
 	echo "$ZONESINFO" > /etc/timezone
@@ -526,20 +565,20 @@ GrubSelectText
 	#$SETXSERVER
 
 	if [ "$HOMEPART" != "root" ]; then
-		HOMETEXT=", $HOMEPART will be formatted $HFSTYPE for /home "
+		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
 	fi
 
 	if [ "$HFSTYPE" = "noformat" ]; then
-		HOMETEXT=", $HOMEPART will not be formatted but used for \n/home "
+		HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
 	fi
 
 	if [ "$testmode" = "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Please verify that this information is correct.\n\nNew user $TARGETUSER will be created on the $FSTYPE formatted $TARGETPART partition$HOMETEXT and grub will be installed to the $GRUBLOCTEXT.\n\nDo you want to continue?" $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
 		fi
 	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Please verify that this information is correct.\nYour backup mode system will be installed on $FSTYPE formatted $TARGETPART partition$HOMETEXT and grub will be installed to the $GRUBLOCTEXT.\n\nDo you want to continue?" $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
 		fi
@@ -552,34 +591,19 @@ GUILOG="yad"
 ##########GUI MODE##########
 
 	#inform them what this is and ask if they want to continue
-
-	if [ "$testyad" = "" ]; then
-		xmessage "Yad not found. You can run cli mode by issuing 'sudo sparky-installer' in a terminal window"
-		exit 1
-	fi
-
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT0"
-
-	if [ $? != 0 ]; then
-		exit 0
-	fi
-
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1"
-
 	if [ $? != 0 ]; then
 		exit 0
 	fi
 
 	#FRONTTEST=`cat /etc/X11/default-display-manager | grep sddm`
-
 	#if [ "$FRONTTEST" = "" ]; then
 	#	FRONTEND="gnome"
 	#else
 	#	FRONTEND="kde"
 	#fi
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"The Live Installer uses US English locale and keyboard layout by default.\n\nWould you like to install with different locale or keyboard settings?\n\nPress YES to change it or NO to keep present configuration."
-
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18"
 	if [ $? = 0 ]; then
 
 		$SPARKYXTERM -e dpkg-reconfigure locales
@@ -590,10 +614,9 @@ GUILOG="yad"
 	fi
 
 	#fix for gparted being inhibited by udisks-daemon
-	killall -KILL udisks-daemon
+	#killall -KILL udisks-daemon
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT"
-
 	#choose the drive to partition
 	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
@@ -608,13 +631,13 @@ GUILOG="yad"
 	PARTDRIVE=""
 	while [ "$PARTDRIVE" = "" ]
 	do
-		PARTDRIVE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a drive to partition.\nIf the only option you see is to Quit the installer then no drives were found." Exit "Quit the installer" $partdrivemenu`
+		PARTDRIVE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL19\n$LOCAL20" Exit "$LOCAL21" $partdrivemenu`
 	done
 
 	PARTDRIVE=`echo $PARTDRIVE | cut -d "|" -f 1`
 
 	if [ "$PARTDRIVE" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 		exit 1
 	fi
 
@@ -633,13 +656,13 @@ GUILOG="yad"
 		TARGETEFI=""
 		while [ "$TARGETEFI" = "" ]
 		do
-		TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a partition to install EFI image to.\nIf the only option you see is to Quit the installer then no EFI partitions were found." Exit "Quit the installer" $efipartmenu`
+		TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL23\n$LOCAL24" Exit "$LOCAL21" $efipartmenu`
 		done
 
 		TARGETEFI=`echo $TARGETEFI | cut -d "|" -f 1`
 
 		if [ "$TARGETEFI" = "Exit" ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 			exit 1
 		fi		
 	
@@ -647,7 +670,7 @@ GUILOG="yad"
 		FORMATEFIPART=""
 		while [ "$FORMATEFIPART" = "" ]
 		do
-			FORMATEFIPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Format the EFI partition?" noformatefi "Do Not Format if you have other OS already installed" formatefi "Format - Sparky will be only one OS on the hard drive now"`
+			FORMATEFIPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL25" noformatefi "$LOCAL26" formatefi "$LOCAL27"`
 		done
 	
 		FORMATEFIPART=`echo $FORMATEFIPART | cut -d "|" -f 1`
@@ -673,13 +696,13 @@ GUILOG="yad"
 	SWAP=""
 	while [ "$SWAP" = "" ]
 	do
-		SWAP=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a swap partition to use.\nIf the only option you see is to Quit the installer then no swap partitions were found." Exit "Quit the installer" $swappartmenu`
+		SWAP=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL28\n$LOCAL29" Exit "$LOCAL21" $swappartmenu`
 	done
 
 	SWAP=`echo $SWAP | cut -d "|" -f 1`
 
 	if [ "$SWAP" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 		exit 1
 	fi
 
@@ -710,20 +733,20 @@ GUILOG="yad"
 	TARGETPART=""
 	while [ "$TARGETPART" = "" ]
 	do
-		TARGETPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a partition to install the root system to.\nIf the only option you see is to Quit the installer then no partitions were found." Exit "Quit the installer" $partmenu`
+		TARGETPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL30\n$LOCAL31" Exit "$LOCAL21" $partmenu`
 	done
 
 	TARGETPART=`echo $TARGETPART | cut -d "|" -f 1`
 
 	if [ "$TARGETPART" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 		exit 1
 	fi
 
 	FSTYPE=""
 	while [ "$FSTYPE" = "" ]
 	do
-		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select filesystem type for the root partition" ext2 "Ext2 filesystem" ext3 "Ext3 filesystem" ext4 "Ext4 filesystem"`
+		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL32" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33"`
 	done
 
 	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
@@ -738,7 +761,7 @@ GUILOG="yad"
 	HOMEPART=""
 	while [ "$HOMEPART" = "" ]
 	do
-		HOMEPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a partition to install /home to.\nIf the only option you see is root then no extra partitions were found." root "put /home on the root partition" $homepartmenu`
+		HOMEPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL34\n$LOCAL35" root "$LOCAL36" $homepartmenu`
 	done
 
 	HOMEPART=`echo $HOMEPART | cut -d "|" -f 1`
@@ -747,7 +770,7 @@ GUILOG="yad"
 		HFSTYPE=""
 		while [ "$HFSTYPE" = "" ]
 		do
-			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select filesystem type for the home partition" noformat "Do Not Format the home partition - not recommended unless you know what you are doing" ext2 "Ext2 filesystem" ext3 "Ext3 filesystem" ext4 "Ext4 filesystem"`
+			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL37" noformat "$LOCAL38" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33"`
 		done
 	fi
 
@@ -761,13 +784,13 @@ GUILOG="yad"
 		while [ "$PASSOK" != "Yes" ]; do
 
 CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
---field="Password for root":H \
---field="Password for root again":H \
---field="New User Real Name" \
---field="New Username" \
---field="Password for new user":H \
---field="Password for new user again":H \
---field="Host Name for the computer"`
+--field="$LOCAL48":H \
+--field="$LOCAL49":H \
+--field="$LOCAL50" \
+--field="$LOCAL51" \
+--field="$LOCAL52":H \
+--field="$LOCAL53":H \
+--field="$LOCAL54"`
 
 			if [ "$?" = "0" ]; then
 				TARGETROOTPASS=`echo $CHOICES | cut -d "|" -f 1`
@@ -778,7 +801,7 @@ CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
 				TARGETPASS2=`echo $CHOICES | cut -d "|" -f 6`
 				TARGETHOSTNAME=`echo $CHOICES | cut -d "|" -f 7`
 			else 
-				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 				exit 1
 			fi
 
@@ -793,23 +816,23 @@ CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
 [ "$TARGETHOSTNAME" != "" ] && \
 PASSOK="Yes"
 
-[ "$TARGETROOTPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Root password is blank."
+[ "$TARGETROOTPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL55"
 
-[ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Root passwords do not match."
+[ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL56"
 
-[ "$TARGETUSERFULLNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"User Full Name is blank."
+[ "$TARGETUSERFULLNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL57"
 
-[ "$TARGETUSER" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Username is blank."
+[ "$TARGETUSER" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL58"
 
-[ "$TARGETUSER" = "$LIVE_USERNAME" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Username can't be the same as the live username."
+[ "$TARGETUSER" = "$LIVE_USERNAME" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL59"
 
-[ "$TARGETPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"User password is blank."
+[ "$TARGETPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL60"
 
-[ "$TARGETPASS" != "$TARGETPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"User passwords do not match."
+[ "$TARGETPASS" != "$TARGETPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL61"
 
-[ "$TARGETROOTPASS" = "$TARGETPASS" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Root and user passwords are the same.\n\nPlease use different passwords."
+[ "$TARGETROOTPASS" = "$TARGETPASS" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL62\n\n$LOCAL63"
 
-[ "$TARGETHOSTNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Host Name is blank."
+[ "$TARGETHOSTNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL64"
 
 		done
 
@@ -828,14 +851,14 @@ GrubSelectGUI () {
 		PartDrive="$i"
 
 		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
-			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "Master boot record of disk")
+			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
 		fi
 	done
 
-	GrubMenu=( "${GrubMenu[@]}" "root" "Root partition - safe choice if you use a different boot manager" "rootmbr" "MBR of the root partition - for a usb install" "nogrub" "Do not install GRUB" )
+	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70" )
 
 	#grub location
-	GRUBLOCTEST=$($DIALOGMENU $TITLE"$TITLETEXT" $MENU $TEXT"Please select where to install grub to.\n" "${GrubMenu[@]}")
+	GRUBLOCTEST=$($DIALOGMENU $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" "${GrubMenu[@]}")
 
 	ret="$?"
 
@@ -850,15 +873,15 @@ GrubSelectGUI () {
 	GRUBLOCTEST=$(echo "$GRUBLOCTEST" | awk -F '|' '{print $1}')
 
 	if [ "$GRUBLOCTEST" = "nogrub" ]; then
-		GRUBLOCTEXT="no device, means the GRUB will be NOT installed"
+		GRUBLOCTEXT="$LOCAL72"
 	elif [ "$GRUBLOCTEST" = "root" ]; then
-		GRUBLOCTEXT="root partition of $TARGETPART"
+		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
 		GRUBLOC="/dev/$TARGETPART"
 	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
-		GRUBLOCTEXT="mbr of root partition of $TARGETPART"
+		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
 		GRUBLOC="/dev/$PARTDRIVE"
 	else
-		GRUBLOCTEXT="master boot record of $GRUBLOCTEST"
+		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
 		GRUBLOC="/dev/$GRUBLOCTEST"
 	fi
 }
@@ -866,8 +889,7 @@ GrubSelectGUI () {
 GrubSelectGUI
 
 	#Timezone setting
-
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Is your system clock set to your current local time?\n\nAnswering no will indicate it is set to UTC"
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77"
 	if [ $? = 0 ]; then
 		if [ "$(grep "UTC" /etc/adjtime)" != "" ]; then
 			sed -i -e "s|UTC|LOCALTIME|g" /etc/adjtime
@@ -888,13 +910,13 @@ GrubSelectGUI
 	ZONESINFO=""
 	while [ "$ZONESINFO" = "" ]
 	do
-		ZONESINFO=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"Please select a timezone for your system" Exit "Quit the installer" $ZONES`
+		ZONESINFO=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL78" Exit "$LOCAL21" $ZONES`
 	done
 
 ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
 
 	if [ "$ZONESINFO" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 		exit 1
 	fi
 
@@ -909,23 +931,23 @@ ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
 	#fi
 
 	if [ "$HOMEPART" != "root" ]; then
-		HOMETEXT=", $HOMEPART will be formatted $HFSTYPE for /home "
+		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
 	fi
 
 	if [ "$HFSTYPE" = "noformat" ]; then
-		HOMETEXT=", $HOMEPART will not be formatted but used for \n/home "
+		HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
 	fi
 
 	if [ "$testmode" = "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Please verify that this information is correct.\n\nNew user $TARGETUSER will be created on the $FSTYPE formatted $TARGETPART partition$HOMETEXT \nand grub will be installed to the $GRUBLOCTEXT.\n\nDo you want to continue?"
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT \n$LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89"
 		if [ $? != 0 ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 			exit 1
 		fi
 	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Please verify that this information is correct.\n\nYour backup mode system will be installed on $FSTYPE formatted $TARGETPART partition$HOMETEXT \nand grub will be installed to the $GRUBLOCTEXT.\n\nDo you want to continue?"
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL88n $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT \n$LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89"
 		if [ $? != 0 ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Quitting the installer now."
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 			exit 1
 
 		fi
@@ -937,12 +959,13 @@ fi
 
 ##########install_to_hd section##########
 
+# preper swap
 if [ "$GUI" != "" ]; then
-	progressbar "Setting up SWAP Now...Please Wait \n" &
+	progressbar "$LOCAL90 $LOCAL91 ... $LOCAL92 ... \n" &
 fi
 
 sleep 2
-echo "Preparing swap partition now"
+echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
 mkswap /dev/$SWAP
 swapon /dev/$SWAP
 
@@ -950,10 +973,11 @@ if [ "$GUI" != "" ]; then
 	killall -KILL tail
 fi
 
+# preper partitions
 if [ "$GUI" != "" ]; then
-	progressbar "Formatting $TARGETPART Now...Please Wait \n" &
+	progressbar "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
 fi
-echo "Formatting the $TARGETPART partition now"
+echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 ## Preserve kernel options in the new grub system
 #NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
@@ -968,17 +992,17 @@ sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /etc/default/grub
 
 #make the filesystem and mount the partition on /TARGET
 if [ "`mount | grep $TARGETPART`" ]; then
-	echo "Unmounting the partition we are going to use and format now"
+	echo "$LOCAL94"
 	umount /dev/$TARGETPART
 fi
 
 mke2fs -t $FSTYPE -F /dev/$TARGETPART
 mkdir -p /TARGET
 sleep 2
-echo "Mounting the TARGET partition now"
+echo "$LOCAL95"
 mount /dev/$TARGETPART /TARGET -o rw
 sleep 2
-echo "Using tune2fs to prevent the forced checks on boot"
+echo "$LOCAL96"
 tune2fs -c 0 -i 0 /dev/$TARGETPART 
 rm -rf "/TARGET/lost+found"
 
@@ -989,19 +1013,19 @@ fi
 if [ "$HOMEPART" != "root" ]; then
 	if [ "$HFSTYPE" != "noformat" ]; then
 		if [ "$GUI" != "" ]; then
-			progressbar "Formatting $HOME Now...Please Wait \n" &
+			progressbar "$LOCAL93 $HOME $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
 		fi
 
-		echo "Formatting the $HOME partition now"
+		echo "$LOCAL93 $HOME $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 		if [ "`mount | grep $HOMEPART`" ]; then
-			echo "Unmounting the partition we are going to use and format now"
+			echo "$LOCAL94"
 			umount /dev/$HOMEPART
 		fi
 		mke2fs -t $HFSTYPE -F /dev/$HOMEPART
 	fi
 
-	echo "Mounting the TARGET home partition now"
+	echo "$LOCAL97"
 	mkdir -p /TARGET/home
 	mount /dev/$HOMEPART /TARGET/home -o rw
 	tune2fs -c 0 -i 0 /dev/$HOMEPART
@@ -1024,14 +1048,14 @@ TESTEFI=`lsmod | grep efi`
 if [ "$TESTEFI" != "" ]; then
 	if [ "$FORMATEFIPART" = "formatefi" ]; then
 		if [ "`mount | grep $TARGETEFI`" ]; then
-			echo "Unmounting the efi partition we are going to use and format now"
+			echo "$LOCAL98 ..."
 			umount /dev/$TARGETEFI
 		fi
 		
 		mkfs.fat -F32 -v /dev/$TARGETEFI
 	fi
 
-	echo "Mounting /dev/$TARGETEFI in /TARGET/boot/efi now"
+	echo "$LOCAL99 /dev/$TARGETEFI $LOCAL100 /TARGET/boot/efi $LOCAL91 ..."
 
 	if [ ! -d /TARGET/boot/efi ]; then
 		mkdir -p /TARGET/boot/efi
@@ -1100,12 +1124,12 @@ cat /etc/live/config.conf >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
 
 if [ "$GUI" != "" ]; then
-	progressbar "Copying the files to the TARGET System...Please Wait \n" &
+	progressbar "$LOCAL101 ... $LOCAL92 ... \n" &
 fi
 
 # copy the live system to the hd
-echo "Copying the live system to the hard drive now."
-echo "This may take a while so please wait until completed."
+echo "$LOCAL101 ... $LOCAL92 ..."
+#echo "This may take a while so please wait until completed."
 
 if [ "$HFSTYPE" = "noformat" ]; then
 	rsync -a / /TARGET --ignore-existing --exclude=/{TARGET,home,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
@@ -1115,17 +1139,17 @@ fi
 
 mkdir -p /TARGET/{proc,mnt,run,sys,media/cdrom}
 
-echo "Completed copying the files."
+echo "$LOCAL102"
 
 if [ "$GUI" != "" ]; then
 	killall -KILL tail
 fi
 
 if [ "$GUI" != "" ]; then
-	progressbar "Performing post-install steps now...Please Wait\n" &
+	progressbar "$LOCAL103 ... $LOCAL92 ... \n" &
 fi
 
-echo "Performing post-install steps now"
+echo "$LOCAL103 ... $LOCAL92 ..."
 
 #prepare the chroot environment for some post install changes
 mount -o bind /proc /TARGET/proc
@@ -1347,7 +1371,7 @@ if [ -f /lib/live/mount/medium/live/minimal ]
 then
 	if [ "$GUI" != "" ]
 	then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"You can install your favorite desktop with very small set of applications now.\n\nBefore starting this, the tool will check for updates of 2 important packages:\nsparky-backup-desktop and sparky-desktop-data to provide the latest versions of them.\n\nWould you like to do it now?"
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108"
 			if [ $? = 0 ]
 			then
 				DESKTOPCHOOSE="yes"
@@ -1356,7 +1380,7 @@ then
 				/usr/bin/sparkylinux-desktop-installer gui
 			fi
 	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"You can install your favorite desktop with very small set of applications now.\n\nBefore starting this, the tool will check for updates of 2 important packages:\nsparky-backup-desktop and sparky-desktop-data to provide the latest versions of them.\n\nWould you like to do it now?" $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
 			if [ $? = 0 ]
 			then
 				DESKTOPCHOOSE="yes"
@@ -1384,10 +1408,10 @@ then
 fi
 
 if [ "$GUI" != "" ]; then
-	progressbar "Removing live packages and setting up the new user...Please Wait\n" &
+	progressbar "$LOCAL109 ... $LOCAL92 ...\n" &
 fi
 
-echo "Removing live packages and setting up the new user...Please Wait"
+echo "$LOCAL109 ... $LOCAL92 ..."
 
 if [ "$TARGETUSER" != "" ]; then
 
@@ -1485,20 +1509,20 @@ FOO
 chmod +x /tmp/Grub-Update
 
 	if [ "$GUI" != "" ]; then
-		progressbar "Updating Grub config file...Please Wait\n" &
+		progressbar "$LOCAL110 ... $LOCAL92 ...\n" &
 		$SPARKYXTERM -e /tmp/Grub-Update
 		sleep 1
 		rm -rf /tmp/Grub-Update
 	else
-		echo "Updating Grub config file."
+		echo "$LOCAL110 ... $LOCAL92 ..."
 		/tmp/Grub-Update
 		sleep 1
 		rm -rf /tmp/Grub-Update
 	fi
 	
-	echo "Post-install has completed."
+	echo "$LOCAL111"
 	echo
-	echo "Unmounting the TARGET partition."
+	echo "$LOCAL112"
 	sleep 1
 	umount -R /TARGET
 	sleep 1
@@ -1507,7 +1531,7 @@ chmod +x /tmp/Grub-Update
 		killall -KILL tail
 	fi
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"SparkyLinux installation is complete.\n\nIf everything went well you should have your new system installed and ready.\n\nRemember that there is NO bootloader installed so you have to do it manually.\n\nDo you want to reboot now to try it out?" $HEIGHT $WIDTH
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n\n$LOCAL114\n\n$LOCAL115\n\n$LOCAL116" $HEIGHT $WIDTH
 	if [ $? != 0 ]; then
 		exit 0
 	else
@@ -1526,20 +1550,20 @@ FOO
 chmod +x /tmp/Grub-Install
 
 	if [ "$GUI" != "" ]; then
-		progressbar "Installing and setting up Grub...Please Wait\n" &
+		progressbar "$LOCAL110 ... $LOCAL92 ...\n" &
 		$SPARKYXTERM -e /tmp/Grub-Install
 		sleep 1
 		rm -rf /tmp/Grub-Install
 	else
-		echo "Installing and setting up Grub."
+		echo "$LOCAL110 ... $LOCAL92 ..."
 		/tmp/Grub-Install
 		sleep 1
 		rm -rf /tmp/Grub-Install
 	fi
 
-	echo "Post-install has completed."
+	echo "$LOCAL111"
 	echo
-	echo "Unmounting the TARGET partition."
+	echo "$LOCAL112"
 	sleep 1
 	umount -R /TARGET
 	sleep 1
@@ -1549,7 +1573,7 @@ chmod +x /tmp/Grub-Install
 	fi
 
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"SparkyLinux installation is complete.\n\nIf everything went well you should have your new system installed and ready.\n\nDo you want to reboot now to try it out?" $HEIGHT $WIDTH
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n\n$LOCAL114\n\n$LOCAL116" $HEIGHT $WIDTH
 
 	if [ $? != 0 ]; then
 		exit 0

@@ -31,6 +31,8 @@ if [ "$1" = "uninstall" ]; then
 	rm -f /lib/live/config/1184-idesk-icon
 	rm -rf /usr/share/sparkybackup/idesk
 	rm -f /usr/bin/spb
+	rm -rf /usr/share/sparky/sparky-advanced-installer
+	rm -rf /usr/share/sparky/sparky-backup-core
 else
 	if [ ! -d /etc/skel/Desktop ]; then
 		mkdir -p /etc/skel/Desktop
@@ -56,4 +58,12 @@ else
 		 mkdir -p /usr/share/sparkybackup/idesk
 	fi
 	cp idesk/* /usr/share/sparkybackup/idesk/
+	if [ ! -d /usr/share/sparky/sparky-advanced-installer ]; then
+		mkdir -p /usr/share/sparky/sparky-advanced-installer
+	fi
+	cp lang-inst/* /usr/share/sparky/sparky-advanced-installer/
+	if [ ! -d /usr/share/sparky/sparky-backup-core ]; then
+		mkdir -p /usr/share/sparky/sparky-backup-core
+	fi
+	cp lang-core/* /usr/share/sparky/sparky-backup-core/
 fi

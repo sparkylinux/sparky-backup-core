@@ -10,9 +10,17 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/02/08 by pavroo
+# Last update 2018/03/26 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
+
+# get default's locale file
+DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
+if [ "`cat /etc/default/locale | grep pl_PL`" != "" ]; then
+. $DEFLOCDIR/pl
+else
+. $DEFLOCDIR/en
+fi
 
 # exit_with_message usage: exit_with_message "message text" exit_code
 function exit_with_message {
@@ -22,33 +30,33 @@ function exit_with_message {
 
 # output_usage usage: output_usage (no parameters)
 function output_usage {
-	echo "Usage of sparkybackup $SPARKYBACKUPVERSION is as follows:"
+	echo "$LOCAL1 sparkybackup $SPARKYBACKUPVERSION $LOCAL2:"
 	echo " "
-	echo "   sudo sparkybackup clean|dist [cdfs|iso] [filename.iso]"
+	echo "   sudo sparkybackup clean|dist [cdfs|iso] [$LOCAL3.iso]"
 	echo " "
 	echo " "
-	echo "Examples:"
+	echo "$LOCAL4:"
 	echo " "
-	echo "   sudo sparkybackup clean    (to clean up temporary files of sparkybackup)"
+	echo "   sudo sparkybackup clean    ($LOCAL5 sparkybackup)"
 	echo " "
-	echo "   sudo sparkybackup dist     (to make a distributable livecd/dvd of your system)"
+	echo "   sudo sparkybackup dist     ($LOCAL6)"
 	echo " "
 	echo "   sudo sparkybackup dist cdfs"
-	echo "                             (to make a distributable livecd/dvd filesystem only)"
+	echo "                             ($LOCAL7)"
 	echo " "
 	echo "   sudo sparkybackup dist iso custom.iso"
-	echo "                             (to make a distributable iso named custom.iso but only"
-	echo "                              if the cdfs is already present)"
+	echo "                             ($LOCAL8 custom.iso"
+	echo "                              $LOCAL9)"
 	echo " "
-	echo "   cdfs and iso options should only be used if you wish to modify something on the"
-	echo "   cd before the iso is created.  An example of this would be to modify the isolinux"
-	echo "   portion of the livecd/dvd"
+	echo "   $LOCAL10"
+	echo "   $LOCAL11"
+	echo "   $LOCAL12"
 	exit_with_message " " 1
 }
 
 # log_info usage: log_info "message text"
 function log_info {
-	echo $1
+	#echo $1
 	if [ ! -d $WORKDIR ]
 	then
 		mkdir -p $WORKDIR
@@ -76,7 +84,7 @@ fi
 TESTMODE=`grep "live" /etc/passwd`
 if [ "$TESTMODE" != "" ]
 then
-	exit_with_message "It's Live system! Install Sparky on a hard drive then remaster it. Exiting now..." 1
+	exit_with_message "$LOCAL13 $LOCAL14" 1
 fi
 
 # load the sparkybackup.conf file 
@@ -107,9 +115,11 @@ fi
 
 if [ "$2" = "cdfs" ]
 then
+	echo "$LOCAL15"
 	log_info "Creating the cd filesystem only"
 elif [ "$2" = "iso" ]
 then
+	echo "$LOCAL16"
 	log_info "Creating the iso file only"
 elif [ "$2" = "" ]
 then
@@ -130,12 +140,14 @@ fi
 
 case $1 in
 	clean)
+		echo "$LOCAL17"
 		log_info "Removing the build directory now..."
 		rm -rf $WORKDIR
-		exit_with_message "Done... Exiting" 0
+		exit_with_message "$LOCAL18 $LOCAL14" 0
 		;;
 
 	dist)
+		echo "$LOCAL19"
 		log_info "Distribution Mode Selected"
 		;;
 
@@ -144,8 +156,20 @@ case $1 in
 		;;
 esac
 
+# add info about disk space before starting
+log_debug "------------------------------------------------------"
+log_debug "df information before starting new build:"
+df -h >> $WORKDIR/sparkybackup.log
+log_debug "------------------------------------------------------"
+# create package-list.txt file even the build will fail
+echo "$LOCAL20 $CUSTOMISO.package-list.txt $LOCAL21 $WORKDIR"
+log_info "Creating $CUSTOMISO.package-list.txt in $WORKDIR"
+dpkg-query -l > $CUSTOMISO.package-list.txt
+log_debug "------------------------------------------------------"
+
 function cdfs {
 	# Step 3 - Create the CD tree in $WORKDIR/ISOTMP
+	echo "$LOCAL22 $WORKDIR $LOCAL23"
 	log_info "Checking if the $WORKDIR folder has been created"
 	if [ -d "$WORKDIR" ]
 	then
@@ -167,7 +191,7 @@ function cdfs {
 	mkdir -p $WORKDIR/dummysys/run
 	mkdir -p $WORKDIR/dummysys/var
 	chmod ug+rwx,o+rwt $WORKDIR/dummysys/tmp
-
+	echo "$LOCAL24"
 	log_info "Copying /var and /etc to temp area..."
 
 	#if [ -f $WORKDIR/varexcludes ]
@@ -179,48 +203,8 @@ function cdfs {
 	then
 		rm -f $WORKDIR/etcexcludes
 	fi
-
-	#if [ -f $WORKDIR/squashexcludes ]
-	#then
-	#	rm -f $WORKDIR/squashexcludes
-	#fi
-
-#	cat > $WORKDIR/varexcludes <<FOO
-#*.log.*
-#*.pid
-#*.bak
-#*.[0-9].gz
-#*.deb
-#kdecache*
-#FOO
-
-#	cat > $WORKDIR/squashexcludes <<FOO
-#root/.thumbnails
-#root/.cache
-#root/.bash_history
-#root/.lesshst
-#root/.nano_history
-#boot/grub
-#$BASEWORKDIR
-#FOO
-
-	#EXCLUDES=`echo $EXCLUDES | sed -e 's/  / /g' | sed -e 's/^ $//g'`
-
-	#if [ "$EXCLUDES" != "" ]
-	#then
-	#	for i in $EXCLUDES
-	#	do
-		
-	#		echo $i | sed -e 's/^\/var\///g' | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/varexcludes
-	#		echo $i | sed -e 's/^\/etc\///g' | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/etcexcludes
-			#echo $i | sed -e 's/^\///g' | sed -e 's/\/$//g' >> $WORKDIR/squashexcludes
-	#	done
-	#	VAREXCLUDES="--exclude-from=$WORKDIR/varexcludes "
-		
-	#fi
 		
 	VAREXCLUDES="--exclude '*.log' --exclude '*.pid' --exclude '*.bak' --exclude '*.[0-9].gz' --exclude '*.deb' --exclude 'kdecache*' "
-	#ETCEXCLUDES="--exclude-from=$WORKDIR/etcexcludes "
 	SQUASHEXCLUDES="-e /initrd.img.old /vmlinuz.old /root/.synaptic/log/*.log /root/.bash_history"
 
 	# copy trackerd stuff as live-initramfs disables it
@@ -256,11 +240,7 @@ function cdfs {
 	if [ "$1" = "dist" ]
 	then
 		rm -f $WORKDIR/dummysys/etc/X11/xorg.conf
-		#CHECKMINICLI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
-		#if [ "$CHECKMINICLI" = "" ]
-		#then
 		rm -f $WORKDIR/dummysys/etc/resolv.conf
-		#fi
 		rm -f $WORKDIR/dummysys/etc/hosts
 		rm -f $WORKDIR/dummysys/etc/hostname
 	fi
@@ -282,17 +262,6 @@ function cdfs {
 		then
 			mkdir -p $WORKDIR/dummysys/etc/skel/Desktop
 		fi
-
-		#if [ -f /usr/bin/live-installer ] || [ -f /usr/bin/calamares ]
-		#then
-		#	log_info "new installer is installed so not copying the old installer desktop launcher"
-		#else
-		#	if [ -f /usr/share/applications/sparkylinux-installer.desktop ]
-		#	then
-		#		cp /usr/share/applications/sparkylinux-installer.desktop $WORKDIR/dummysys/etc/skel/Desktop/
-		#		log_info "new installer is NOT installed so copying the old installer desktop launcher"
-		#	fi
-		#fi
 
 		rm -f $WORKDIR/dummysys/etc/group
 		rm -f $WORKDIR/dummysys/etc/group-
@@ -466,7 +435,7 @@ function cdfs {
 		sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	fi
 
-	cp /usr/lib/sparkybackup/live/filesystem.packages-remove $WORKDIR/ISOTMP/live/filesystem.packages-remove
+	#cp /usr/lib/sparkybackup/live/filesystem.packages-remove $WORKDIR/ISOTMP/live/filesystem.packages-remove
 	
 	# copy grub-efi live files for dual-booting isolinux and grub-efi
 	# but don't copy the stuff if building iso with bios support only
@@ -505,11 +474,6 @@ function cdfs {
 		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 		mv $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 		
-		# remove some stuff if building sparky rescue edition
-		#if [ -f /usr/bin/sparkylinux-installer* ]
-		#then
-		#	rm -f /usr/bin/sparkylinux-installer
-		#fi
 		if [ -f /usr/share/applications/sparkylinux-installer.desktop* ]
 		then
 			rm -f /usr/share/applications/sparkylinux-installer.desktop
@@ -595,11 +559,13 @@ FOO
 	sed -i -e 's/ResultAny=no/ResultAny=yes/g' /lib/live/config/*policykit
 	sed -i -e 's/ResultInactive=no/ResultInactive=yes/g' /lib/live/config/*policykit
 
+	echo "$LOCAL25 $1 $LOCAL26"
 	log_info "Setting up live options for $1 mode"
 
 	# make a new initial ramdisk including the live scripts
 	update-initramfs -t -c -k $(uname -r)
 
+	echo "$LOCAL27"
 	log_info "Copying your kernel and initrd for the livecd"
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
@@ -611,6 +577,7 @@ FOO
 		rm -f $WORKDIR/ISOTMP/live/filesystem.squashfs
 	fi
 
+	echo "$LOCAL28"
 	log_info "Creating filesystem.squashfs... This will take a while so be patient."
 
 	if [ "$SQUASHFSOPTS" = "" ]
@@ -644,10 +611,6 @@ FOO
 	log_debug "------------------------------------------------------"
 	log_debug "Mount information"
 	mount >> $WORKDIR/sparkybackup.log
-
-	log_debug "------------------------------------------------------"
-	log_debug "df information"
-	df -h >> $WORKDIR/sparkybackup.log
 
 	log_debug "------------------------------------------------------"
 	log_debug "/etc/sparkybackup/sparkybackup.conf info"
@@ -689,6 +652,10 @@ FOO
 	else
 		log_debug "memtest not copied"
 	fi
+
+	log_debug "------------------------------------------------------"
+	log_debug "User's default locale info"
+	cat /etc/default/locale >> $WORKDIR/sparkybackup.log
 	log_debug "------------------------------------------------------"
 	
 	sleep 1
@@ -697,10 +664,20 @@ FOO
 	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
 	if [ "$SQUASHFSSIZE" -gt "3999999" ]
 	then
-		log_info " The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
+		echo "$LOCAL29"
+		log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
+		log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
 		exit 1
+	else
+		log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
 	fi
 }
+
+# check disk space again before creating iso
+log_debug "------------------------------------------------------"
+log_debug "df information after creating squashfs:"
+df -h >> $WORKDIR/sparkybackup.log
+log_debug "------------------------------------------------------"
 
 function iso {
 	CREATEISO="`which xorriso`"
@@ -709,7 +686,8 @@ function iso {
 	# check to see if the cd filesystem exists
 	if [ ! -f "$WORKDIR/ISOTMP/live/filesystem.squashfs" ]
 	then
-		log_info "The cd filesystem is missing.  Either there was a problem creating the compressed filesystem or you are trying to run sudo sparkybackup dist iso before sudo sparkybackup dist cdfs"
+		echo "$LOCAL30"
+		log_info "The cd filesystem is missing. Either there was a problem creating the compressed filesystem or you are trying to run sudo sparkybackup dist iso before sudo sparkybackup dist cdfs"
 		exit 1
 	fi
 
@@ -717,6 +695,7 @@ function iso {
 	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
 	if [ "$SQUASHFSSIZE" -gt "3999999" ]
 	then
+		echo "$LOCAL29"
 		log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
 		exit 1
 	fi
@@ -724,60 +703,68 @@ function iso {
 	sleep 1
 
 	# Step 6 - Make the ISO file
+	echo "$LOCAL20 $CUSTOMISO $LOCAL21 $WORKDIR $LOCAL31 $CREATEISO"
 	log_info "Creating $CUSTOMISO in $WORKDIR using $CREATEISO"
 	cd $WORKDIR/ISOTMP
 
 	if [ "$ARCH" = "" ]
 	then
+		# create iso image
+		echo "$LOCAL20 32bit $LOCAL32"
+		log_info "Creating 32bit iso image"
 		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID32BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
-		# create hybrid iso so it can be dd installed to a usb flash drive
-		log_info "Making 32bit iso into a hybrid image so it can be imaged to a usb key or burned to optical media"
 	else
+		echo "$LOCAL20 64bit $LOCAL32"
+		log_info "Creating 64bit iso image"
 		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID64BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
 	fi
 
 	# create hybrid iso so it can be dd installed to a usb flash drive
-	log_info "Making 64bit iso into a hybrid image so it can be imaged to a usb key or burned to optical media"
+	echo "$LOCAL33"
+	log_info "Creating iso into a hybrid image so it can be imaged to a usb key or burned to optical media"
 	isohybrid -u $WORKDIR/$CUSTOMISO
+	ISOSIZE=`ls -s $WORKDIR/$CUSTOMISO | awk -F " " '{print $1}'`
+	log_debug "iso size: $ISOSIZE"
 
 	# create the md5, sha1, sha256 and sha512 sums file so the user doesn't have to - this is good so the iso file can later be tested to ensure it hasn't become corrupted
+	echo "$LOCAL20 $CUSTOMISO.allsums.txt $LOCAL21 $WORKDIR"
 	log_info "Creating $CUSTOMISO.allsums.txt in $WORKDIR"
 
 	cd $WORKDIR
 	echo "# md5sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	md5sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "md5sum $LOCAL34"
 	log_info "md5sum done"
 
 	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	echo "# sha1sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	sha1sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "sha1sum $LOCAL34"
 	log_info "sha1sum done"
 
 	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	echo "# sha256sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	sha256sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "sha256sum $LOCAL34"
 	log_info "sha256sum done"
 
 	echo "" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	echo "# sha512sum:" >> $WORKDIR/$CUSTOMISO.allsums.txt
 	sha512sum $CUSTOMISO >> $WORKDIR/$CUSTOMISO.allsums.txt
+	echo "sha512sum $LOCAL34"
 	log_info "sha512sum done"
 
 	sleep 1
 
-	# create package-list.txt file
-	log_info "Creating $CUSTOMISO.package-list.txt in $WORKDIR"
-	dpkg-query -l > $CUSTOMISO.package-list.txt
-
+	echo "$WORKDIR/$CUSTOMISO $LOCAL35"
+	echo "$LOCAL36"
 	log_info "$WORKDIR/$CUSTOMISO is ready to be burned or tested in a virtual machine."
-	log_info " "
 	log_info "Check the size and if it is larger than 700MB you will need to burn it to a dvd"
-	log_info " "
 	ls -hs $WORKDIR/$CUSTOMISO
 	ls -hs $WORKDIR/$CUSTOMISO >> $WORKDIR/sparkybackup.log
-	log_info " " 
+	echo "$LOCAL37 'sudo sparkybackup clean' $LOCAL38 $CUSTOMISO"
+	echo " "
 	log_info "It is recommended to run 'sudo sparkybackup clean' once you have burned and tested the $CUSTOMISO"
-	log_info " "
 }
 
 # check to see if either iso or cdfs options have been invoked and proceed accordingly

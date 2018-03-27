@@ -1,4 +1,18 @@
 -------------------------------------------------------------------------------
+  Version 20180328 (2018-03-26)
+-------------------------------------------------------------------------------
+  * Small fixes
+
+-------------------------------------------------------------------------------
+  Version 20180326 (2018-03-26)
+-------------------------------------------------------------------------------
+  * Added disk space check in before creating squashfs and after
+  * Moved installed package list creation before creating iso, so will be created even the iso not be created
+  * Added iso size check in
+  * Removed doubled rescue editon name from isolinux config
+  * Localized sparkybackup, spb and advanced-installer into Polish
+
+-------------------------------------------------------------------------------
   Version 20180321 (2018-03-20)
 -------------------------------------------------------------------------------
   * Small fix
