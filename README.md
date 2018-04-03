@@ -42,6 +42,7 @@ passwd
 rsync
 sed
 sparky-backup-desktop
+sparky-xterm (>= 0.2.0)
 squashfs-tools
 syslinux-utils
 systemd, systemd-sysv
@@ -64,6 +65,10 @@ Suggests:
 aptitude
 grub-pc
 yad
+imagemagic
+librsvg2-bin
+memtest86+ (rescue edition only)
+aptitude
 
 Install:
 -------------
