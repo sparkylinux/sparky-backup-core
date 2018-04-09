@@ -1,0 +1,132 @@
+#!/bin/bash
+
+# last update by 2018/04/09 pavroo
+
+# if NOT Live system just quit, do nothing
+testmode=`grep "1000" /etc/passwd | grep "Live"`
+if [ "$testmode" = "" ]; then
+	echo "It is NOT Live system! Exiting now..."
+	exit 1
+fi
+
+# get the choosen locale
+# Arabic
+AR=`cat /proc/cmdline | grep ar_AE`
+# Brazilian
+BR=`cat /proc/cmdline | grep pt_BR`
+# Bulgarian
+BG=`cat /proc/cmdline | grep bg_BG`
+# Chinese CN
+CN=`cat /proc/cmdline | grep zh_CN`
+# Czech
+CZ=`cat /proc/cmdline | grep cs_CZ`
+# Danish
+DK=`cat /proc/cmdline | grep da_DK`
+# Dutch
+NL=`cat /proc/cmdline | grep nl_NL`
+# English
+EN=`cat /proc/cmdline | grep en`
+# Finnish
+FI=`cat /proc/cmdline | grep fi_FI`
+# French
+FR=`cat /proc/cmdline | grep fr_FR`
+# German
+DE=`cat /proc/cmdline | grep de_DE`
+# Greek
+GR=`cat /proc/cmdline | grep el_GR`
+# Hebrew
+IL=`cat /proc/cmdline | grep he_IL`
+# Hindi
+IN=`cat /proc/cmdline | grep hi_IN`
+# Hungarian
+HU=`cat /proc/cmdline | grep hu_HU`
+# Italian
+IT=`cat /proc/cmdline | grep it_IT`
+# Japanase
+JP=`cat /proc/cmdline | grep ja_JP`
+# Korean
+KR=`cat /proc/cmdline | grep ko_KR`
+# Norwegian
+NO=`cat /proc/cmdline | grep no_NO`
+# Polish
+PL=`cat /proc/cmdline | grep pl_PL`
+# Portuguese
+PT=`cat /proc/cmdline | grep pt_PT`
+# Romanian
+RO=`cat /proc/cmdline | grep ro_RO`
+# Russian
+RU=`cat /proc/cmdline | grep ru_RU`
+# Slovak
+SK=`cat /proc/cmdline | grep sk_SK`
+# Slovenian
+SI=`cat /proc/cmdline | grep sl_SI`
+# Spanish
+ES=`cat /proc/cmdline | grep es_ES`
+# Swedish
+SE=`cat /proc/cmdline | grep sv_SE`
+
+# get the keyboard code
+if [ "$AR" != "" ]; then
+	LANG="ara"
+elif [ "$BR" != "" ]; then
+	LANG="br"
+elif [ "$BG" != "" ]; then
+	LANG="bg"
+elif [ "$CN" != "" ]; then
+	LANG="cn"
+elif [ "$CZ" != "" ]; then
+	LANG="cz"
+elif [ "$DK" != "" ]; then
+	LANG="dk"
+elif [ "$EN" != "" ]; then
+	LANG=""
+elif [ "$NL" != "" ]; then
+	LANG="nl"
+elif [ "$FI" != "" ]; then
+	LANG="fi"
+elif [ "$FR" != "" ]; then
+	LANG="fr"
+elif [ "$DE" != "" ]; then
+	LANG="de"
+elif [ "$GR" != "" ]; then
+	LANG="gr"
+elif [ "$IL" != "" ]; then
+	LANG="il"
+elif [ "$IN" != "" ]; then
+	LANG="in"
+elif [ "$HU" != "" ]; then
+	LANG="hu"
+elif [ "$IT" != "" ]; then
+	LANG="it"
+elif [ "$JP" != "" ]; then
+	LANG="jp"
+elif [ "$KR" != "" ]; then
+	LANG="kr"
+elif [ "$NO" != "" ]; then
+	LANG="no"
+elif [ "$PL" != "" ]; then
+	LANG="pl"
+elif [ "$PT" != "" ]; then
+	LANG="pt"
+elif [ "$RO" != "" ]; then
+	LANG="ro"
+elif [ "$RU" != "" ]; then
+	LANG="ru"
+elif [ "$SK" != "" ]; then
+	LANG="sk"
+elif [ "$SI" != "" ]; then
+	LANG="si"
+elif [ "$ES" != "" ]; then
+	LANG="es"
+elif [ "$SE" != "" ]; then
+	LANG="se"
+fi
+
+# set the keyboard layout now
+if [ "$LANG" != "" ]; then
+	setxkbmap -layout $LANG
+else
+	exit 1
+fi
+
+exit 0

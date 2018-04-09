@@ -35,7 +35,6 @@ keyboard-configuration
 laptop-detect
 live-boot, live-config, live-config-systemd, live-boot-initramfs-tools
 locales
-memtest86+ (rescue edition only)
 mount
 os-prober
 passwd
@@ -65,10 +64,9 @@ Suggests:
 aptitude
 grub-pc
 yad
-imagemagic
+imagemagick
 librsvg2-bin
 memtest86+ (rescue edition only)
-aptitude
 
 Install:
 -------------

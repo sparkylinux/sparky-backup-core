@@ -17,6 +17,9 @@
 if [ "$1" = "uninstall" ]; then
    	rm -f /usr/bin/sparkybackup
 	rm -f /usr/bin/sparkylinux-installer
+	rm -f /usr/bin/sparky-installer
+	rm -f /usr/bin/spb
+	rm -f /usr/bin/sparky-setxkb
 	rm -rf /etc/sparkybackup
 	rm -rf /usr/share/icons/sparky/sparkybackupsys
 	rm -rf /usr/lib/sparkybackup
@@ -29,10 +32,11 @@ if [ "$1" = "uninstall" ]; then
 	rm -f /lib/live/config/1182-advanced-installer-icon
 	rm -f /lib/live/config/1183-installer-guide-icon
 	rm -f /lib/live/config/1184-idesk-icon
+	rm -f /lib/live/config/1185-sparky-livefix
 	rm -rf /usr/share/sparkybackup/idesk
-	rm -f /usr/bin/spb
 	rm -rf /usr/share/sparky/sparky-advanced-installer
 	rm -rf /usr/share/sparky/sparky-backup-core
+	rm -f /etc/xdg/autostart/sparky-setxkb.desktop
 else
 	if [ ! -d /etc/skel/Desktop ]; then
 		mkdir -p /etc/skel/Desktop
@@ -66,4 +70,8 @@ else
 		mkdir -p /usr/share/sparky/sparky-backup-core
 	fi
 	cp lang-core/* /usr/share/sparky/sparky-backup-core/
+	if [ ! -d /etc/xdg/autostart ]; then
+		mkdir -p /etc/xdg/autostart
+	fi
+	cp xdg/* /etc/xdg/autostart/
 fi

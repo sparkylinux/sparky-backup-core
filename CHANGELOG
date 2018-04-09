@@ -1,4 +1,12 @@
 -------------------------------------------------------------------------------
+  Version 20180408 (2018-04-09)
+-------------------------------------------------------------------------------
+  * Added script to set keyboard layout in live system
+  * Added kernel parametr to set a locale in live system
+  * Removed rescue isolinux and grub configs
+  * Small fix aroud live iso list of installed packages
+
+-------------------------------------------------------------------------------
   Version 20180403 (2018-04-03)
 -------------------------------------------------------------------------------
   * Changed sparky-xterm settings

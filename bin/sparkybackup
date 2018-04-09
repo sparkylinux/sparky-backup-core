@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/03/26 by pavroo
+# Last update 2018/04/09 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -168,7 +168,7 @@ log_debug "------------------------------------------------------"
 # create package-list.txt file even the build will fail
 echo "$LOCAL20 $CUSTOMISO.package-list.txt $LOCAL21 $WORKDIR"
 log_info "Creating $CUSTOMISO.package-list.txt in $WORKDIR"
-dpkg-query -l > $CUSTOMISO.package-list.txt
+dpkg-query -l > $WORKDIR/$CUSTOMISO.package-list.txt
 log_debug "------------------------------------------------------"
 
 function cdfs {
@@ -432,7 +432,7 @@ function cdfs {
 
 	ISOLABEL="$LIVECDLABEL $LIVENUMBER $LIVEVERSION $LIVEARCH"
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+	#sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
 
 	if [ ! -d /etc/plymouth ]
 	then
@@ -468,15 +468,15 @@ function cdfs {
 
 	# replace isolinux and grub configs for rescue edition
 	CHECKRESCUE=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
-	if [ "$CHECKRESCUE" = "" ]
+	if [ "$CHECKRESCUE" != "" ]
 	then
-		rm -f $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
-		rm -f $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg
-	else
-		rm -f $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		mv $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-		mv $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		#rm -f $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+		#rm -f $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg
+	#else
+		#rm -f $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		#mv $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		#rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		#mv $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 		
 		if [ -f /usr/share/applications/sparkylinux-installer.desktop* ]
 		then

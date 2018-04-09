@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/04/03
+# Last update 2018/04/06
 #
 # This script requires either yad or dialog to run
 
@@ -26,7 +26,7 @@ fi
 
 # set options depending on mode - text or gui
 DIALOG="`which dialog`"
-HEIGHT="17"
+HEIGHT="20"
 WIDTH="75"
 MENUHEIGHT="12"
 TITLE="--title "
