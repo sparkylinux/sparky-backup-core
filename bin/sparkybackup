@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/04/09 by pavroo
+# Last update 2018/04/10 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -366,6 +366,12 @@ function cdfs {
 	if [ "$CHECKRESCUEISO" != "" ]
 	then
 		cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
+
+		echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		echo "label memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		echo "	menu label Run memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		echo "	kernel /isolinux/memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	fi
 
 	# set live iso label depends of edition
@@ -432,7 +438,7 @@ function cdfs {
 
 	ISOLABEL="$LIVECDLABEL $LIVENUMBER $LIVEVERSION $LIVEARCH"
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	#sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
+	sed -i -e 's/__LIVELABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 
 	if [ ! -d /etc/plymouth ]
 	then
@@ -469,15 +475,7 @@ function cdfs {
 	# replace isolinux and grub configs for rescue edition
 	CHECKRESCUE=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
 	if [ "$CHECKRESCUE" != "" ]
-	then
-		#rm -f $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg
-		#rm -f $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg
-	#else
-		#rm -f $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		#mv $WORKDIR/ISOTMP/isolinux/isolinux-rescue.cfg $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		#rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-		#mv $WORKDIR/ISOTMP/boot/grub/sparky-rescue.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-		
+	then		
 		if [ -f /usr/share/applications/sparkylinux-installer.desktop* ]
 		then
 			rm -f /usr/share/applications/sparkylinux-installer.desktop
@@ -502,6 +500,11 @@ function cdfs {
 		then
 			rm -f $WORKDIR/dummysys/etc/sparky-installation-guide.desktop
 		fi
+	fi
+
+	if [ -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg ]
+	then
+		sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 	fi
 
 	# add minimal file to the iso to let the netinstall installer detect it
