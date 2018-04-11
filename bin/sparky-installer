@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/04/06
+# Last update 2018/04/10
 #
 # This script requires either yad or dialog to run
 
@@ -1453,6 +1453,7 @@ apt-get purge --yes --force-yes live-installer
 apt-get purge --yes --force-yes gparted
 apt-get purge --yes --force-yes calamares
 apt-get purge --yes --force-yes mc
+apt-get purge --yes --force-yes lvm2
 #apt-get purge --yes --force-yes live-build
 #apt-get purge --yes --force-yes live-manual-html
 apt-get autoremove --yes
@@ -1482,6 +1483,7 @@ apt-get purge --yes --force-yes live-installer
 apt-get purge --yes --force-yes gparted
 apt-get purge --yes --force-yes calamares
 apt-get purge --yes --force-yes mc
+apt-get purge --yes --force-yes lvm2
 #apt-get purge --yes --force-yes live-build
 #apt-get purge --yes --force-yes live-manual-html
 apt-get autoremove --yes
