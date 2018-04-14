@@ -1,31 +1,33 @@
 #!/bin/bash
 
-# last update by 2018/04/09 pavroo
+### last update by 2018/04/14 pavroo
 
-# if NOT Live system just quit, do nothing
+### if NOT Live system just quit, do nothing
 testmode=`grep "1000" /etc/passwd | grep "Live"`
 if [ "$testmode" = "" ]; then
 	echo "It is NOT Live system! Exiting now..."
 	exit 1
 fi
 
-# get the choosen locale
+### get the choosen locale
 # Arabic
 AR=`cat /proc/cmdline | grep ar_AE`
+# Bengali (Bangladesh)
+BD=`cat /proc/cmdline | grep bn_BD`
 # Brazilian
 BR=`cat /proc/cmdline | grep pt_BR`
 # Bulgarian
 BG=`cat /proc/cmdline | grep bg_BG`
 # Chinese CN
 CN=`cat /proc/cmdline | grep zh_CN`
+# Croatian
+CR=`cat /proc/cmdline | grep hr_HR`
 # Czech
 CZ=`cat /proc/cmdline | grep cs_CZ`
 # Danish
 DK=`cat /proc/cmdline | grep da_DK`
 # Dutch
 NL=`cat /proc/cmdline | grep nl_NL`
-# English
-EN=`cat /proc/cmdline | grep en`
 # Finnish
 FI=`cat /proc/cmdline | grep fi_FI`
 # French
@@ -48,6 +50,8 @@ JP=`cat /proc/cmdline | grep ja_JP`
 KR=`cat /proc/cmdline | grep ko_KR`
 # Norwegian
 NO=`cat /proc/cmdline | grep no_NO`
+# Urdu (Pakistan)
+PK=`cat /proc/cmdline | grep ur_PK`
 # Polish
 PL=`cat /proc/cmdline | grep pl_PL`
 # Portuguese
@@ -64,16 +68,28 @@ SI=`cat /proc/cmdline | grep sl_SI`
 ES=`cat /proc/cmdline | grep es_ES`
 # Swedish
 SE=`cat /proc/cmdline | grep sv_SE`
+# Thai
+TH=`cat /proc/cmdline | grep th_TH`
+# Turkish
+TR=`cat /proc/cmdline | grep tr_TR`
+# UK
+UK=`cat /proc/cmdline | grep en_GB`
+# Ukrainian
+UA=`cat /proc/cmdline | grep uk_UA`
 
-# get the keyboard code
+### get the keyboard code
 if [ "$AR" != "" ]; then
 	LANG="ara"
+elif [ "$BD" != "" ]; then
+	LANG="bd"
 elif [ "$BR" != "" ]; then
 	LANG="br"
 elif [ "$BG" != "" ]; then
 	LANG="bg"
 elif [ "$CN" != "" ]; then
 	LANG="cn"
+elif [ "$CR" != "" ]; then
+	LANG="hr"
 elif [ "$CZ" != "" ]; then
 	LANG="cz"
 elif [ "$DK" != "" ]; then
@@ -104,6 +120,8 @@ elif [ "$KR" != "" ]; then
 	LANG="kr"
 elif [ "$NO" != "" ]; then
 	LANG="no"
+elif [ "$PK" != "" ]; then
+	LANG="pk"
 elif [ "$PL" != "" ]; then
 	LANG="pl"
 elif [ "$PT" != "" ]; then
@@ -120,9 +138,17 @@ elif [ "$ES" != "" ]; then
 	LANG="es"
 elif [ "$SE" != "" ]; then
 	LANG="se"
+elif [ "$TH" != "" ]; then
+	LANG="th"
+elif [ "$TR" != "" ]; then
+	LANG="tr"
+elif [ "$UK" != "" ]; then
+	LANG="gb"
+elif [ "$UA" != "" ]; then
+	LANG="ua"
 fi
 
-# set the keyboard layout now
+### set the keyboard layout now
 if [ "$LANG" != "" ]; then
 	setxkbmap -layout $LANG
 else

@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/04/10 by pavroo
+# Last update 2018/04/14 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -18,10 +18,14 @@
 DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
 if [ "`cat /etc/default/locale | grep de_DE`" != "" ]; then
 . $DEFLOCDIR/de
+elif [ "`cat /etc/default/locale | grep it_IT`" != "" ]; then
+. $DEFLOCDIR/it
 elif [ "`cat /etc/default/locale | grep pl_PL`" != "" ]; then
 . $DEFLOCDIR/pl
 elif [ "`cat /etc/default/locale | grep pt_BR`" != "" ]; then
 . $DEFLOCDIR/pt_BR
+elif [ "`cat /etc/default/locale | grep pt_PT`" != "" ]; then
+. $DEFLOCDIR/pt_PT
 else
 . $DEFLOCDIR/en
 fi
