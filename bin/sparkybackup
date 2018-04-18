@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/04/14 by pavroo
+# Last update 2018/04/18 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -272,11 +272,14 @@ function cdfs {
 		fi
 
 		rm -f $WORKDIR/dummysys/etc/group
+		rm -f $WORKDIR/dummysys/etc/group.org
 		rm -f $WORKDIR/dummysys/etc/group-
 		rm -f $WORKDIR/dummysys/etc/passwd
 		rm -f $WORKDIR/dummysys/etc/passwd-
+		rm -f $WORKDIR/dummysys/etc/passwd.org
 		rm -f $WORKDIR/dummysys/etc/shadow
 		rm -f $WORKDIR/dummysys/etc/shadow-
+		rm -f $WORKDIR/dummysys/etc/shadow.org
 		rm -f $WORKDIR/dummysys/etc/gshadow
 		rm -f $WORKDIR/dummysys/etc/gshadow-
 		rm -f $WORKDIR/dummysys/etc/wicd/wired-settings.conf
@@ -353,6 +356,10 @@ function cdfs {
 			echo $LINE | xargs -i sed -e 's/{}//g' $WORKDIR/dummysys/etc/group.new2 > $WORKDIR/dummysys/etc/group
 			rm -rf $WORKDIR/dummysys/etc/group.new1 $WORKDIR/dummysys/etc/group.new2
 		done
+
+		OLDUSER=`grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'`
+		cat /etc/shadow | grep -v root | grep -v $OLDUSER > $WORKDIR/dummysys/etc/shadow
+		chmod 640 $WORKDIR/dummysys/etc/shadow
 	fi
 
 	# copy isolinux files
