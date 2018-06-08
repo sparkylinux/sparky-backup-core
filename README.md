@@ -36,6 +36,7 @@ laptop-detect
 live-boot, live-config, live-config-systemd, live-boot-initramfs-tools
 locales
 mount
+nano
 os-prober
 passwd
 rsync
@@ -53,11 +54,11 @@ xorriso
 Conflicts:
 ------------
 sparky-remastersys
-sparky-backup-sys (<= 20160203)
+sparky-backup-sys (<= 20180606)
 
 Replaces:
 ------------
-sparky-backup-sys (<= 20160203)
+sparky-backup-sys (<= 20180606)
 
 Suggests:
 -------------

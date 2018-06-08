@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/04/18 by pavroo
+# Last update 2018/06/08 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -30,6 +30,18 @@ else
 . $DEFLOCDIR/en
 fi
 
+# set options for dialog
+DIALOG="`which dialog`"
+HEIGHT="20"
+WIDTH="75"
+MENUHEIGHT="12"
+TITLE="--title "
+TEXT=""
+MENU="--menu"
+YESNO="--yesno "
+MSGBOX="--msgbox "
+TITLETEXT="Sparky Backup Core"
+
 # exit_with_message usage: exit_with_message "message text" exit_code
 function exit_with_message {
 	echo $1
@@ -39,26 +51,48 @@ function exit_with_message {
 # output_usage usage: output_usage (no parameters)
 function output_usage {
 	echo "$LOCAL1 sparkybackup $SPARKYBACKUPVERSION $LOCAL2:"
-	echo " "
-	echo "   sudo sparkybackup clean|dist [cdfs|iso] [$LOCAL3.iso]"
-	echo " "
-	echo " "
+	echo ""
+	echo "sudo sparkybackup info|efi|skel|dist|edit|installer|clean|cache|log"
+	echo ""
 	echo "$LOCAL4:"
-	echo " "
-	echo "   sudo sparkybackup clean    ($LOCAL5 sparkybackup)"
-	echo " "
-	echo "   sudo sparkybackup dist     ($LOCAL6)"
-	echo " "
-	echo "   sudo sparkybackup dist cdfs"
-	echo "                             ($LOCAL7)"
-	echo " "
-	echo "   sudo sparkybackup dist iso custom.iso"
-	echo "                             ($LOCAL8 custom.iso"
-	echo "                              $LOCAL9)"
-	echo " "
-	echo "   $LOCAL10"
-	echo "   $LOCAL11"
-	echo "   $LOCAL12"
+	echo ""
+	echo "    sudo sparkybackup info"
+	echo "$LOCAL54"
+	echo ""
+	echo "    sudo sparkybackup efi"
+	echo "$LOCAL59"
+	echo ""
+	echo "    sudo sparkybackup skel"
+	echo "$LOCAL75"
+	echo ""
+	echo "    sudo sparkybackup dist"
+	echo "$LOCAL6"
+	echo ""
+	echo "    sudo sparkybackup edit"
+	echo "$LOCAL42"
+	echo ""
+	echo "    sudo sparkybackup installer"
+	echo "$LOCAL46"
+	echo ""
+	echo "    sudo sparkybackup clean"
+	echo "$LOCAL43"
+	echo ""
+	echo "    sudo sparkybackup cache"
+	echo "$LOCAL44"
+	echo ""
+	echo "    sudo sparkybackup log"
+	echo "$LOCAL74"
+	echo ""
+	#echo "   sudo sparkybackup dist cdfs"
+	#echo "                             ($LOCAL7)"
+	#echo " "
+	#echo "   sudo sparkybackup dist iso custom.iso"
+	#echo "                             ($LOCAL8 custom.iso"
+	#echo "                              $LOCAL9)"
+	#echo " "
+	#echo "   $LOCAL10"
+	#echo "   $LOCAL11"
+	#echo "   $LOCAL12"
 	exit_with_message " " 1
 }
 
@@ -87,6 +121,8 @@ if [ "$testroot" != "root" ]
 then
 	output_usage
 fi
+
+TESTAPTITUDE="`which aptitude`"
 
 # if Live system just quit, do nothing
 TESTMODE=`grep "live" /etc/passwd`
@@ -147,16 +183,137 @@ then
 fi
 
 case $1 in
+	info)
+		echo "$LOCAL47"
+		echo "$LOCAL48"
+		echo "$LOCAL49"
+		echo ""
+		echo "$LOCAL50"
+		echo "$LOCAL51"
+		echo "$LOCAL52"
+		echo "$LOCAL53"
+		echo ""
+		echo "$LOCAL55"
+		echo "$LOCAL56"
+		echo ""
+		echo "$LOCAL57 $SPARKYBACKUPVERSION"
+		echo "$LOCAL58 https://sparkylinux.org/forum"
+		echo ""
+		exit_with_message " " 1
+		;;
+
+	efi)
+		echo "$LOCAL60"
+		echo "$LOCAL61"
+		echo "1. $LOCAL62"
+		echo "efibootmgr, grub-efi, grub-efi-amd64 ($LOCAL63 ia32), grub-efi-amd64-bin ($LOCAL63 ia32), libefivar1, libefiboot1"
+		echo ""
+		echo "2. $LOCAL64 /home/offline"
+		echo ""
+		echo "3. $LOCAL65"
+		echo "$LOCAL66"
+		echo ""
+		echo "$LOCAL67"
+		echo "$LOCAL68"
+		echo ""
+		exit_with_message " " 1
+		;;
+
 	clean)
 		echo "$LOCAL17"
 		log_info "Removing the build directory now..."
-		rm -rf $WORKDIR
-		exit_with_message "$LOCAL18 $LOCAL14" 0
+		rm -rf $BASEWORKDIR
+		exit_with_message "$LOCAL18 $LOCAL14" 1
+		;;
+
+	skel)
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL75 \n$LOCAL76 \n\n$LOCAL77 \n$LOCAL78 \n$LOCAL79 \n$LOCAL80 \n\n$LOCAL81 \n$LOCAL82" $HEIGHT $WIDTH
+		if [ "$?" != "0" ]
+		then
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL83 \n$LOCAL84" $HEIGHT $WIDTH
+			log_info "skelcopy launched but not used"
+			exit_with_message " " 1
+		fi
+
+		MYUSER1=`grep "1000" /etc/passwd | awk -F ":" '{print $1}'`
+		MYUSER2=`grep "1001" /etc/passwd | awk -F ":" '{print $1}'`
+		MYUSER3=`grep "1002" /etc/passwd | awk -F ":" '{print $1}'`
+		if [ "$MYUSER3" != "" ]
+		then
+			$DIALOG $TITLE"$TITLETEXT" $OKEXIT $MENU $TEXT"\n$LOCAL85 \n$LOCAL86" $HEIGHT $WIDTH $MENUHEIGHT "$MYUSER1" user1000 "$MYUSER2" user1001 "$MYUSER3" user1002 2>/tmp/choices.$$
+		elif [ "$MYUSER3" = "" ] && [ "$MYUSER2" != "" ]
+		then
+			$DIALOG $TITLE"$TITLETEXT" $OKEXIT $MENU $TEXT"\n$LOCAL85 \n$LOCAL86" $HEIGHT $WIDTH $MENUHEIGHT "$MYUSER1" user1000 "$MYUSER2" user1001 2>/tmp/choices.$$
+		else
+			$DIALOG $TITLE"$TITLETEXT" $OKEXIT $MENU $TEXT"\n$LOCAL85 \n$LOCAL86" $HEIGHT $WIDTH $MENUHEIGHT "$MYUSER1" user1000 2>/tmp/choices.$$
+		fi
+
+		if [ "$?" = "0" ]
+		then
+			SKELUSER=`cat /tmp/choices.$$`
+		else
+			SKELUSER=""
+		fi
+		rm /tmp/choices.$$
+
+		SKELUSER=`echo $SKELUSER | cut -d "|" -f 1`
+		if [ "$SKELUSER" != "" ]
+		then
+			cd `grep "^$SKELUSER:" /etc/passwd | awk -F ":" '{print $6}'`
+			PWD=`pwd`
+			TESTUSER=`grep "$PWD" /etc/passwd | awk -F ":" '{print $1}'`
+
+			if [ "$TESTUSER" != "$SKELUSER" ]
+			then
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL87 \n$LOCAL14" $HEIGHT $WIDTH
+				echo "need to be in the user directory....exiting"
+				exit_with_message " " 1
+			fi
+			sparkybackup-skelcopy $SKELUSER
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL88 $SKELUSER $LOCAL89\n\n$LOCAL14" $HEIGHT $WIDTH
+			log_info "skelcopy used and user settings been copied to skel"
+			exit_with_message " " 1
+		else
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL90 \n\n$LOCAL14" $HEIGHT $WIDTH
+			log_info "skelcopy used but user settings been not copied to skel"
+			exit_with_message " " 1
+		fi
 		;;
 
 	dist)
 		echo "$LOCAL19"
 		log_info "Distribution Mode Selected"
+		;;
+
+	edit)
+		nano /etc/sparkybackup/sparkybackup.conf
+		exit_with_message " " 1
+		;;
+
+	installer)
+		nano /etc/sparkybackup/sparkylinux-installer.conf
+		exit_with_message " " 1
+		;;
+
+	cache)
+		apt-get autoremove
+		apt-get clean
+
+		if [ "$TESTAPTITUDE" != "" ]
+		then
+			aptitude purge ~c
+		fi
+		exit_with_message " " 1
+		;;
+	
+	log)
+		if [ -f "$WORKDIR/sparkybackup.log" ]
+		then
+			nano $WORKDIR/sparkybackup.log
+		else
+			echo "$LOCAL45"
+		fi
+		exit_with_message " " 1
 		;;
 
 	*)

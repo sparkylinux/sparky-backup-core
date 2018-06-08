@@ -20,6 +20,7 @@ if [ "$1" = "uninstall" ]; then
 	rm -f /usr/bin/sparky-installer
 	rm -f /usr/bin/spb
 	rm -f /usr/bin/sparky-setxkb
+	rm -f /usr/bin/sparkybackup-skelcopy
 	rm -rf /etc/sparkybackup
 	rm -rf /usr/share/icons/sparky/sparkybackupsys
 	rm -rf /usr/lib/sparkybackup
@@ -74,4 +75,5 @@ else
 		mkdir -p /etc/xdg/autostart
 	fi
 	cp xdg/* /etc/xdg/autostart/
+	cp bin/sparkybackup-skelcopy /usr/bin/sparkybackup-skelcopy
 fi
