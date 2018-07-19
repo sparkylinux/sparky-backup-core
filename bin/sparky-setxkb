@@ -1,6 +1,6 @@
 #!/bin/bash
 
-### last update by 2018/04/14 pavroo
+### last update by 2018/07/19 pavroo
 
 ### if NOT Live system just quit, do nothing
 testmode=`grep "1000" /etc/passwd | grep "Live"`
@@ -42,6 +42,8 @@ IL=`cat /proc/cmdline | grep he_IL`
 IN=`cat /proc/cmdline | grep hi_IN`
 # Hungarian
 HU=`cat /proc/cmdline | grep hu_HU`
+# Indonesian
+ID=`cat /proc/cmdline | grep id_ID`
 # Italian
 IT=`cat /proc/cmdline | grep it_IT`
 # Japanase
@@ -112,6 +114,8 @@ elif [ "$IN" != "" ]; then
 	LANG="in"
 elif [ "$HU" != "" ]; then
 	LANG="hu"
+elif [ "$ID" != "" ]; then
+	LANG="id"
 elif [ "$IT" != "" ]; then
 	LANG="it"
 elif [ "$JP" != "" ]; then

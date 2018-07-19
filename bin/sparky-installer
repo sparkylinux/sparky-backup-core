@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/04/14
+# Last update 2018/07/19
 #
 # This script requires either yad or dialog to run
 
@@ -113,6 +113,7 @@ DEFLANGS=`$DIALOGMENU $TITLE"$TITLETEXT" $YESNO $MENU $TEXT"Please choose the Ad
 Brazilian "Brasileiro" \
 English "English" \
 German "Deutsch" \
+Indonesian "Indonesia" \
 Italian "Italiano" \
 Polish "Polski" \
 Portuguese "Português" \
@@ -129,6 +130,8 @@ Exit "Exiting now..."`
 		DEFLANG="English"
 	elif [ "$DEFLANGS" = "German" ]; then
 		DEFLANG="German"
+	elif [ "$DEFLANGS" = "Indonesian" ]; then
+		DEFLANG="Indonesian"
 	elif [ "$DEFLANGS" = "Italian" ]; then
 		DEFLANG="Italian"
 	elif [ "$DEFLANGS" = "Polish" ]; then
@@ -143,7 +146,7 @@ Exit "Exiting now..."`
 
 elif [ "$GUI" = "" ]; then
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" German "Deutsch" Italian "Italiano" Polish "Polski" Portuguese "Português" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" German "Deutsch" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
 
 	if [ "$?" = "0" ]; then
 		DEFLANG=`cat /tmp/sparky-advanced-installer`
@@ -164,6 +167,8 @@ if [ "$DEFLANG" = "Brazilian" ]; then
 . $DEFLOCDIR/pt_BR
 elif [ "$DEFLANG" = "German" ]; then
 . $DEFLOCDIR/de
+elif [ "$DEFLANG" = "Indonesian" ]; then
+. $DEFLOCDIR/id_ID
 elif [ "$DEFLANG" = "Italian" ]; then
 . $DEFLOCDIR/it
 elif [ "$DEFLANG" = "Polish" ]; then
@@ -354,7 +359,7 @@ GUILOG="cli"
 	fi
 
 	#choose filesystem type
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		FSTYPE=`cat /tmp/choice.$$`
@@ -384,7 +389,7 @@ GUILOG="cli"
 
 	if [ "$HOMEPART" != "root" ]; then
 		#choose filesystem type
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 		if [ "$?" = "0" ]; then
 			HFSTYPE=`cat /tmp/choice.$$`
@@ -769,7 +774,7 @@ GUILOG="yad"
 	FSTYPE=""
 	while [ "$FSTYPE" = "" ]
 	do
-		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL32" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33"`
+		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL32" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
 	done
 
 	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
@@ -793,7 +798,7 @@ GUILOG="yad"
 		HFSTYPE=""
 		while [ "$HFSTYPE" = "" ]
 		do
-			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL37" noformat "$LOCAL38" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33"`
+			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL37" noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
 		done
 	fi
 
@@ -1019,15 +1024,40 @@ if [ "`mount | grep $TARGETPART`" ]; then
 	umount /dev/$TARGETPART
 fi
 
-mke2fs -t $FSTYPE -F /dev/$TARGETPART
-mkdir -p /TARGET
-sleep 2
-echo "$LOCAL95"
-mount /dev/$TARGETPART /TARGET -o rw
-sleep 2
-echo "$LOCAL96"
-tune2fs -c 0 -i 0 /dev/$TARGETPART 
-rm -rf "/TARGET/lost+found"
+if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
+	mke2fs -t $FSTYPE -F /dev/$TARGETPART
+	mkdir -p /TARGET
+	sleep 2
+	echo "$LOCAL95"
+	mount /dev/$TARGETPART /TARGET -o rw
+	sleep 2
+	echo "$LOCAL96"
+	tune2fs -c 0 -i 0 /dev/$TARGETPART 
+	rm -rf "/TARGET/lost+found"
+elif [ "$FSTYPE" = "btrfs" ]; then
+	mke2fs -t ext3 -F /dev/$TARGETPART
+	sleep 2
+	# Create volume
+	btrfs-convert /dev/$TARGETPART
+	# Mount partition
+	mount -o rw /dev/$TARGETPART /mnt
+	btrfs subvolume delete /mnt/ext2_saved
+	# Create subvolume
+	btrfs subvolume create /mnt/root
+	# Mount the subvolume
+	sleep 2
+	echo "$LOCAL95"
+	mkdir -p /TARGET
+	mount -t btrfs -o subvol=root,defaults,nodatacow /dev/$TARGETPART /TARGET
+	rm -rf "/TARGET/lost+found"
+elif [ "$FSTYPE" = "xfs" ]; then
+	mkfs.xfs -f /dev/$TARGETPART
+	mkdir -p /TARGET
+	sleep 2
+	echo "$LOCAL95"
+	mount /dev/$TARGETPART /TARGET -o rw
+	rm -rf "/TARGET/lost+found"
+fi
 
 if [ "$GUI" != "" ]; then
 	killall -KILL tail
@@ -1045,13 +1075,35 @@ if [ "$HOMEPART" != "root" ]; then
 			echo "$LOCAL94"
 			umount /dev/$HOMEPART
 		fi
-		mke2fs -t $HFSTYPE -F /dev/$HOMEPART
+
+		if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
+		elif [ "$HFSTYPE" = "btrfs" ]; then
+			mke2fs -t ext3 -F /dev/$HOMEPART
+			sleep 2
+			# Create volume
+			btrfs-convert /dev/$HOMEPART
+			# Mount partition
+			mount -o rw /dev/$HOMEPART /srv
+			btrfs subvolume delete /srv/ext2_saved
+			# Create subvolume
+			btrfs subvolume create /srv/home
+			sleep 2			
+		elif [ "$HFSTYPE" = "xfs" ]; then
+			mkfs.xfs -f /dev/$HOMEPART
+		fi
 	fi
 
 	echo "$LOCAL97"
 	mkdir -p /TARGET/home
-	mount /dev/$HOMEPART /TARGET/home -o rw
-	tune2fs -c 0 -i 0 /dev/$HOMEPART
+	if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+		mount /dev/$HOMEPART /TARGET/home -o rw
+		tune2fs -c 0 -i 0 /dev/$HOMEPART
+	elif [ "$HFSTYPE" = "btrfs" ]; then
+		mount -t btrfs -o subvol=home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
+	elif [ "$HFSTYPE" = "xfs" ]; then
+		mount /dev/$HOMEPART /TARGET/home -o rw
+	fi
 	rm -rf "/TARGET/home/lost+found"
 	sleep 2
 
@@ -1204,12 +1256,28 @@ FOO
 	rm -rf /TARGET/debs
 fi
 
-#create the new fstab by uuid
+#create a new fstab by uuid
 TESTEFI=`lsmod | grep efi`
 UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
 UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
 UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
 UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
+
+if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
+	FSTABOPT="defaults,errors=remount-ro"
+elif [ "$FSTYPE" = "btrfs" ]; then
+	FSTABOPT="subvol=root,defaults,noatime,space_cache,autodefrag"
+elif [ "$FSTYPE" = "xfs" ]; then
+	FSTABOPT="defaults,noatime"
+fi
+
+if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+	HFSTABOPT="defaults"
+elif [ "$HFSTYPE" = "btrfs" ]; then
+	HFSTABOPT="subvol=home,defaults,noatime,space_cache,autodefrag"
+elif [ "$HFSTYPE" = "xfs" ]; then
+	HFSTABOPT="defaults,noatime"
+fi
 
 if [ "$HOMEPART" = "root" ]; then
 	if [ "$TESTEFI" != "" ]; then
@@ -1221,7 +1289,7 @@ cat > /TARGET/etc/fstab <<FOO
 # /dev/$TARGETEFI
 UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
 # /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE relatime,errors=remount-ro 0 1
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
 # /dev/$SWAP
 UUID=$UUIDSWAP none swap sw 0 0
 # cdrom
@@ -1235,7 +1303,7 @@ cat > /TARGET/etc/fstab <<FOO
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
 # /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE relatime,errors=remount-ro 0 1
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
 # /dev/$SWAP
 UUID=$UUIDSWAP none swap sw 0 0
 # cdrom
@@ -1254,9 +1322,9 @@ cat > /TARGET/etc/fstab <<FOO
 # /dev/$TARGETEFI
 UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
 # /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE relatime,errors=remount-ro 0 1
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
 # /dev/$HOMEPART home
-UUID=$UUIDHOMEPART /home $HFSTYPE relatime 0 0
+UUID=$UUIDHOMEPART /home $HFSTYPE $HFSTABOPT 0 2
 # /dev/$SWAP
 UUID=$UUIDSWAP none swap sw 0 0
 # cdrom
@@ -1270,9 +1338,9 @@ cat > /TARGET/etc/fstab <<FOO
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
 # /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE relatime,errors=remount-ro 0 1
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
 # /dev/$HOMEPART home
-UUID=$UUIDHOMEPART /home $HFSTYPE relatime 0 0
+UUID=$UUIDHOMEPART /home $HFSTYPE $HFSTABOPT 0 2
 # /dev/$SWAP
 UUID=$UUIDSWAP none swap sw 0 0
 # cdrom
@@ -1591,6 +1659,14 @@ chmod +x /tmp/Grub-Install
 	echo "$LOCAL112"
 	sleep 1
 	umount -R /TARGET
+	if [ "$FSTYPE" = "btrfs" ]; then
+		umount -R /mnt/root
+		umount -R /mnt
+	fi
+	if [ "$HFSTYPE" = "btrfs" ]; then
+		umount -R /src/home
+		umount -R /src
+	fi
 	sleep 1
 
 	if [ "$GUI" != "" ]; then
