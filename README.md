@@ -21,6 +21,7 @@ Dependencies:
 ---------------
 apt
 bash
+btrfs-progs
 console-data
 coreutils
 dialog
@@ -48,8 +49,9 @@ syslinux-utils
 systemd, systemd-sysv
 util-linux
 x11-utils
-xz-utils
+xfsprogs
 xorriso
+xz-utils
 
 Conflicts:
 ------------

@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/19
+# Last update 2018/07/20
 #
 # This script requires either yad or dialog to run
 
@@ -1035,13 +1035,13 @@ if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; t
 	tune2fs -c 0 -i 0 /dev/$TARGETPART 
 	rm -rf "/TARGET/lost+found"
 elif [ "$FSTYPE" = "btrfs" ]; then
-	mke2fs -t ext3 -F /dev/$TARGETPART
+	mkfs.btrfs -f /dev/$TARGETPART
 	sleep 2
 	# Create volume
-	btrfs-convert /dev/$TARGETPART
+	#btrfs-convert /dev/$TARGETPART
 	# Mount partition
 	mount -o rw /dev/$TARGETPART /mnt
-	btrfs subvolume delete /mnt/ext2_saved
+	#btrfs subvolume delete /mnt/ext2_saved
 	# Create subvolume
 	btrfs subvolume create /mnt/root
 	# Mount the subvolume
@@ -1079,13 +1079,13 @@ if [ "$HOMEPART" != "root" ]; then
 		if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
 		elif [ "$HFSTYPE" = "btrfs" ]; then
-			mke2fs -t ext3 -F /dev/$HOMEPART
+			mkfs.btrfs -f /dev/$HOMEPART
 			sleep 2
 			# Create volume
-			btrfs-convert /dev/$HOMEPART
+			#btrfs-convert /dev/$HOMEPART
 			# Mount partition
 			mount -o rw /dev/$HOMEPART /srv
-			btrfs subvolume delete /srv/ext2_saved
+			#btrfs subvolume delete /srv/ext2_saved
 			# Create subvolume
 			btrfs subvolume create /srv/home
 			sleep 2			
