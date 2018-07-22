@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/20
+# Last update 2018/07/22
 #
 # This script requires either yad or dialog to run
 
@@ -1037,18 +1037,14 @@ if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; t
 elif [ "$FSTYPE" = "btrfs" ]; then
 	mkfs.btrfs -f /dev/$TARGETPART
 	sleep 2
-	# Create volume
-	#btrfs-convert /dev/$TARGETPART
-	# Mount partition
 	mount -o rw /dev/$TARGETPART /mnt
-	#btrfs subvolume delete /mnt/ext2_saved
 	# Create subvolume
-	btrfs subvolume create /mnt/root
+	btrfs subvolume create /mnt/@
 	# Mount the subvolume
 	sleep 2
 	echo "$LOCAL95"
 	mkdir -p /TARGET
-	mount -t btrfs -o subvol=root,defaults,nodatacow /dev/$TARGETPART /TARGET
+	mount -t btrfs -o subvol=@,defaults,nodatacow /dev/$TARGETPART /TARGET
 	rm -rf "/TARGET/lost+found"
 elif [ "$FSTYPE" = "xfs" ]; then
 	mkfs.xfs -f /dev/$TARGETPART
@@ -1081,13 +1077,10 @@ if [ "$HOMEPART" != "root" ]; then
 		elif [ "$HFSTYPE" = "btrfs" ]; then
 			mkfs.btrfs -f /dev/$HOMEPART
 			sleep 2
-			# Create volume
-			#btrfs-convert /dev/$HOMEPART
 			# Mount partition
 			mount -o rw /dev/$HOMEPART /srv
-			#btrfs subvolume delete /srv/ext2_saved
 			# Create subvolume
-			btrfs subvolume create /srv/home
+			btrfs subvolume create /srv/@home
 			sleep 2			
 		elif [ "$HFSTYPE" = "xfs" ]; then
 			mkfs.xfs -f /dev/$HOMEPART
@@ -1100,7 +1093,7 @@ if [ "$HOMEPART" != "root" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 		tune2fs -c 0 -i 0 /dev/$HOMEPART
 	elif [ "$HFSTYPE" = "btrfs" ]; then
-		mount -t btrfs -o subvol=home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
+		mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
 	elif [ "$HFSTYPE" = "xfs" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 	fi
@@ -1266,7 +1259,7 @@ UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
 	FSTABOPT="defaults,errors=remount-ro"
 elif [ "$FSTYPE" = "btrfs" ]; then
-	FSTABOPT="subvol=root,defaults,noatime,space_cache,autodefrag"
+	FSTABOPT="subvol=@,defaults,noatime,space_cache,autodefrag"
 elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="defaults,noatime"
 fi
@@ -1274,7 +1267,7 @@ fi
 if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	HFSTABOPT="subvol=home,defaults,noatime,space_cache,autodefrag"
+	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
 elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
@@ -1660,11 +1653,11 @@ chmod +x /tmp/Grub-Install
 	sleep 1
 	umount -R /TARGET
 	if [ "$FSTYPE" = "btrfs" ]; then
-		umount -R /mnt/root
+		umount -R /mnt/@
 		umount -R /mnt
 	fi
 	if [ "$HFSTYPE" = "btrfs" ]; then
-		umount -R /src/home
+		umount -R /src/@home
 		umount -R /src
 	fi
 	sleep 1
@@ -1672,7 +1665,6 @@ chmod +x /tmp/Grub-Install
 	if [ "$GUI" != "" ]; then
 		killall -KILL tail
 	fi
-
 
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n\n$LOCAL114\n\n$LOCAL116" $HEIGHT $WIDTH
 
