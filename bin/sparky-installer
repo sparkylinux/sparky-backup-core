@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/22
+# Last update 2018/07/23
 #
 # This script requires either yad or dialog to run
 
@@ -1040,11 +1040,14 @@ elif [ "$FSTYPE" = "btrfs" ]; then
 	mount -o rw /dev/$TARGETPART /mnt
 	# Create subvolume
 	btrfs subvolume create /mnt/@
+	btrfs subvolume create /mnt/@home
 	# Mount the subvolume
 	sleep 2
 	echo "$LOCAL95"
 	mkdir -p /TARGET
 	mount -t btrfs -o subvol=@,defaults,nodatacow /dev/$TARGETPART /TARGET
+	mkdir -p /TARGET/home
+	mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$TARGETPART /TARGET/home
 	rm -rf "/TARGET/lost+found"
 elif [ "$FSTYPE" = "xfs" ]; then
 	mkfs.xfs -f /dev/$TARGETPART
@@ -1260,6 +1263,7 @@ if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; t
 	FSTABOPT="defaults,errors=remount-ro"
 elif [ "$FSTYPE" = "btrfs" ]; then
 	FSTABOPT="subvol=@,defaults,noatime,space_cache,autodefrag"
+	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
 elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="defaults,noatime"
 fi
@@ -1272,8 +1276,33 @@ elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
 
+## home on root partition
 if [ "$HOMEPART" = "root" ]; then
+
+	# home on root partition & uefi
 	if [ "$TESTEFI" != "" ]; then
+
+		# home on root partition & uefi & btrfs
+		if [ "$FSTYPE" = "btrfs" ]; then
+cat > /TARGET/etc/fstab <<FOO
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# /dev/$TARGETEFI
+UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
+# /dev/$TARGETPART
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
+# /dev/$TARGETPART
+UUID=$UUIDTARGETPART /home $FSTYPE $HFSTABOPT 0 2
+# /dev/$SWAP
+UUID=$UUIDSWAP none swap sw 0 0
+# cdrom
+$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
+
+FOO
+		# home on root partition & uefi & no btrfs
+		elif [ "$FSTYPE" != "btrfs" ]; then
 cat > /TARGET/etc/fstab <<FOO
 # /etc/fstab: static file system information.
 #
@@ -1289,7 +1318,31 @@ UUID=$UUIDSWAP none swap sw 0 0
 $TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
 
 FOO
-	else
+		fi
+
+	# home on root partition & bios
+	elif [ "$TESTEFI" = "" ]; then
+
+		# home on root partition & bios & btrfs
+		if [ "$FSTYPE" = "btrfs" ]; then
+cat > /TARGET/etc/fstab <<FOO
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# /dev/$TARGETPART
+UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
+# /dev/$TARGETPART
+UUID=$UUIDTARGETPART /home $FSTYPE $HFSTABOPT 0 2
+# /dev/$SWAP
+UUID=$UUIDSWAP none swap sw 0 0
+# cdrom
+$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
+
+FOO
+
+		# home on root partition & bios & no btrfs
+		elif [ "$FSTYPE" != "btrfs" ]; then
 cat > /TARGET/etc/fstab <<FOO
 # /etc/fstab: static file system information.
 #
@@ -1303,9 +1356,14 @@ UUID=$UUIDSWAP none swap sw 0 0
 $TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
 
 FOO
+		fi
 	fi
+fi
 
-elif [ "$HOMEPART" != "root" ]; then	
+## home on separated partition
+if [ "$HOMEPART" != "root" ]; then
+
+	# home on separated partition & uefi
 	if [ "$TESTEFI" != "" ]; then
 cat > /TARGET/etc/fstab <<FOO
 # /etc/fstab: static file system information.
@@ -1324,6 +1382,7 @@ UUID=$UUIDSWAP none swap sw 0 0
 $TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
 
 FOO
+	# home on separated partition & bios
 	else
 cat > /TARGET/etc/fstab <<FOO
 # /etc/fstab: static file system information.
@@ -1653,6 +1712,7 @@ chmod +x /tmp/Grub-Install
 	sleep 1
 	umount -R /TARGET
 	if [ "$FSTYPE" = "btrfs" ]; then
+		umount -R /mnt/@home
 		umount -R /mnt/@
 		umount -R /mnt
 	fi
