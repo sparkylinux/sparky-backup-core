@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/07/19 by pavroo
+# Last update 2018/07/26 16:36 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -610,10 +610,10 @@ function cdfs {
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	sed -i -e 's/__LIVELABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 
-	if [ ! -d /etc/plymouth ]
-	then
-		sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	fi
+	#if [ ! -d /etc/plymouth ]
+	#then
+	#	sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#fi
 
 	#cp /usr/lib/sparkybackup/live/filesystem.packages-remove $WORKDIR/ISOTMP/live/filesystem.packages-remove
 	
@@ -740,12 +740,15 @@ FOO
 	log_info "Setting up live options for $1 mode"
 
 	# make a new initial ramdisk including the live scripts
-	update-initramfs -t -c -k $(uname -r)
+	#update-initramfs -t -c -k $(uname -r)
+	update-initramfs -t -c -k all
 
 	echo "$LOCAL27"
 	log_info "Copying your kernel and initrd for the livecd"
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
+	#cp /boot/vmlinuz-4.16.0-2-amd64 $WORKDIR/ISOTMP/live/vmlinuz416
+	#cp /boot/initrd.img-4.16.0-2-amd64 $WORKDIR/ISOTMP/live/initrd416.img
 
 	# Step 5 - Make filesystem.squashfs
 

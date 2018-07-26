@@ -1,7 +1,7 @@
 # Indonesian localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2018/07/19 by pavroo
+# Last update 2018/07/25 by pavroo
 # Translated to Indonesian by les kompie
 LOCAL1="Advanced Installer membantu anda meng-instal sistem live ke hard drive."
 LOCAL2="Advanced Installer membantu anda meng-instal sistem live ke hard drive, seperti apa adanya."
@@ -111,7 +111,7 @@ LOCAL105="Sebelum memulai ini, tool ini akan memeriksa update 2 paket:"
 LOCAL106="dan"
 LOCAL107="untuk menyediakan versi terbarunya."
 LOCAL108="Apakah sekarang anda mau melakukannya?"
-LOCAL109="Menghapus paket live dan menyiapkan user baru"
+LOCAL109="Menghapus paket live"
 LOCAL110="Memperbarui konfigurasi GRUB"
 LOCAL111="Langkah pasca-instal telah selesai."
 LOCAL112="Unmount partisi TARGET."
@@ -119,3 +119,4 @@ LOCAL113="Proses instal SparkyLinux selesai."
 LOCAL114="Jika semuanya berjalan dengan baik, sistem baru sudah ter-instal dan siap digunakan."
 LOCAL115="Ingat bahwa tidak ada bootloader yang di-instal, jadi anda harus menginstalnya secara manual."
 LOCAL116="Apakah anda mau reboot sekarang untuk mencoba Sparky?"
+LOCAL117="Menyiapkan user baru"

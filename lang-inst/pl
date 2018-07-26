@@ -1,7 +1,7 @@
 # Polish localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2018/03/26 by pavroo
+# Last update 2018/07/25 by pavroo
 LOCAL1="Advanced Installer umożliwi zainstalowanie na twoim dysku twardym systemu live."
 LOCAL2="Advanced Installer umożliwi zainstalowanie na twoim dysku twardym systemu live w tej samej wersji co live."
 LOCAL3="Pozwoli również na na zainstalowanie twojego ulubionego pulpitu,"
@@ -110,7 +110,7 @@ LOCAL105="Przed rozpoczęciem narzędzie sprawdzi dostępność aktualizacji 2 p
 LOCAL106="i"
 LOCAL107="aby dostarczyć ich najnowsze wersje."
 LOCAL108="Czy chcesz to zrobić teraz?"
-LOCAL109="Usuwanie pakietów live i konfiguracja nowego użytkownika"
+LOCAL109="Usuwanie pakietów live"
 LOCAL110="Aktualizacja konfiguracji GRUB"
 LOCAL111="Krok po-instalacyjny został zakończony."
 LOCAL112="Odmontowywanie partycji DOCELOWYCH."
@@ -118,3 +118,4 @@ LOCAL113="Instalacja SparkyLinux została zakończona."
 LOCAL114="Jeśli wszystko poszło dobrze, twój nowy system został zainstalowany i jest gotowy do użycia."
 LOCAL115="Pamiętaj, że żaden bootloader NIE został zainstalowany, więc musisz zrobić to ręcznie."
 LOCAL116="Czy chcesz uruchomić ponownie komputer i wypróbować Sparky?"
+LOCAL117="Konfiguracja nowego użytkownika"

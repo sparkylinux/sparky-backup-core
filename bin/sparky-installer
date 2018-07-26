@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/23
+# Last update 2018/07/26
 #
 # This script requires either yad or dialog to run
 
@@ -1065,10 +1065,10 @@ fi
 if [ "$HOMEPART" != "root" ]; then
 	if [ "$HFSTYPE" != "noformat" ]; then
 		if [ "$GUI" != "" ]; then
-			progressbar "$LOCAL93 $HOME $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
+			progressbar "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
 		fi
 
-		echo "$LOCAL93 $HOME $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
+		echo "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 		if [ "`mount | grep $HOMEPART`" ]; then
 			echo "$LOCAL94"
@@ -1509,8 +1509,56 @@ if [ "$GUI" != "" ]; then
 	killall -KILL tail
 fi
 
+# setting up new user
+if [ "$GUI" != "" ]; then
+	progressbar "$LOCAL117 ... $LOCAL92 ...\n" &
+fi
+
+echo "$LOCAL117 ... $LOCAL92 ..."
+
+if [ "$TARGETUSER" != "" ]; then
+
+cat > /TARGET/bin/newuserscript <<FOO
+#!/bin/bash
+
+echo -e "$TARGETROOTPASS\n$TARGETROOTPASS\n" | passwd root
+userdel -f -r $LIVE_USERNAME
+sed -i '/$LIVE_USERNAME/d' /etc/sudoers
+groupadd -g 1000 $TARGETUSER
+useradd -u 1000 -g 1000 -c "$TARGETUSERFULLNAME,,," -G $DEFAULTGROUPS -s /bin/bash -m $TARGETUSER
+echo -e "$TARGETPASS\n$TARGETPASS\n" | passwd $TARGETUSER
+
+FOO
+
+else
+
+cat > /TARGET/bin/newuserscript <<FOO
+#!/bin/bash
+
+for i in `ls -d /home/*`; do
+
+if [ /$i/.config/Thunar/volmanrc ]; then
+  sed -i -e 's/FALSE/TRUE/g' /$i/.config/Thunar/volmanrc
+  cp -f /$i/.config/volmanrc /root/.config/Thunar/volmanrc
+fi
+
+done
+
+FOO
+
+fi
+
+chmod 755 /TARGET/bin/newuserscript
+chroot /TARGET /bin/newuserscript
+rm /TARGET/bin/newuserscript
+
+if [ "$GUI" != "" ]; then
+	killall -KILL tail
+fi
+
 # install your favorite desktop of your choice
-if [ -f /lib/live/mount/medium/live/minimal ]
+CHECKMINI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimal`
+if [ "$CHECKMINI" != "" ]
 then
 	if [ "$GUI" != "" ]
 	then
@@ -1550,26 +1598,25 @@ then
 	cp /TARGET/var/log/sparkylinux-installer.log /var/log/sparkylinux-installer.log
 fi
 
+# remove live packages
 if [ "$GUI" != "" ]; then
 	progressbar "$LOCAL109 ... $LOCAL92 ...\n" &
 fi
 
 echo "$LOCAL109 ... $LOCAL92 ..."
 
-if [ "$TARGETUSER" != "" ]; then
+# remove mc but not in minimalcli
+CHECKMINICLI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+if [ "$CHECKMINI" = "" ]
+then
+	REMOVEMC="apt-get purge --yes --force-yes mc"
+else
+	REMOVEMC=""
+fi
 
 cat > /TARGET/bin/tempinstallerscript <<FOO
 #!/bin/bash
 
-echo -e "$TARGETROOTPASS\n$TARGETROOTPASS\n" | passwd root
-userdel -f -r $LIVE_USERNAME
-sed -i '/$LIVE_USERNAME/d' /etc/sudoers
-groupadd -g 1000 $TARGETUSER
-useradd -u 1000 -g 1000 -c "$TARGETUSERFULLNAME,,," -G $DEFAULTGROUPS -s /bin/bash -m $TARGETUSER
-echo -e "$TARGETPASS\n$TARGETPASS\n" | passwd $TARGETUSER
-#dpkg-divert --remove --rename --quiet /usr/lib/update-notifier/apt-check
-#dpkg-divert --remove --rename --quiet /usr/sbin/update-initramfs
-#dpkg-divert --remove --rename --quiet /usr/sbin/anacron
 apt-get purge --yes --force-yes sparky-backup-core
 apt-get purge --yes --force-yes live-boot
 apt-get purge --yes --force-yes live-boot-doc
@@ -1579,57 +1626,16 @@ apt-get purge --yes --force-yes live-config-systemd
 apt-get purge --yes --force-yes live-config-doc
 apt-get purge --yes --force-yes live-tools
 apt-get purge --yes --force-yes live-installer
-#apt-get purge --yes --force-yes memtest86+
 apt-get purge --yes --force-yes gparted
 apt-get purge --yes --force-yes calamares
-apt-get purge --yes --force-yes mc
+$REMOVEMC
 apt-get purge --yes --force-yes lvm2
-#apt-get purge --yes --force-yes live-build
-#apt-get purge --yes --force-yes live-manual-html
 apt-get autoremove --yes
-update-initramfs -t -c -k $(/bin/uname -r)
+#update-initramfs -t -c -k $(/bin/uname -r)
+update-initramfs -t -c -k all
 shadowconfig on
 
 FOO
-
-else
-
-cat > /TARGET/bin/tempinstallerscript <<FOO
-#!/bin/bash
-
-#dpkg-divert --remove --rename --quiet /usr/lib/update-notifier/apt-check
-#dpkg-divert --remove --rename --quiet /usr/sbin/update-initramfs
-#dpkg-divert --remove --rename --quiet /usr/sbin/anacron
-apt-get purge --yes --force-yes sparky-backup-core
-apt-get purge --yes --force-yes live-boot
-apt-get purge --yes --force-yes live-boot-doc
-apt-get purge --yes --force-yes live-boot-initramfs-tools
-apt-get purge --yes --force-yes live-config
-apt-get purge --yes --force-yes live-config-systemd
-apt-get purge --yes --force-yes live-config-doc
-apt-get purge --yes --force-yes live-tools
-apt-get purge --yes --force-yes live-installer
-#apt-get purge --yes --force-yes memtest86+
-apt-get purge --yes --force-yes gparted
-apt-get purge --yes --force-yes calamares
-apt-get purge --yes --force-yes mc
-apt-get purge --yes --force-yes lvm2
-#apt-get purge --yes --force-yes live-build
-#apt-get purge --yes --force-yes live-manual-html
-apt-get autoremove --yes
-update-initramfs -t -c -k $(uname -r)
-for i in `ls -d /home/*`; do
-
-if [ /$i/.config/Thunar/volmanrc ]; then
-  sed -i -e 's/FALSE/TRUE/g' /$i/.config/Thunar/volmanrc
-  cp -f /$i/.config/volmanrc /root/.config/Thunar/volmanrc
-fi
-
-done
-
-FOO
-
-fi
 
 chmod 755 /TARGET/bin/tempinstallerscript
 chroot /TARGET /bin/tempinstallerscript
