@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/28 by pavroo
+# Last update 2018/07/30 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -38,7 +38,11 @@ MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
-CHECKMINI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimal`
+if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
+CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
+fi
 
 if [ -f /usr/bin/sparky-xterm ];then
 	SPARKYXTERM="/usr/bin/sparky-xterm"
@@ -206,7 +210,7 @@ tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-bu
 
 if [ "$GUI" = "" ]; then
 GUILOG="cli"
-
+#blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | cut -f3 -d "/" | sed -r "s/://"
 ##########TEXT MODE##########
 
 	#inform them what this is and ask if they want to continue
@@ -1162,11 +1166,13 @@ DATE=`date '+%F'`
 KERNEL=`uname -r`
 RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
-LOCALE=`locale | grep 'LANG=' | cut -d= -f2`
-SCRIPTVERSION=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.version`
-LIVEISOIMAGE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
-TARGETUSERGROUPS=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`
-TARGETGRUBOPT=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkylinux-installer.conf | grep NewGrubDefLine`
+TESTEFI=`lsmod | grep efi`
+LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
+TARGETLOCALE=`cat /tmp/sparky-advanced-installer`
+SCRIPTVERSION=`cat /etc/sparkybackup/sparkybackup.version`
+LIVEISOIMAGE=$CHECKISOVER
+TARGETUSERGROUPS=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`
+TARGETGRUBOPT=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep NewGrubDefLine`
 LIVEMODE=$LIVEMODE
 GUI=$GUILOG
 TARGETUSER=$TARGETUSER
@@ -1255,10 +1261,14 @@ fi
 
 #create a new fstab by uuid
 TESTEFI=`lsmod | grep efi`
-UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
-UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
-UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
-UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
+#UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
+#UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
+#UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
+#UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
+#UUIDTARGETPART=`ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}'`
+UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
+#UUIDHOMEPART=`ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}'`
+#UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
 
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
 	FSTABOPT="defaults,errors=remount-ro"
@@ -1277,134 +1287,33 @@ elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
 
-## home on root partition
-if [ "$HOMEPART" = "root" ]; then
-
-	# home on root partition & bios
-	if [ "$TESTEFI" = "" ]; then
-
-		# home on root partition & bios & btrfs
-		if [ "$FSTYPE" = "btrfs" ]; then
 cat > /TARGET/etc/fstab <<FOO
 # /etc/fstab: static file system information.
 #
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART /home $FSTYPE $HFSTABOPT 0 2
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
+# root /dev/$TARGETPART
+/dev/$TARGETPART	/	$FSTYPE	$FSTABOPT	0	1
+# swap /dev/$SWAP
+/dev/$SWAP	none	swap	sw	0	0
 # cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
+$TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
 
 FOO
 
-		# home on root partition & bios & no btrfs
-		elif [ "$FSTYPE" != "btrfs" ]; then
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
-# cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
-
-FOO
-		fi
-
-	# home on root partition & uefi
-	#if [ "$TESTEFI" != "" ]; then
-	else
-
-		# home on root partition & uefi & btrfs
-		if [ "$FSTYPE" = "btrfs" ]; then
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# /dev/$TARGETEFI
-UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART /home $FSTYPE $HFSTABOPT 0 2
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
-# cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
-
-FOO
-		# home on root partition & uefi & no btrfs
-		elif [ "$FSTYPE" != "btrfs" ]; then
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# /dev/$TARGETEFI
-UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
-# cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
-
-FOO
-		fi
-
-	
-	fi
+# add efi part
+if [ "$TESTEFI" != "" ]; then
+	echo "# efi /dev/$TARGETEFI" >> /TARGET/etc/fstab
+	echo "/dev/$TARGETEFI	/boot/efi	vfat	defaults	0	0" >> /TARGET/etc/fstab
 fi
 
-## home on separated partition
-if [ "$HOMEPART" != "root" ]; then
-
-	# home on separated partition & uefi
-	if [ "$TESTEFI" != "" ]; then
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# /dev/$TARGETEFI
-UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$HOMEPART home
-UUID=$UUIDHOMEPART /home $HFSTYPE $HFSTABOPT 0 2
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
-# cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
-
-FOO
-	# home on separated partition & bios
-	else
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# /dev/$TARGETPART
-UUID=$UUIDTARGETPART / $FSTYPE $FSTABOPT 0 1
-# /dev/$HOMEPART home
-UUID=$UUIDHOMEPART /home $HFSTYPE $HFSTABOPT 0 2
-# /dev/$SWAP
-UUID=$UUIDSWAP none swap sw 0 0
-# cdrom
-$TARGETCDROM /media/cdrom0 udf,iso9660 user,noauto,exec,utf8 0 0
-
-FOO
-	fi
-	
+# add home part
+if [ "$HOMEPART" = "root" ] && [ "$FSTYPE" = "btrfs" ]; then
+	echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
+	echo "/dev/$TARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+else
+	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
+	echo "/dev/$TARGETPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 fi
 
 # add swap uuid to resume
@@ -1417,6 +1326,26 @@ fi
 cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
 RESUME=UUID=$UUIDSWAP
 FOO
+
+echo "UUIDs & FSTAB" >> /var/log/sparkylinux-installer.log
+echo "==============================================================" >> /var/log/sparkylinux-installer.log
+#echo "UUIDTARGETPART:" >> /var/log/sparkylinux-installer.log
+#ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}' >> /var/log/sparkylinux-installer.log
+#echo "UUIDSWAP:" >> /var/log/sparkylinux-installer.log
+#ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}' >> /var/log/sparkylinux-installer.log
+#if [ "$HOMEPART" != "root" ]; then
+#	echo "UUIDHOMEPART:" >> /var/log/sparkylinux-installer.log
+#	ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}' >> /var/log/sparkylinux-installer.log
+#fi
+#if [ "$TESTEFI" != "" ]; then
+#	echo "UUIDTARGETEFI:" >> /var/log/sparkylinux-installer.log
+#	ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}' >> /var/log/sparkylinux-installer.log
+#fi
+echo "INITRAMFS-RESUME:" >> /var/log/sparkylinux-installer.log
+cat /TARGET/etc/initramfs-tools/conf.d/resume >> /var/log/sparkylinux-installer.log
+echo "GENERATED FSTAB:" >> /var/log/sparkylinux-installer.log
+cat /TARGET/etc/fstab >> /var/log/sparkylinux-installer.log
+echo "" >> /var/log/sparkylinux-installer.log
 
 # remove the old live installer desktop file 
 if [ -f /TARGET/etc/skel/Desktop/sparkylinux-installer.desktop ]; then
@@ -1586,19 +1515,22 @@ then
 fi
 
 # add info about new desktop installation to the log file
-if [ "$DESKTOPCHOOSE" != "yes" ]
+if [ "$DESKTOPCHOOSE" = "yes" ]
 then
-	echo "NEW DESKTOP INSTALLATION=no" >> /TARGET/var/log/sparkylinux-installer.log
-	echo "==============================================================" >> /TARGET/var/log/sparkylinux-installer.log
+	echo "NEW DESKTOP INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
+	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+else
+	echo "NEW DESKTOP INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
+	echo "==============================================================" >> /var/log/sparkylinux-installer.log
 fi
-echo "End of Sparky Advanced Installer Log" >> /TARGET/var/log/sparkylinux-installer.log
-echo "==============================================================" >> /TARGET/var/log/sparkylinux-installer.log
+echo "End of Sparky Advanced Installer Log" >> /var/log/sparkylinux-installer.log
+echo "==============================================================" >> /var/log/sparkylinux-installer.log
 
 # synchronize log files
 if [ -f /var/log/sparkylinux-installer.log ] && [ -f /TARGET/var/log/sparkylinux-installer.log ]
 then
-	rm -f /var/log/sparkylinux-installer.log
-	cp /TARGET/var/log/sparkylinux-installer.log /var/log/sparkylinux-installer.log
+	rm -f /TARGET/var/log/sparkylinux-installer.log
+	cp /var/log/sparkylinux-installer.log /TARGET/var/log/sparkylinux-installer.log
 fi
 
 # remove live packages
@@ -1609,8 +1541,7 @@ fi
 echo "$LOCAL109 ... $LOCAL92 ..."
 
 # remove mc but not from minimalcli
-CHECKMINICLI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
-if [ "$CHECKMINI" = "" ]
+if [ "$CHECKMINICLI" = "" ]
 then
 	REMOVEMC="apt-get purge --yes --force-yes mc"
 else
@@ -1620,6 +1551,14 @@ fi
 cat > /TARGET/bin/tempinstallerscript <<FOO
 #!/bin/bash
 
+if [ -d /etc/skel ]; then
+	cd /etc/skel
+	if [ ! -d /home/$TARGETUSER ]; then
+		mkdir -p /home/$TARGETUSER
+	fi
+	rsync -ar . /home/$TARGETUSER
+	chown -R $TARGETUSER:$TARGETUSER /home/$TARGETUSER
+fi
 apt-get purge --yes --force-yes sparky-backup-core
 apt-get purge --yes --force-yes live-boot
 apt-get purge --yes --force-yes live-boot-doc
