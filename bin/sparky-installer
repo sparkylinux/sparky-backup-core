@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/30 by pavroo
+# Last update 2018/07/31 20:56 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -40,7 +40,6 @@ PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 fi
 
@@ -1045,14 +1044,16 @@ elif [ "$FSTYPE" = "btrfs" ]; then
 	mount -o rw /dev/$TARGETPART /mnt
 	# Create subvolume
 	btrfs subvolume create /mnt/@
-	btrfs subvolume create /mnt/@home
 	# Mount the subvolume
 	sleep 2
 	echo "$LOCAL95"
 	mkdir -p /TARGET
 	mount -t btrfs -o subvol=@,defaults,nodatacow /dev/$TARGETPART /TARGET
-	mkdir -p /TARGET/home
-	mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$TARGETPART /TARGET/home
+	if [ "$HOMEPART" = "root" ]; then
+		btrfs subvolume create /mnt/@home
+		mkdir -p /TARGET/home
+		mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$TARGETPART /TARGET/home
+	fi
 	rm -rf "/TARGET/lost+found"
 elif [ "$FSTYPE" = "xfs" ]; then
 	mkfs.xfs -f /dev/$TARGETPART
@@ -1084,12 +1085,12 @@ if [ "$HOMEPART" != "root" ]; then
 			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
 		elif [ "$HFSTYPE" = "btrfs" ]; then
 			mkfs.btrfs -f /dev/$HOMEPART
-			sleep 2
+			#sleep 2
 			# Mount partition
-			mount -o rw /dev/$HOMEPART /srv
+			#mount -o rw /dev/$HOMEPART /srv
 			# Create subvolume
-			btrfs subvolume create /srv/@home
-			sleep 2			
+			#btrfs subvolume create /srv/@home
+			#sleep 2			
 		elif [ "$HFSTYPE" = "xfs" ]; then
 			mkfs.xfs -f /dev/$HOMEPART
 		fi
@@ -1101,7 +1102,8 @@ if [ "$HOMEPART" != "root" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 		tune2fs -c 0 -i 0 /dev/$HOMEPART
 	elif [ "$HFSTYPE" = "btrfs" ]; then
-		mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
+		mount /dev/$HOMEPART /TARGET/home -o rw
+		#mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
 	elif [ "$HFSTYPE" = "xfs" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 	fi
@@ -1282,7 +1284,7 @@ fi
 if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
+	HFSTABOPT="defaults,noatime,space_cache,autodefrag"
 elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
@@ -1298,7 +1300,6 @@ cat > /TARGET/etc/fstab <<FOO
 /dev/$SWAP	none	swap	sw	0	0
 # cdrom
 $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
-
 FOO
 
 # add efi part
@@ -1308,12 +1309,14 @@ if [ "$TESTEFI" != "" ]; then
 fi
 
 # add home part
-if [ "$HOMEPART" = "root" ] && [ "$FSTYPE" = "btrfs" ]; then
-	echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
-	echo "/dev/$TARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+if [ "$HOMEPART" = "root" ]; then
+	if [ "$FSTYPE" = "btrfs" ]; then
+		echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
+		echo "/dev/$TARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	fi
 else
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
-	echo "/dev/$TARGETPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	echo "/dev/$HOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 fi
 
 # add swap uuid to resume
@@ -1540,14 +1543,6 @@ fi
 
 echo "$LOCAL109 ... $LOCAL92 ..."
 
-# remove mc but not from minimalcli
-if [ "$CHECKMINICLI" = "" ]
-then
-	REMOVEMC="apt-get purge --yes --force-yes mc"
-else
-	REMOVEMC=""
-fi
-
 cat > /TARGET/bin/tempinstallerscript <<FOO
 #!/bin/bash
 
@@ -1570,7 +1565,7 @@ apt-get purge --yes --force-yes live-tools
 apt-get purge --yes --force-yes live-installer
 apt-get purge --yes --force-yes gparted
 apt-get purge --yes --force-yes calamares
-$REMOVEMC
+apt-get purge --yes --force-yes mc
 apt-get purge --yes --force-yes lvm2
 apt-get autoremove --yes
 #update-initramfs -t -c -k $(/bin/uname -r)
