@@ -4,7 +4,7 @@
 ## live-config(7) - System Configuration Scripts
 ## Copyright (C) 2006-2013 Daniel Baumann <daniel@debian.org>
 ##
-## Copyright (C) 2017 Paweł Pijanowski <pavroo@onet.eu>
+## Copyright (C) 2017-2018 Paweł Pijanowski <pavroo@onet.eu>
 ##
 ## This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
 ## This is free software, and you are welcome to redistribute it
@@ -18,10 +18,10 @@ Idesk_icon ()
         fi
 
 	# live installer icon
-	if [ -e /usr/bin/live-installer ] && [ -e /usr/share/sparkybackup/idesk/live-* ]; then
-        	cp /usr/share/sparkybackup/idesk/live-* /home/${LIVE_USERNAME}/.idesktop/
-        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/live-*
-    	fi
+	#if [ -e /usr/bin/live-installer ] && [ -e /usr/share/sparkybackup/idesk/live-* ]; then
+        #	cp /usr/share/sparkybackup/idesk/live-* /home/${LIVE_USERNAME}/.idesktop/
+        #	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/live-*
+    	#fi
     
 	# calamares icon
 	if [ -e /usr/bin/calamares ] && [ -e /usr/share/sparkybackup/idesk/calamares-* ]; then
@@ -30,10 +30,10 @@ Idesk_icon ()
     	fi
 
 	# advanced installer icon
-	if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/advanced-* ]; then
-        	cp /usr/share/sparkybackup/idesk/advanced-* /home/${LIVE_USERNAME}/.idesktop/
-        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/advanced-*
-    	fi
+	#if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/advanced-* ]; then
+        #	cp /usr/share/sparkybackup/idesk/advanced-* /home/${LIVE_USERNAME}/.idesktop/
+        #	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/advanced-*
+    	#fi
 
 	# installer guide icon
 	if [ -e /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg ]; then
