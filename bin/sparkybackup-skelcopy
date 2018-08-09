@@ -7,7 +7,7 @@
 #
 # Forked for SparkyLinux by pavroo <pavroo@onet.eu> 2013/06/24
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/07/19
+# Last update 2018/08/09
 
 # get default's locale file
 DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
@@ -162,7 +162,7 @@ if [ -d "$SKELFOLDER" ]; then
 		rsync -a .config/mate-menu /etc/skel/.config/
 	fi
 	
-	if [ -d config/menus ]; then
+	if [ -d .config/menus ]; then
 		rsync -a .config/menus /etc/skel/.config/
 	fi
 
@@ -242,7 +242,7 @@ if [ -d "$SKELFOLDER" ]; then
 		rsync -a .config/volumeicon /etc/skel/.config/
 	fi
 
-	if [ -d config/xfce4 ]; then
+	if [ -d .config/xfce4 ]; then
 		rsync -a .config/xfce4 /etc/skel/.config/
 	fi
 
