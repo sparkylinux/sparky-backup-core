@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/08/05 20:20 by pavroo
+# Last update 2018/08/11 16:20 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -50,6 +50,13 @@ elif [ -f /usr/bin/sparky-terminal ];then
 else
 	echo "sparky-xterm is missing... Exiting..."
 	exit 1
+fi
+
+TESTEFI0=`lsmod | grep efi`
+if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI" != "" ]; then
+	TESTEFI="EFI detected"
+else
+	TESTEFI=""
 fi
 
 if [ "$1" = "gui" -o "$2" = "gui" ]; then
@@ -196,7 +203,6 @@ else
 	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 fi
 
-TESTEFI=`lsmod | grep efi`	
 if [ "$TESTEFI" != "" ]
 then
 	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
@@ -263,7 +269,6 @@ GUILOG="cli"
 	$PARTITIONPROG /dev/$PARTDRIVE
 
 	# find a partiton for efi image
-	TESTEFI=`lsmod | grep efi`	
 	if [ "$TESTEFI" != "" ]; then
 	PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 		for i in $PARTEFI; do
@@ -680,8 +685,7 @@ GUILOG="yad"
 
 	$PARTITIONPROG /dev/$PARTDRIVE
 
-	# find a partiton for efi image
-	TESTEFI=`lsmod | grep efi`	
+	# find a partiton for efi image	
 	if [ "$TESTEFI" != "" ]; then
 	PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 		for i in $PARTEFI; do
@@ -1127,7 +1131,6 @@ if [ "$HOMEPART" != "root" ]; then
 fi
 
 #format and mount efi part
-TESTEFI=`lsmod | grep efi`
 if [ "$TESTEFI" != "" ]; then
 	if [ "$FORMATEFIPART" = "formatefi" ]; then
 		if [ "`mount | grep $TARGETEFI`" ]; then
@@ -1173,7 +1176,7 @@ DATE=`date '+%F'`
 KERNEL=`uname -r`
 RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
-TESTEFI=`lsmod | grep efi`
+TESTEFI=$TESTEFI
 LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
 TARGETLOCALE=`cat /tmp/sparky-advanced-installer`
 SCRIPTVERSION=`cat /etc/sparkybackup/sparkybackup.version`
@@ -1248,7 +1251,6 @@ mv /TARGET/etc/resolv.conf /TARGET/etc/resolv.conf.bak
 cp -f /etc/resolv.conf /TARGET/etc/resolv.conf
 
 # install grub-efi if needed
-TESTEFI=`lsmod | grep efi`
 if [ "$TESTEFI" != "" ]; then
 	mkdir -p /TARGET/boot/efi/EFI/sparky
 	mkdir -p /TARGET/debs
@@ -1271,7 +1273,6 @@ FOO
 fi
 
 #create a new fstab by uuid
-TESTEFI=`lsmod | grep efi`
 #UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
 #UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
 #UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
