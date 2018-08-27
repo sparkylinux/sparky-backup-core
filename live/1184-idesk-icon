@@ -36,14 +36,14 @@ Idesk_icon ()
     	#fi
 
 	# installer guide icon
-	if [ -e /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg ]; then
-		convert --resize 48x48 /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg /home/${LIVE_USERNAME}/.idesktop/application-info.png
-	fi
+	#if [ -e /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg ]; then
+	#	convert --resize 48x48 /usr/share/icons/ultra-flat-icons/mimetypes/scalable/application-info.svg /home/${LIVE_USERNAME}/.idesktop/application-info.png
+	#fi
 
-	if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/installer-* ]; then
-        	cp /usr/share/sparkybackup/idesk/installer-* /home/${LIVE_USERNAME}/.idesktop/
-        	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/installer-*
-    	fi
+	#if [ -e /usr/bin/sparkylinux-installer ] && [ -e /usr/share/sparkybackup/idesk/installer-* ]; then
+        #	cp /usr/share/sparkybackup/idesk/installer-* /home/${LIVE_USERNAME}/.idesktop/
+        #	#chmod 755 /home/${LIVE_USERNAME}/.idesktop/installer-*
+    	#fi
 
 	if [ -e /usr/share/sparkybackup/idesk/ideskrc ]; then
 		cp /usr/share/sparkybackup/idesk/ideskrc /home/${LIVE_USERNAME}/.ideskrc
@@ -52,6 +52,11 @@ Idesk_icon ()
 	# autostart idesk in live system
 	if [ -e /home/${LIVE_USERNAME}/.config/openbox/autostart.sh ]; then
 		echo "idesk &" >> /home/${LIVE_USERNAME}/.config/openbox/autostart.sh
+	fi
+
+	# stop thunar daemon in live system
+	if [ -e /home/${LIVE_USERNAME}/.config/openbox/autostart.sh ]; then
+		echo "killall thunar &" >> /home/${LIVE_USERNAME}/.config/openbox/autostart.sh
 	fi
 	
 	chown ${LIVE_USERNAME}:${LIVE_USERNAME} "/home/${LIVE_USERNAME}/.idesktop" -R

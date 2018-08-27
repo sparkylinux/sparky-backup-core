@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/07/26 16:36 by pavroo
+# Last update 2018/08/27 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -747,8 +747,8 @@ FOO
 	log_info "Copying your kernel and initrd for the livecd"
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
-	#cp /boot/vmlinuz-4.16.0-2-amd64 $WORKDIR/ISOTMP/live/vmlinuz416
-	#cp /boot/initrd.img-4.16.0-2-amd64 $WORKDIR/ISOTMP/live/initrd416.img
+	#cp /boot/vmlinuz-4.16.0-* $WORKDIR/ISOTMP/live/vmlinuz416
+	#cp /boot/initrd.img-4.16.0-* $WORKDIR/ISOTMP/live/initrd416.img
 
 	# Step 5 - Make filesystem.squashfs
 
