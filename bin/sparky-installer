@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/09/13 by pavroo
+# Last update 2018/09/28 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -41,6 +41,7 @@ TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
+CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 fi
 
 if [ -f /usr/bin/sparky-xterm ];then
@@ -123,6 +124,7 @@ if [ "$GUI" != "" ]; then
 DEFLANGS=`$DIALOGMENU $TITLE"$TITLETEXT" $YESNO $MENU $TEXT"Please choose the Advanced Installer language:" \
 Brazilian "Brasileiro" \
 English "English" \
+French "Français" \
 German "Deutsch" \
 Indonesian "Indonesia" \
 Italian "Italiano" \
@@ -140,6 +142,8 @@ Exit "Exiting now..."`
 		DEFLANG="Brazilian"
 	elif [ "$DEFLANGS" = "English" ]; then
 		DEFLANG="English"
+	elif [ "$DEFLANGS" = "French" ]; then
+		DEFLANG="French"
 	elif [ "$DEFLANGS" = "German" ]; then
 		DEFLANG="German"
 	elif [ "$DEFLANGS" = "Indonesian" ]; then
@@ -160,7 +164,7 @@ Exit "Exiting now..."`
 
 elif [ "$GUI" = "" ]; then
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" German "Deutsch" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
 
 	if [ "$?" = "0" ]; then
 		DEFLANG=`cat /tmp/sparky-advanced-installer`
@@ -179,6 +183,8 @@ fi
 DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 if [ "$DEFLANG" = "Brazilian" ]; then
 . $DEFLOCDIR/pt_BR
+elif [ "$DEFLANG" = "French" ]; then
+. $DEFLOCDIR/fr
 elif [ "$DEFLANG" = "German" ]; then
 . $DEFLOCDIR/de
 elif [ "$DEFLANG" = "Indonesian" ]; then
@@ -199,6 +205,9 @@ fi
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
 then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
+elif [ "$CHECKSERVER" != "" ]
+then
+	INSTALLTEXT1="$LOCAL1 $LOCAL118 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
 	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 fi
@@ -1282,13 +1291,19 @@ UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
 #UUIDHOMEPART=`ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}'`
 #UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
 
+if [ -d /TARGET/usr/share/doc/sparky-backup-server ]; then
+	FSTABEXTRA="defaults,relatime,suid,async,acl,user_xattr,barrier=1"
+else
+	FSTABEXTRA="defaults"
+fi
+
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
-	FSTABOPT="defaults,errors=remount-ro"
+	FSTABOPT="errors=remount-ro,$FSTABEXTRA"
 elif [ "$FSTYPE" = "btrfs" ]; then
-	FSTABOPT="subvol=@,defaults,noatime,space_cache,autodefrag"
+	FSTABOPT="subvol=@,noatime,space_cache,autodefrag,$FSTABEXTRA"
 	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
 elif [ "$FSTYPE" = "xfs" ]; then
-	FSTABOPT="defaults,noatime"
+	FSTABOPT="noatime,$FSTABEXTRA"
 fi
 
 if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
@@ -1502,6 +1517,19 @@ if [ "$GUI" != "" ]; then
 	killall -KILL tail
 fi
 
+# install server edition, text mode only
+if [ "$CHECKSERVER" != "" ]
+then
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-backup-server\n\n$LOCAL108" $HEIGHT $WIDTH
+	if [ $? = 0 ]
+	then
+		SERVERCHOOSE="yes"
+		apt-get update 
+		apt-get install sparky-backup-server -y
+		/usr/bin/sparkylinux-server-installer
+	fi
+fi
+
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
 then
@@ -1512,7 +1540,7 @@ then
 		then
 			DESKTOPCHOOSE="yes"
 			apt-get update 
-			apt-get install sparky-backup-desktop sparky-desktop-data -y --force-yes
+			apt-get install sparky-backup-desktop sparky-desktop-data -y
 			/usr/bin/sparkylinux-desktop-installer
 		fi
 	else
@@ -1521,13 +1549,22 @@ then
 		then
 			DESKTOPCHOOSE="yes"
 			$SPARKYXTERM "apt-get update"
-			$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y --force-yes"
+			$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y"
 			/usr/bin/sparkylinux-desktop-installer gui
 		fi
 	fi
 fi
 
-# add info about new desktop installation to the log file
+# add info about new desktop or server installation to the log file
+if [ "$SERVERCHOOSE" = "yes" ]
+then
+	echo "NEW SERVER INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
+	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+else
+	echo "NEW SERVER INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
+	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+fi
+
 if [ "$DESKTOPCHOOSE" = "yes" ]
 then
 	echo "NEW DESKTOP INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
@@ -1564,20 +1601,13 @@ if [ -d /etc/skel ]; then
 	rsync -ar . /home/$TARGETUSER
 	chown -R $TARGETUSER:$TARGETUSER /home/$TARGETUSER
 fi
-apt-get purge --yes --force-yes sparky-backup-core
-apt-get purge --yes --force-yes live-boot
-apt-get purge --yes --force-yes live-boot-doc
-apt-get purge --yes --force-yes live-boot-initramfs-tools
-apt-get purge --yes --force-yes live-config
-apt-get purge --yes --force-yes live-config-systemd
-apt-get purge --yes --force-yes live-config-doc
-apt-get purge --yes --force-yes live-tools
-apt-get purge --yes --force-yes live-installer
-apt-get purge --yes --force-yes gparted
-apt-get purge --yes --force-yes calamares
-apt-get purge --yes --force-yes mc
-apt-get purge --yes --force-yes lvm2
-apt-get purge --yes --force-yes ^cryptsetup*
+apt-get purge --yes sparky-backup-*
+apt-get purge --yes live-*
+apt-get purge --yes gparted
+apt-get purge --yes calamares
+apt-get purge --yes mc
+apt-get purge --yes lvm2
+apt-get purge --yes cryptsetup*
 apt-get autoremove --yes
 #update-initramfs -t -c -k $(/bin/uname -r)
 update-initramfs -t -c -k all

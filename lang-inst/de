@@ -1,7 +1,7 @@
 # German localization file for Sparky Advanced Installer by Det Bertling.
 # Copyright 2018 PaweÅ‚ "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2018/07/25 by pavroo
+# Last update 2018/09/28 by pavroo
 LOCAL1="Der erweiterte Installiermodus ermöglicht dir die Installation des Livesystems auf deine Festplatte."
 LOCAL2="Der erweiterte Installiermodus ermöglicht dir die Installation des Livesystems auf deine Festplatte, wie es ist."
 LOCAL3="Er ermöglicht auch, deinen bevoderzugten Desktop zu installieren mit"
@@ -119,3 +119,6 @@ LOCAL114="Wenn alles gut gegangen ist, solltest du dein neues System installiert
 LOCAL115="Bedenke, das KEIN Bootloader installiert ist, so dass du das manuell erledigen musst."
 LOCAL116="Möchtest du neu starten um Sparky auszuprobieren?"
 LOCAL117="Erstelle den neuen Nutzer"
+LOCAL118="It also lets you install and set the server edition."
+LOCAL119="This will let you install Sparky Small Business Server edition."
+LOCAL120="Before starting this, the tool will check for update of 1 package:"

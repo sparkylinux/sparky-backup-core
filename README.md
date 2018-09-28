@@ -42,7 +42,7 @@ os-prober
 passwd
 rsync
 sed
-sparky-backup-desktop (>= 20180729)
+sparky-backup-desktop (>= 20180729) | sparky-backup-server
 sparky-xterm (>= 0.2.0)
 squashfs-tools
 syslinux-utils

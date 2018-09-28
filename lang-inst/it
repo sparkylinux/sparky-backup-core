@@ -1,7 +1,7 @@
 # File di localizzazione italiano per Sparky Advanced Installer.
 # Copyright 2018 Carlo Troiani <troianicarlo@gmail.com> 2018/04/11
 # Rilasciato sotto licenza GNU GPL v2
-# Ultimo aggiornamento: 2018/07/25 by pavroo
+# Ultimo aggiornamento: 2018/09/28 by pavroo
 LOCAL1="L'Advanced Installer ti permette di installare il sistema che sta girando sul tuo disco rigido."
 LOCAL2="L'Advanced Installer ti permette di installare il sistema live che hai avviato sul tuo disco così come è."
 LOCAL3="Ti permette anche di installare il tuo ambiente grafico preferito"
@@ -119,3 +119,6 @@ LOCAL114="Se tutto e' andato bene il nuovo sistema e' installato e pronto per l'
 LOCAL115="Ricorda che se non c'e' alcun bootloader installato dovrai installarlo manualmente."
 LOCAL116="Vuoi riavviare la macchina adesso per provare la tua nova Sparky?"
 LOCAL117="Sto configurando il nuiovo utente"
+LOCAL118="It also lets you install and set the server edition."
+LOCAL119="This will let you install Sparky Small Business Server edition."
+LOCAL120="Before starting this, the tool will check for update of 1 package:"
