@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/09/28 by pavroo
+# Last update 2018/10/14 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -642,6 +642,14 @@ function cdfs {
 	else
 		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
 		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
+	fi
+
+	# replace grub & isolinux background of 100 edition
+	if [ -f /opt/sparky-100-grub.png ]; then
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub.png
+		cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/boot/grub/grub.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background.png
+		cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/isolinux/background.png
 	fi
 
 	# replace isolinux and grub configs for rescue edition
