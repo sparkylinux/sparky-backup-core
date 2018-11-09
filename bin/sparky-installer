@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/09/28 by pavroo
+# Last update 2018/11/08 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1261,9 +1261,12 @@ cp -f /etc/resolv.conf /TARGET/etc/resolv.conf
 
 # install grub-efi if needed
 if [ "$TESTEFI" != "" ]; then
+	mv /TARGET/usr/sbin/grub-probe /TARGET/usr/sbin/grub-probe.bak
+	echo "exit 0" > /TARGET/usr/sbin/grub-probe
+	chmod +x /TARGET/usr/sbin/grub-probe
 	mkdir -p /TARGET/boot/efi/EFI/sparky
 	mkdir -p /TARGET/debs
-	if [ -f /lib/live/mount/medium/offline/*.deb ]; then
+	if [ -d /lib/live/mount/medium/offline ]; then
 		cp /lib/live/mount/medium/offline/* /TARGET/debs/
 	else
 		cp /run/live/medium/offline/* /TARGET/debs/
@@ -1272,13 +1275,21 @@ if [ "$TESTEFI" != "" ]; then
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
-exit 0
 FOO
 	chmod +x /TARGET/tmp/efi-install
 	echo "Installing grub-efi"
 	chroot /TARGET /tmp/efi-install
 	rm -f /TARGET/tmp/efi-install
 	rm -rf /TARGET/debs
+	rm -f /TARGET/usr/sbin/grub-probe
+	mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
+	if [ ! -d /TARGET/usr/share/doc/grub-efi ]; then
+		echo "Installation grub-efi failed"
+		echo "Installation grub-efi failed" >> /var/log/sparkylinux-installer.log
+	else
+		echo "Installation grub-efi ok"
+		echo "Installation grub-efi ok" >> /var/log/sparkylinux-installer.log
+	fi
 fi
 
 #create a new fstab by uuid
