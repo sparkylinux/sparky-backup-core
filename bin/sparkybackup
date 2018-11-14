@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/10/14 by pavroo
+# Last update 2018/11/14 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -87,16 +87,6 @@ function output_usage {
 	echo "    sudo sparkybackup log"
 	echo "$LOCAL74"
 	echo ""
-	#echo "   sudo sparkybackup dist cdfs"
-	#echo "                             ($LOCAL7)"
-	#echo " "
-	#echo "   sudo sparkybackup dist iso custom.iso"
-	#echo "                             ($LOCAL8 custom.iso"
-	#echo "                              $LOCAL9)"
-	#echo " "
-	#echo "   $LOCAL10"
-	#echo "   $LOCAL11"
-	#echo "   $LOCAL12"
 	exit_with_message " " 1
 }
 
@@ -547,46 +537,142 @@ function cdfs {
 	fi
 
 	# set live iso label depends of edition
-	CHECKXFCEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep xfce`
+	CHECKAWESOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep awesome`
+	CHECKBSPWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep bspwm`
+	CHECKBUDGIEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep budgie`
+	CHECKCDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cde`
+	CHECKCINNAMONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cinnamon`
+	CHECKEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep enlightenment`
+	CHECKFLUXBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep fluxbox`
+	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
+	CHECKGNOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gnome`
+	CHECKI3ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep i3`
+	CHECKICEWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep icewm`
+	CHECKJADEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep jade`
+	CHECKJWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep jwm`
+	CHECKKDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep kde`
+	CHECKLUMINAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lumina`
 	CHECKLXDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxde`
 	CHECKLXQTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxqt`
+	CHECKMANOKWARIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep manokwari`
 	CHECKMATEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep mate`
-	CHECKMINIMALGUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalgui`
 	CHECKMINIMALCLIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
-	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
+	CHECKMINIMALGUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalgui`
 	CHECKMULTIMEDIAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep multimedia`
+	CHECKOPENBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep openbox`
+	CHECKPANTHEONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pantheon`
+	CHECKPEKWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pekwm`
 	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+	CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
+	CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep light`
+	CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
+	CHECKTRINITYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep trinity`
+	CHECKTDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep tde`
+	CHECKWINDOWMAKERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep windowmaker`
+	CHECKWMAKERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep wmaker`
+	CHECKXFCEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep xfce`
+
 	CHECKNUMBERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO | cut -f2 -d"=" | cut -f2 -d"-"`
+
 	CHECKI686ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep i686`
 	CHECKX8664ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep x86_64`
 
-	if [ "$CHECKXFCEISO" != "" ]
+	if [ "$CHECKAWESOMEISO" != "" ]
 	then
-		LIVEVERSION="Xfce"
+		LIVEVERSION="Awesome"
+	elif [ "$CHECKBSPWMISO" != "" ]
+	then
+		LIVEVERSION="BSPWM"
+	elif [ "$CHECKBUDGIEISO" != "" ]
+	then
+		LIVEVERSION="Budgie"
+	elif [ "$CHECKCDEISO" != "" ]
+	then
+		LIVEVERSION="CDE"
+	elif [ "$CHECKCINNAMONISO" != "" ]
+	then
+		LIVEVERSION="Cinnamon"
+	elif [ "$CHECKEISO" != "" ]
+	then
+		LIVEVERSION="Enlightenment"
+	elif [ "$CHECKFLUXBOXISO" != "" ]
+	then
+		LIVEVERSION="Fluxbox"
+	elif [ "$CHECKGAMEOVERISO" != "" ]
+	then
+		LIVEVERSION="GameOver"
+	elif [ "$CHECKGNOMEISO" != "" ]
+	then
+		LIVEVERSION="GNOME"
+	elif [ "$CHECKI3ISO" != "" ]
+	then
+		LIVEVERSION="i3"
+	elif [ "$CHECKICEWMISO" != "" ]
+	then
+		LIVEVERSION="IceWM"
+	elif [ "$CHECKJADEISO" != "" ]
+	then
+		LIVEVERSION="Jade"
+	elif [ "$CHECKJWMISO" != "" ]
+	then
+		LIVEVERSION="JWM"
+	elif [ "$CHECKKDEISO" != "" ]
+	then
+		LIVEVERSION="KDE"
+	elif [ "$CHECKLUMINAISO" != "" ]
+	then
+		LIVEVERSION="Lumina"
 	elif [ "$CHECKLXDEISO" != "" ]
 	then
 		LIVEVERSION="LXDE"
 	elif [ "$CHECKLXQTISO" != "" ]
 	then
 		LIVEVERSION="LXQt"
+	elif [ "$CHECKMANOKWARIISO" != "" ]
+	then
+		LIVEVERSION="Manokwari"
 	elif [ "$CHECKMATEISO" != "" ]
 	then
 		LIVEVERSION="MATE"
-	elif [ "$CHECKMINIMALGUIISO" != "" ]
-	then
-		LIVEVERSION="MinimalGUI"
 	elif [ "$CHECKMINIMALCLIISO" != "" ]
 	then
 		LIVEVERSION="MinimalCLI"
-	elif [ "$CHECKGAMEOVERISO" != "" ]
+	elif [ "$CHECKMINIMALGUIISO" != "" ]
 	then
-		LIVEVERSION="GameOver"
+		LIVEVERSION="MinimalGUI"
 	elif [ "$CHECKMULTIMEDIAISO" != "" ]
 	then
 		LIVEVERSION="Multimedia"
+	elif [ "$CHECKOPENBOXISO" != "" ]
+	then
+		LIVEVERSION="Openbox"
+	elif [ "$CHECKPANTHEONISO" != "" ]
+	then
+		LIVEVERSION="Pantheon"
+	elif [ "$CHECKPEKWMISO" != "" ]
+	then
+		LIVEVERSION="PekWM"
 	elif [ "$CHECKRESCUEISO" != "" ]
 	then
 		LIVEVERSION="Rescue"
+	elif [ "$CHECKSBCLIENTISO" != "" ]
+	then
+		LIVEVERSION="Small Business Client"
+	elif [ "$CHECKSBCLIENTLIGHTISO" != "" ]
+	then
+		LIVEVERSION="Small Business Client Light"
+	elif [ "$CHECKSBSERVERISO" != "" ]
+	then
+		LIVEVERSION="Small Business Sever"
+	elif [ "$CHECKTRINITYISO" != "" ] || [ "$CHECKTDEISO" != "" ]
+	then
+		LIVEVERSION="TDE"
+	elif [ "$CHECKWINDOWMAKERISO" != "" ] || [ "$CHECKWMAKERISO" != "" ]
+	then
+		LIVEVERSION="WindowMaker"
+	elif [ "$CHECKXFCEISO" != "" ]
+	then
+		LIVEVERSION="Xfce"
 	else
 		LIVEVERSION=""
 	fi
@@ -612,12 +698,10 @@ function cdfs {
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	sed -i -e 's/__LIVELABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 
-	#if [ ! -d /etc/plymouth ]
-	#then
-	#	sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	#fi
-
-	#cp /usr/lib/sparkybackup/live/filesystem.packages-remove $WORKDIR/ISOTMP/live/filesystem.packages-remove
+	if [ ! -d /etc/plymouth ]
+	then
+		sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	fi
 	
 	# copy grub-efi live files for dual-booting isolinux and grub-efi
 	# but don't copy the stuff if building iso with bios support only
@@ -653,8 +737,7 @@ function cdfs {
 	fi
 
 	# replace isolinux and grub configs for rescue edition
-	CHECKRESCUE=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
-	if [ "$CHECKRESCUE" != "" ]
+	if [ "$CHECKRESCUEISO" != "" ]
 	then		
 		if [ -f /usr/share/applications/sparkylinux-installer.desktop* ]
 		then
@@ -757,8 +840,9 @@ FOO
 	log_info "Copying your kernel and initrd for the livecd"
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
-	#cp /boot/vmlinuz-4.16.0-* $WORKDIR/ISOTMP/live/vmlinuz416
-	#cp /boot/initrd.img-4.16.0-* $WORKDIR/ISOTMP/live/initrd416.img
+	# configure it if you want to enable 2nd kernel in live session 
+	#cp /boot/vmlinuz-4.19.0-* $WORKDIR/ISOTMP/live/vmlinuz419
+	#cp /boot/initrd.img-4.19.0-* $WORKDIR/ISOTMP/live/initrd419.img
 
 	# Step 5 - Make filesystem.squashfs
 
