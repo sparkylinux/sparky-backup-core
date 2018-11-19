@@ -10,7 +10,7 @@
 # Copyright 2013-2018 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/11/15 by pavroo
+# Last update 2018/11/19 23:50 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -703,11 +703,6 @@ function cdfs {
 	ISOLABEL="$LIVECDLABEL $LIVENUMBER $LIVEVERSION $LIVEARCH"
 	sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	sed -i -e 's/__LIVELABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-
-	if [ ! -d /etc/plymouth ]
-	then
-		sed -i -e 's/splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	fi
 	
 	# copy grub-efi live files for dual-booting isolinux and grub-efi
 	# but don't copy the stuff if building iso with bios support only
@@ -774,6 +769,14 @@ function cdfs {
 	if [ -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg ]
 	then
 		sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+	fi
+
+	if [ ! -d /etc/plymouth ]
+	then
+		sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 	fi
 
 	# add minimal file to the iso to let the netinstall installer detect it

@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/11/08 by pavroo
+# Last update 2018/11/19 23:45 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -40,8 +40,10 @@ PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKMINIMALCLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
+CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
 if [ -f /usr/bin/sparky-xterm ];then
@@ -1031,9 +1033,15 @@ echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 ## Preserve kernel options in the new grub system
 #NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
-if [ "$NewGrubDefLine" = "" ]; then
-	NewGrubDefLine="quiet"
+#if [ "$NewGrubDefLine" = "" ]; then
+if [ "$CHECKSERVER" != "" ]; then
+	NewGrubDefLine=""
+elif [ "$CHECKMINIMALCLI" != "" ]; then
+	NewGrubDefLine=""
+else
+	NewGrubDefLine="$NewGrubDefLine"
 fi
+#fi
 
 OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub)
 OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /etc/default/grub)
@@ -1102,13 +1110,7 @@ if [ "$HOMEPART" != "root" ]; then
 		if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
 		elif [ "$HFSTYPE" = "btrfs" ]; then
-			mkfs.btrfs -f /dev/$HOMEPART
-			#sleep 2
-			# Mount partition
-			#mount -o rw /dev/$HOMEPART /srv
-			# Create subvolume
-			#btrfs subvolume create /srv/@home
-			#sleep 2			
+			mkfs.btrfs -f /dev/$HOMEPART			
 		elif [ "$HFSTYPE" = "xfs" ]; then
 			mkfs.xfs -f /dev/$HOMEPART
 		fi
@@ -1121,7 +1123,6 @@ if [ "$HOMEPART" != "root" ]; then
 		tune2fs -c 0 -i 0 /dev/$HOMEPART
 	elif [ "$HFSTYPE" = "btrfs" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
-		#mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$HOMEPART /TARGET/home
 	elif [ "$HFSTYPE" = "xfs" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 	fi
@@ -1294,13 +1295,20 @@ fi
 
 #create a new fstab by uuid
 #UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
-#UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
-#UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
-#UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
 #UUIDTARGETPART=`ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}'`
-UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
+UUIDTARGETPART=`blkid | grep $TARGETPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
 #UUIDHOMEPART=`ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}'`
+UUIDHOMEPART=`blkid | grep $HOMEPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
+#UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
+UUIDSWAP=`blkid | grep $SWAP: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
 #UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
+UUIDTARGETEFI=`blkid | grep $TARGETEFI: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
 
 if [ -d /TARGET/usr/share/doc/sparky-backup-server ]; then
 	FSTABEXTRA="defaults,relatime,suid,async,acl,user_xattr,barrier=1"
@@ -1331,9 +1339,9 @@ cat > /TARGET/etc/fstab <<FOO
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
 # root /dev/$TARGETPART
-/dev/$TARGETPART	/	$FSTYPE	$FSTABOPT	0	1
+UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
 # swap /dev/$SWAP
-/dev/$SWAP	none	swap	sw	0	0
+UUID=$UUIDSWAP	none	swap	sw	0	0
 # cdrom
 $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
 FOO
@@ -1341,18 +1349,18 @@ FOO
 # add efi part
 if [ "$TESTEFI" != "" ]; then
 	echo "# efi /dev/$TARGETEFI" >> /TARGET/etc/fstab
-	echo "/dev/$TARGETEFI	/boot/efi	vfat	defaults	0	0" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0" >> /TARGET/etc/fstab
 fi
 
 # add home part
 if [ "$HOMEPART" = "root" ]; then
 	if [ "$FSTYPE" = "btrfs" ]; then
 		echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
-		echo "/dev/$TARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+		echo "UUID=$UUIDTARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 	fi
 else
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
-	echo "/dev/$HOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 fi
 
 # add swap uuid to resume
