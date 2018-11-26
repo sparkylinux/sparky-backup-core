@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/11/19 23:45 by pavroo
+# Last update 2018/11/26 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1310,7 +1310,7 @@ UUIDSWAP=`blkid | grep $SWAP: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//
 #UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
 UUIDTARGETEFI=`blkid | grep $TARGETEFI: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
 
-if [ -d /TARGET/usr/share/doc/sparky-backup-server ]; then
+if [ -d /TARGET/usr/share/doc/sparky-meta-server ]; then
 	FSTABEXTRA="defaults,relatime,suid,async,acl,user_xattr,barrier=1"
 else
 	FSTABEXTRA="defaults"
@@ -1447,9 +1447,13 @@ fi
 if [ "$TARGETUSER" != "" ]; then
 
 	echo "$TARGETHOSTNAME" > /TARGET/etc/hostname
-	echo "127.0.0.1 localhost" > /TARGET/etc/hosts
-	echo "127.0.0.1 $TARGETHOSTNAME" >> /TARGET/etc/hosts
-	touch /TARGET/etc/resolv.conf
+	if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
+		echo "127.0.0.1 localhost" > /TARGET/etc/hosts
+		echo "127.0.0.1 $TARGETHOSTNAME" >> /TARGET/etc/hosts
+		if [ ! -f /TARGET/etc/resolv.conf ]; then
+			touch /TARGET/etc/resolv.conf
+		fi
+	fi
 
 	#remove autologin from livecd on installed system
 
@@ -1626,7 +1630,7 @@ apt-get purge --yes gparted
 apt-get purge --yes calamares
 apt-get purge --yes mc
 apt-get purge --yes lvm2
-apt-get purge --yes cryptsetup*
+apt-get purge --yes cryptsetup
 apt-get autoremove --yes
 #update-initramfs -t -c -k $(/bin/uname -r)
 update-initramfs -t -c -k all
@@ -1643,8 +1647,10 @@ if [ "$GUI" != "" ]; then
 fi
 
 # restore resolveconf
-rm -f /TARGET/etc/resolv.conf
-mv /TARGET/etc/resolv.conf.bak /TARGET/etc/resolv.conf
+if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
+	rm -f /TARGET/etc/resolv.conf
+	mv /TARGET/etc/resolv.conf.bak /TARGET/etc/resolv.conf
+fi
 
 # Setup grub
 if [ "$GRUBLOCTEST" = "nogrub" ]; then
