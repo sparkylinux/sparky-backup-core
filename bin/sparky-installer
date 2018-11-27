@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/11/26 by pavroo
+# Last update 2018/11/27 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -40,7 +40,7 @@ PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-CHECKMINIMALCLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+#CHECKMINIMALCLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
@@ -1031,23 +1031,6 @@ if [ "$GUI" != "" ]; then
 fi
 echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
-## Preserve kernel options in the new grub system
-#NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
-#if [ "$NewGrubDefLine" = "" ]; then
-if [ "$CHECKSERVER" != "" ]; then
-	NewGrubDefLine=""
-elif [ "$CHECKMINIMALCLI" != "" ]; then
-	NewGrubDefLine=""
-else
-	NewGrubDefLine="$NewGrubDefLine"
-fi
-#fi
-
-OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /etc/default/grub)
-OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /etc/default/grub)
-sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /etc/default/grub
-sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /etc/default/grub
-
 #make the filesystem and mount the partition on /TARGET
 if [ "`mount | grep $TARGETPART`" ]; then
 	echo "$LOCAL94"
@@ -1605,6 +1588,21 @@ then
 	rm -f /TARGET/var/log/sparkylinux-installer.log
 	cp /var/log/sparkylinux-installer.log /TARGET/var/log/sparkylinux-installer.log
 fi
+
+## Preserve kernel options in the new grub system
+#NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
+if [ "$CHECKSERVER" != "" ]; then
+	NewGrubDefLine=""
+elif [ ! -d /TARGET/etc/plymouth ]; then
+	NewGrubDefLine=""
+else
+	NewGrubDefLine="$NewGrubDefLine"
+fi
+
+OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /TARGET/etc/default/grub)
+OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /TARGET/etc/default/grub)
+sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /TARGET/etc/default/grub
+sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
 
 # remove live packages
 if [ "$GUI" != "" ]; then
