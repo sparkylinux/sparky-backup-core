@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2018 under the GNU GPL2 License
+# Copyright 2013-2019 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2018/11/19 23:50 by pavroo
+# Last update 2019/01/02 23:26 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -510,7 +510,12 @@ function cdfs {
 
 		OLDUSER=`grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'`
 		cat /etc/shadow | grep -v root | grep -v $OLDUSER > $WORKDIR/dummysys/etc/shadow
+		chmod 644 $WORKDIR/dummysys/etc/group
+		chown root:root $WORKDIR/dummysys/etc/group
+		chmod 644 $WORKDIR/dummysys/etc/passwd
+		chown root:root $WORKDIR/dummysys/etc/passwd
 		chmod 640 $WORKDIR/dummysys/etc/shadow
+		chown root:shadow $WORKDIR/dummysys/etc/shadow
 	fi
 
 	# copy isolinux files
