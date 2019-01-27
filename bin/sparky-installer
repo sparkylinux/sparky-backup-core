@@ -8,7 +8,7 @@
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2018/12/29 by pavroo
+# Last update 2019/01/27 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -231,7 +231,7 @@ tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-bu
 
 if [ "$GUI" = "" ]; then
 GUILOG="cli"
-#blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | cut -f3 -d "/" | sed -r "s/://"
+
 ##########TEXT MODE##########
 
 	#inform them what this is and ask if they want to continue
@@ -1526,13 +1526,13 @@ fi
 # install server edition, text mode only
 if [ "$CHECKSERVER" != "" ]
 then
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-backup-server\n\n$LOCAL108" $HEIGHT $WIDTH
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-ad-server\n\n$LOCAL108" $HEIGHT $WIDTH
 	if [ $? = 0 ]
 	then
 		SERVERCHOOSE="yes"
 		apt-get update 
-		apt-get install sparky-backup-server -y
-		/usr/bin/sparkylinux-server-installer
+		apt-get install sparky-ad-server -y
+		/usr/bin/sparky-ad-server
 	fi
 fi
 
