@@ -1,7 +1,7 @@
 ﻿# Fichier de localisation française de Sparky Advanced Installer.
 # Copyright 2018 hiver <hiver@club-internet.fr> 2018/09/27
 # Sous licence GNU GPL v2
-# Dernière mise à jour 2018/09/28 by pavroo
+# Last update 2019/01/28 by pavroo
 LOCAL1="L'installateur avancé vous permet d'installer le système Live sur votre disque dur."
 LOCAL2="L'installateur avancé vous permet d'installer le système Live sur votre disque dur tel quel."
 LOCAL3="Il vous permet aussi d'installer votre bureau favori avec"
@@ -122,3 +122,4 @@ LOCAL117="Configuration du nouvel utilisateur"
 LOCAL118="It also lets you install and set the server edition."
 LOCAL119="This will let you install Sparky Small Business Server edition."
 LOCAL120="Before starting this, the tool will check for update of 1 package:"
+LOCAL121="After rebooting, to finish the Server installation, run the command: sparky-server"

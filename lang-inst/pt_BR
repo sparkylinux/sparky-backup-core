@@ -1,8 +1,8 @@
 # English localization file for Sparky Advanced Installer.
 # Copyright 2018 PaweÅ‚ "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2018/09/28 by pavroo
 # Traduzido por Daniel Campos Ramos "Capitain_Jack" <Capitain_Jack@yahoo.com> 2018/04/01
+# Last update 2019/01/28 by pavroo
 LOCAL1="O instalador avançado permite que você instale o sistema live em seu disco rígido."
 LOCAL2="O instalador avançado instala o sistema live como está em seu disco rígido."
 LOCAL3="Também permite que instale seu desktop favorito"
@@ -123,3 +123,4 @@ LOCAL117="Configurando o novo usuário"
 LOCAL118="It also lets you install and set the server edition."
 LOCAL119="This will let you install Sparky Small Business Server edition."
 LOCAL120="Before starting this, the tool will check for update of 1 package:"
+LOCAL121="After rebooting, to finish the Server installation, run the command: sparky-server"

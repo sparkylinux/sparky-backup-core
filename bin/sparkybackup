@@ -10,7 +10,7 @@
 # Copyright 2013-2019 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2019/01/27 by pavroo
+# Last update 2019/01/28 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 

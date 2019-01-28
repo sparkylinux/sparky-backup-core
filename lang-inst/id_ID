@@ -1,8 +1,8 @@
 # Indonesian localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2018/09/28 by pavroo
 # Translated to Indonesian by les kompie
+# Last update 2019/01/28 by pavroo
 LOCAL1="Advanced Installer membantu anda meng-instal sistem live ke hard drive."
 LOCAL2="Advanced Installer membantu anda meng-instal sistem live ke hard drive, seperti apa adanya."
 LOCAL3="Ini juga membantu anda meng-instal desktop favorit anda dengan"
@@ -123,3 +123,4 @@ LOCAL117="Menyiapkan user baru"
 LOCAL118="It also lets you install and set the server edition."
 LOCAL119="This will let you install Sparky Small Business Server edition."
 LOCAL120="Before starting this, the tool will check for update of 1 package:"
+LOCAL121="After rebooting, to finish the Server installation, run the command: sparky-server"

@@ -7,8 +7,8 @@
 #
 # sparkylinux-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2018 Under the GNU GPL2 License
-# Last update 2019/01/27 by pavroo
+# Copyright 2013-2019 Under the GNU GPL2 License
+# Last update 2019/01/28 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -462,60 +462,64 @@ GUILOG="cli"
 
 		rm /tmp/choice.$$
 
-		#username input secton
-		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL42" $HEIGHT $WIDTH 2>/tmp/choice.$$
-		if [ "$?" = "0" ]; then
-			TARGETUSERFULLNAME=`cat /tmp/choice.$$`
-		else
-			exit 1
-		fi
+		# do not set a regular user on server edition; text mode only
+		if [ "$CHECKSERVER" = "" ]; then
 
-		rm /tmp/choice.$$
-
-		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL43\n$LOCAL44" $HEIGHT $WIDTH 2>/tmp/choice.$$
-		if [ "$?" = "0" ]; then
-			TARGETUSER=`cat /tmp/choice.$$`
-		else
-			exit 1
-		fi
-
-		rm /tmp/choice.$$
-
-		#make sure its all lowercase just in case
-		TARGETUSER="`echo $TARGETUSER | awk '{print tolower ($0)}'`"
-
-		#password entry section
-
-		TARGETPASS="1"
-		TARGETPASS2="2"
-
-		while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
-
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
+			#username input secton
+			$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL42" $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
-				TARGETPASS=`cat /tmp/choice.$$`
+				TARGETUSERFULLNAME=`cat /tmp/choice.$$`
 			else
 				exit 1
 			fi
 
 			rm /tmp/choice.$$
 
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL43\n$LOCAL44" $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
-				TARGETPASS2=`cat /tmp/choice.$$`
+				TARGETUSER=`cat /tmp/choice.$$`
 			else
 				exit 1
 			fi
 
 			rm /tmp/choice.$$
 
-			if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
-				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
-			fi
+			#make sure its all lowercase just in case
+			TARGETUSER="`echo $TARGETUSER | awk '{print tolower ($0)}'`"
 
-		done
+			#password entry section
 
-		rm /tmp/choice.$$
+			TARGETPASS="1"
+			TARGETPASS2="2"
+
+			while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
+
+				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
+				if [ "$?" = "0" ]; then
+					TARGETPASS=`cat /tmp/choice.$$`
+				else
+					exit 1
+				fi
+
+				rm /tmp/choice.$$
+
+				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
+				if [ "$?" = "0" ]; then
+					TARGETPASS2=`cat /tmp/choice.$$`
+				else
+					exit 1
+				fi
+
+				rm /tmp/choice.$$
+
+				if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
+					$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
+				fi
+
+			done
+
+			rm /tmp/choice.$$
+		fi
 
 	fi
 
@@ -1502,6 +1506,10 @@ else
 cat > /TARGET/bin/newuserscript <<FOO
 #!/bin/bash
 
+echo -e "$TARGETROOTPASS\n$TARGETROOTPASS\n" | passwd root
+userdel -f -r $LIVE_USERNAME
+sed -i '/$LIVE_USERNAME/d' /etc/sudoers
+
 for i in `ls -d /home/*`; do
 
 if [ /$i/.config/Thunar/volmanrc ]; then
@@ -1524,17 +1532,17 @@ if [ "$GUI" != "" ]; then
 fi
 
 # install server edition, text mode only
-if [ "$CHECKSERVER" != "" ]
-then
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-ad-server\n\n$LOCAL108" $HEIGHT $WIDTH
-	if [ $? = 0 ]
-	then
-		SERVERCHOOSE="yes"
-		apt-get update 
-		apt-get install sparky-ad-server -y
-		/usr/bin/sparky-ad-server
-	fi
-fi
+#if [ "$CHECKSERVER" != "" ]
+#then
+#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-ad-server\n\n$LOCAL108" $HEIGHT $WIDTH
+#	if [ $? = 0 ]
+#	then
+#		SERVERCHOOSE="yes"
+#		apt-get update 
+#		apt-get install sparky-ad-server -y
+#		/usr/bin/sparky-ad-server
+#	fi
+#fi
 
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
@@ -1562,14 +1570,14 @@ then
 fi
 
 # add info about new desktop or server installation to the log file
-if [ "$SERVERCHOOSE" = "yes" ]
-then
-	echo "NEW SERVER INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
-	echo "==============================================================" >> /var/log/sparkylinux-installer.log
-else
-	echo "NEW SERVER INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
-	echo "==============================================================" >> /var/log/sparkylinux-installer.log
-fi
+#if [ "$SERVERCHOOSE" = "yes" ]
+#then
+#	echo "NEW SERVER INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
+#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+#else
+#	echo "NEW SERVER INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
+#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+#fi
 
 if [ "$DESKTOPCHOOSE" = "yes" ]
 then
@@ -1683,13 +1691,6 @@ chmod +x /tmp/Grub-Update
 		killall -KILL tail
 	fi
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n\n$LOCAL114\n\n$LOCAL115\n\n$LOCAL116" $HEIGHT $WIDTH
-	if [ $? != 0 ]; then
-		exit 0
-	else
-		reboot
-	fi
-
 else
 cat > /tmp/Grub-Install << FOO
 #!/bin/bash
@@ -1733,11 +1734,23 @@ chmod +x /tmp/Grub-Install
 		killall -KILL tail
 	fi
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n\n$LOCAL114\n\n$LOCAL116" $HEIGHT $WIDTH
+fi
 
-	if [ $? != 0 ]; then
-		exit 0
-	else
-		reboot
-	fi
+if [ "$GRUBLOCTEST" = "nogrub" ]; then
+	PASTEGRUB="\n$LOCAL115\n"
+else
+	PASTEGRUB=""
+fi
+
+if [ "$CHECKSERVER" != "" ]; then
+	PASTESERVER="\n$LOCAL121\n"
+else
+	PASTESERVER=""
+fi
+
+$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n$PASTEGRUB\n$LOCAL114\n$PASTESERVER\n$LOCAL116" $HEIGHT $WIDTH
+if [ $? != 0 ]; then
+	exit 0
+else
+	reboot
 fi
