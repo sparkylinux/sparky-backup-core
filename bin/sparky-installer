@@ -5,10 +5,10 @@
 # Originally Created September 12th,2008
 # Updated to replace zenity with yad July 2012
 #
-# sparkylinux-installer has been forked
+# sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/01/28 by pavroo
+# Last update 2019/02/03 13:14 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -252,7 +252,6 @@ GUILOG="cli"
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
 	#choose the drive to partition
-	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
 	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
 
@@ -281,7 +280,8 @@ GUILOG="cli"
 
 	# find a partiton for efi image
 	if [ "$TESTEFI" != "" ]; then
-	PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	#PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 		for i in $PARTEFI; do
 			efipart="$i"
 			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -292,6 +292,7 @@ GUILOG="cli"
 
 		if [ "$?" = "0" ]; then
 			TARGETEFI=`cat /tmp/choice.$$`
+			TARGETEFI="$TARGETEFI:"
 		else
 			TARGETEFI="Exit"
 		fi
@@ -319,10 +320,11 @@ GUILOG="cli"
 	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
 	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
 	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
+	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
 	if [ "$TARGETEFI" != "" ]; then
-		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
 	else
-		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 	fi
 	for i in $TARGETSWAP; do
 		swappart="$i"
@@ -333,6 +335,7 @@ GUILOG="cli"
 	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		SWAP=`cat /tmp/choice.$$`
+		SWAP="$SWAP:"
 	else
 		SWAP="Exit"
 	fi
@@ -345,22 +348,14 @@ GUILOG="cli"
 	fi
 
 	#choose the partition to install to
-	#CKLIVE=`mount | grep "live" | grep -v "loop"  | awk '{print $1}' | awk -F "/" '{print $3}'`
 	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
 	if [ "$TARGETEFI" != "" ]; then
-		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
 	else
-		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $SWAP`
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
 	fi
-	#PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
 	PARTINST=`echo $PARTITIONS`
-	#for i in $PARTITIONS; do
-	#	tempsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-	#	if [ "$tempsize" = "1" ]; then
-	#		PARTINST=`echo $PARTINST | sed -r "s/$i//"`
-	#	fi
-	#done
 
 	for i in $PARTITIONS; do
 		part="$i"
@@ -372,6 +367,7 @@ GUILOG="cli"
 
 	if [ "$?" = "0" ]; then
 		TARGETPART=`cat /tmp/choice.$$`
+		TARGETPART="$TARGETPART:"
 	else
 		TARGETPART="Exit"
 	fi
@@ -394,7 +390,12 @@ GUILOG="cli"
 
 	rm /tmp/choice.$$
 
-	HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART//"`
+	#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
+	if [ "$TARGETEFI" != "" ]; then
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	else
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	fi
 
 	for i in $HOMEINST; do
 		homepart="$i"
@@ -425,6 +426,13 @@ GUILOG="cli"
 		rm /tmp/choice.$$
 
 	fi
+
+	# set partitions with no ":"
+	if [ "$TESTEFI" != "" ]; then
+		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
+	fi
+	SWAP=`echo $SWAP | cut -f1 -d":"`
+	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
 
 	#check mode and get new user info if it is a dist mode
 	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
@@ -675,7 +683,6 @@ GUILOG="yad"
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT"
 	#choose the drive to partition
-	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
 	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
 
@@ -702,7 +709,8 @@ GUILOG="yad"
 
 	# find a partiton for efi image	
 	if [ "$TESTEFI" != "" ]; then
-	PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	#PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 		for i in $PARTEFI; do
 			efipart="$i"
 			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -712,10 +720,11 @@ GUILOG="yad"
 		TARGETEFI=""
 		while [ "$TARGETEFI" = "" ]
 		do
-		TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL23\n$LOCAL24" Exit "$LOCAL21" $efipartmenu`
+			TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL23\n$LOCAL24" Exit "$LOCAL21" $efipartmenu`
 		done
 
 		TARGETEFI=`echo $TARGETEFI | cut -d "|" -f 1`
+		TARGETEFI="$TARGETEFI:"
 
 		if [ "$TARGETEFI" = "Exit" ]; then
 			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
@@ -739,9 +748,9 @@ GUILOG="yad"
 	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
 	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 	if [ "$TARGETEFI" != "" ]; then
-		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
 	else
-		TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 	fi
 	for i in $TARGETSWAP; do
 		swappart="$i"
@@ -756,6 +765,7 @@ GUILOG="yad"
 	done
 
 	SWAP=`echo $SWAP | cut -d "|" -f 1`
+	SWAP="$SWAP:"
 
 	if [ "$SWAP" = "Exit" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
@@ -763,22 +773,14 @@ GUILOG="yad"
 	fi
 
 	#choose the partition to install to
-	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}'`
 	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
 	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 	if [ "$TARGETEFI" != "" ]; then
-		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
 	else
-		PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $SWAP`
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
 	fi
-	#PARTINSTTEMP=`echo $PARTITIONS | sed -r "s/$SWAP//"`
 	PARTINST=`echo $PARTITIONS`
-	#for i in $PARTINST; do
-	#	tempsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-	#	if [ "$tempsize" = "1" ]; then
-	#		PARTINST=`echo $PARTINST | sed -r "s/$i//"`
-	#	fi
-	#done
 
 	for i in $PARTITIONS; do
 		part="$i"
@@ -793,6 +795,7 @@ GUILOG="yad"
 	done
 
 	TARGETPART=`echo $TARGETPART | cut -d "|" -f 1`
+	TARGETPART="$TARGETPART:"
 
 	if [ "$TARGETPART" = "Exit" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
@@ -807,7 +810,12 @@ GUILOG="yad"
 
 	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
 
-	HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART//"`
+	#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART//"`
+	if [ "$TARGETEFI" != "" ]; then
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	else
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	fi
 	for i in $HOMEINST; do
 		homepart="$i"
 		homepartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -831,6 +839,13 @@ GUILOG="yad"
 	fi
 
 	HFSTYPE=`echo $HFSTYPE | cut -d "|" -f 1`
+
+	# set partitions with no ":"
+	if [ "$TESTEFI" != "" ]; then
+		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
+	fi
+	SWAP=`echo $SWAP | cut -f1 -d":"`
+	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
 
 	#check mode and get new user info if it is a dist mode
 	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
@@ -899,7 +914,6 @@ PASSOK="Yes"
 GrubSelectGUI () {
 
 	GrubMenu=()
-	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
 	Drives=$(lsblk -l | grep -v NAME | awk '{print $1}')
 
@@ -1149,7 +1163,6 @@ if [ "$TESTEFI" != "" ]; then
 fi
 
 #get the cdrom device for fstab
-#TARGETCDROM=`cat /proc/mounts | grep "/live/image" | awk '{print $1}'`
 TARGETCDROM="/dev/cdrom"
 
 sleep 1
@@ -1363,18 +1376,6 @@ FOO
 
 echo "UUIDs & FSTAB" >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
-#echo "UUIDTARGETPART:" >> /var/log/sparkylinux-installer.log
-#ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}' >> /var/log/sparkylinux-installer.log
-#echo "UUIDSWAP:" >> /var/log/sparkylinux-installer.log
-#ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}' >> /var/log/sparkylinux-installer.log
-#if [ "$HOMEPART" != "root" ]; then
-#	echo "UUIDHOMEPART:" >> /var/log/sparkylinux-installer.log
-#	ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}' >> /var/log/sparkylinux-installer.log
-#fi
-#if [ "$TESTEFI" != "" ]; then
-#	echo "UUIDTARGETEFI:" >> /var/log/sparkylinux-installer.log
-#	ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}' >> /var/log/sparkylinux-installer.log
-#fi
 echo "INITRAMFS-RESUME:" >> /var/log/sparkylinux-installer.log
 cat /TARGET/etc/initramfs-tools/conf.d/resume >> /var/log/sparkylinux-installer.log
 echo "GENERATED FSTAB:" >> /var/log/sparkylinux-installer.log
@@ -1531,19 +1532,6 @@ if [ "$GUI" != "" ]; then
 	killall -KILL tail
 fi
 
-# install server edition, text mode only
-#if [ "$CHECKSERVER" != "" ]
-#then
-#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL119\n\n$LOCAL120\nsparky-ad-server\n\n$LOCAL108" $HEIGHT $WIDTH
-#	if [ $? = 0 ]
-#	then
-#		SERVERCHOOSE="yes"
-#		apt-get update 
-#		apt-get install sparky-ad-server -y
-#		/usr/bin/sparky-ad-server
-#	fi
-#fi
-
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
 then
@@ -1568,16 +1556,6 @@ then
 		fi
 	fi
 fi
-
-# add info about new desktop or server installation to the log file
-#if [ "$SERVERCHOOSE" = "yes" ]
-#then
-#	echo "NEW SERVER INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
-#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
-#else
-#	echo "NEW SERVER INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
-#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
-#fi
 
 if [ "$DESKTOPCHOOSE" = "yes" ]
 then
@@ -1754,3 +1732,5 @@ if [ $? != 0 ]; then
 else
 	reboot
 fi
+
+exit 0
