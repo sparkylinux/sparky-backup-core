@@ -1,7 +1,7 @@
 # Файл русской локализации для Sparky Advanced Installer.
 # Copyright 2018 Igor Klyushnyov <inklu@yandex.ru> 2018/07/30
 # Под лицензией GNU GPL v2
-# Last update 2019/01/28 by pavroo
+# Last update 2019/02/05 by pavroo
 LOCAL1="Расширенный установщик позволит установить live-систему на ваш жёсткий диск."
 LOCAL2="Расширенный установщик позволит установить live-систему на ваш жёсткий диск как есть."
 LOCAL3="Также, если пожелаете, он позволит установить предпочтительный рабочий стол с"
@@ -123,3 +123,7 @@ LOCAL118="It also lets you install and set the server edition."
 LOCAL119="This will let you install Sparky Small Business Server edition."
 LOCAL120="Before starting this, the tool will check for update of 1 package:"
 LOCAL121="After rebooting, to finish the Server installation, run the command: sparky-server"
+LOCAL122="Пожалуйста, дождитесь завершения..."
+LOCAL123="The bootloader starts booting the new system with 5 second of delay.\nIf you would like to change, choose your delay time or quit."
+LOCAL124="with no changes"
+LOCAL125="no delay"

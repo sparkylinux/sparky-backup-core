@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/02/03 13:14 by pavroo
+# Last update 2019/02/05 22:10 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -222,7 +222,7 @@ else
 fi
 
 progressbar () {
-tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close
+tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text=$LOCAL122
 }
 
 . /etc/live/config.conf
@@ -584,6 +584,20 @@ GrubSelectText () {
 		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
 		GRUBLOC="/dev/$GRUBLOCTEST"
 	fi
+
+	# set grub delay
+	#if [ "$CHECKSERVER" != "" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
+	#fi
+
+	if [ "$?" = "0" ]
+	then
+		SETDELAY=`cat /tmp/choice.$$`
+	else
+		SETDELAY="5"
+	fi
+
+	rm /tmp/choice.$$
 
 }
 	
@@ -954,6 +968,22 @@ GrubSelectGUI () {
 		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
 		GRUBLOC="/dev/$GRUBLOCTEST"
 	fi
+
+	# set grub delay
+SETDELAY=`$DIALOGMENU $TITLE"$TITLETEXT" $MSGBOX $MENU $TEXT"$LOCAL123" \
+5 "5 sec $LOCAL124" \
+10 "10 sec" \
+20 "20 sec" \
+30 "30 sec" \
+No "0 sec $LOCAL125"`
+
+	if [ "$?" = "0" ]
+	then
+		SETDELAY=`echo $SETDELAY | cut -d "|" -f 1`
+	else
+		SETDELAY="5"
+	fi
+
 }
 
 GrubSelectGUI
@@ -1589,6 +1619,13 @@ OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /TARGET/etc/default/gr
 OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /TARGET/etc/default/grub)
 sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /TARGET/etc/default/grub
 sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
+if [ "$SETDELAY" = "No" ]; then
+	sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g" /TARGET/etc/default/grub
+elif [ "$SETDELAY" = "5" ]; then
+	echo "Grub delay with no changes..."
+else
+	sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=$SETDELAY/g" /TARGET/etc/default/grub
+fi
 
 # remove live packages
 if [ "$GUI" != "" ]; then

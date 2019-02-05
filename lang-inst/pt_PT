@@ -1,8 +1,8 @@
 # Portuguese localization file for Sparky Advanced Installer.
-# Copyright 2018 PaweÅ‚ "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
+# Copyright 2018 Paweł‚ "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
 # Translation by José Vieira <jvieira33@sapo.pt> 2018/04/13
-# Last update 2019/01/28 by pavroo
+# Last update 2019/02/05 by pavroo
 LOCAL1="O instalador avançado permite instalar no disco rígido o sistema do meio externo executável."
 LOCAL2="O instalador avançado instala no disco rígido o sistema do meio externo executável tal como está."
 LOCAL3="Também permite instalar um ambiente de trabalho à escolha."
@@ -124,3 +124,7 @@ LOCAL118="It also lets you install and set the server edition."
 LOCAL119="This will let you install Sparky Small Business Server edition."
 LOCAL120="Before starting this, the tool will check for update of 1 package:"
 LOCAL121="After rebooting, to finish the Server installation, run the command: sparky-server"
+LOCAL122="Por favor, espere até completar..."
+LOCAL123="The bootloader starts booting the new system with 5 second of delay.\nIf you would like to change, choose your delay time or quit."
+LOCAL124="with no changes"
+LOCAL125="no delay"
