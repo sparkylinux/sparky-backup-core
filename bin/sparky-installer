@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/02/05 22:10 by pavroo
+# Last update 2019/02/06 00:39 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -178,7 +178,7 @@ elif [ "$GUI" = "" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Exiting the Installer now..." $HEIGHT $WIDTH
 		exit 1
 	fi
-	
+
 fi
 
 # get default's locale file
@@ -222,7 +222,7 @@ else
 fi
 
 progressbar () {
-tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text=$LOCAL122
+tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
 }
 
 . /etc/live/config.conf
