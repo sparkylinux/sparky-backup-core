@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/02/06 00:39 by pavroo
+# Last update 2019/02/25 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1461,17 +1461,21 @@ fi
 #restore original inittab as live-initramfs changes it
 #cp /TARGET/usr/share/sysvinit/inittab /TARGET/etc/inittab
 
+# set hostname & hosts
+if [ -f /TARGET/etc/hostname ]; then
+	rm -f /TARGET/etc/hostname
+fi
+echo "$TARGETHOSTNAME" > /TARGET/etc/hostname
+if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
+	echo "127.0.0.1 localhost" > /TARGET/etc/hosts
+	echo "127.0.0.1 $TARGETHOSTNAME" >> /TARGET/etc/hosts
+fi
+if [ ! -f /TARGET/etc/resolv.conf ]; then
+	touch /TARGET/etc/resolv.conf
+fi
+
 #check if this is a backup livecd or a dist livecd
 if [ "$TARGETUSER" != "" ]; then
-
-	echo "$TARGETHOSTNAME" > /TARGET/etc/hostname
-	if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
-		echo "127.0.0.1 localhost" > /TARGET/etc/hosts
-		echo "127.0.0.1 $TARGETHOSTNAME" >> /TARGET/etc/hosts
-		if [ ! -f /TARGET/etc/resolv.conf ]; then
-			touch /TARGET/etc/resolv.conf
-		fi
-	fi
 
 	#remove autologin from livecd on installed system
 
