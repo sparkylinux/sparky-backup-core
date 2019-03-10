@@ -1,7 +1,7 @@
 # Polish localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2019/02/05 by pavroo
+# Last update 2019/03/09 by pavroo
 LOCAL1="Advanced Installer umożliwi zainstalowanie na twoim dysku twardym systemu live."
 LOCAL2="Advanced Installer umożliwi zainstalowanie na twoim dysku twardym systemu live w tej samej wersji co live."
 LOCAL3="Pozwoli również na na zainstalowanie twojego ulubionego pulpitu,"
@@ -127,3 +127,6 @@ LOCAL122="Proszę czekać aż skończy..."
 LOCAL123="Bootloader uruchamia system z 5 sekundowym opóźnieniem.\nJeśli chcesz to zmienić, wybierz swój czas opóźnienia lub zamknij."
 LOCAL124="bez zmian"
 LOCAL125="bez opóźnienia"
+LOCAL126="Logowanie automatyczne bez pytania o hasło?"
+LOCAL127="Tak, aktywuj autologowanie"
+LOCAL128="Nie, dziękuję"

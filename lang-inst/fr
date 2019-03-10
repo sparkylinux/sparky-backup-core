@@ -1,7 +1,7 @@
 ﻿# Fichier de localisation française de Sparky Advanced Installer.
 # Copyright 2018 hiver <hiver@club-internet.fr> 2018/09/27
 # Sous licence GNU GPL v2
-# Last update 2019/02/05 by pavroo
+# Last update 2019/03/09 by pavroo
 LOCAL1="L'installateur avancé vous permet d'installer le système Live sur votre disque dur."
 LOCAL2="L'installateur avancé vous permet d'installer le système Live sur votre disque dur tel quel."
 LOCAL3="Il vous permet aussi d'installer votre bureau favori avec"
@@ -127,3 +127,6 @@ LOCAL122="Veuillez patienter jusqu'à la fin..."
 LOCAL123="The bootloader starts booting the new system with 5 seconds of delay.\nIf you would like to change, choose your delay time or quit."
 LOCAL124="with no changes"
 LOCAL125="no delay"
+LOCAL126="Log in automatically without asking for password?"
+LOCAL127="Yes, enable autologin"
+LOCAL128="No, thank's"

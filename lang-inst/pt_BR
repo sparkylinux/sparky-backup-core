@@ -2,7 +2,7 @@
 # Copyright 2018 Paweł‚ "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
 # Traduzido por Daniel Campos Ramos "Capitain_Jack" <Capitain_Jack@yahoo.com> 2018/04/01
-# Last update 2019/02/05 by pavroo
+# Last update 2019/03/09 by pavroo
 LOCAL1="O instalador avançado permite que você instale o sistema live em seu disco rígido."
 LOCAL2="O instalador avançado instala o sistema live como está em seu disco rígido."
 LOCAL3="Também permite que instale seu desktop favorito"
@@ -128,3 +128,6 @@ LOCAL122="Por favor, aguarde até completar..."
 LOCAL123="O gerenciador de boot carrega a inicialização do novo sistema com 5 segundos de atraso.\nSe você gostaria de alterar, escolha o seu tempo de atraso ou pode sair."
 LOCAL124="sem alterações"
 LOCAL125="sem atraso"
+LOCAL126="Log in automatically without asking for password?"
+LOCAL127="Yes, enable autologin"
+LOCAL128="No, thank's"

@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/02/25 by pavroo
+# Last update 2019/03/10 22:12 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -40,7 +40,6 @@ PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-#CHECKMINIMALCLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
@@ -280,7 +279,6 @@ GUILOG="cli"
 
 	# find a partiton for efi image
 	if [ "$TESTEFI" != "" ]; then
-	#PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 		for i in $PARTEFI; do
 			efipart="$i"
@@ -527,6 +525,16 @@ GUILOG="cli"
 			done
 
 			rm /tmp/choice.$$
+
+			# autologin section
+			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT TRUE "$LOCAL127" FALSE "$LOCAL128" 2>/tmp/choice.$$
+			if [ "$?" = "0" ]; then
+				AUTOLOGIN=`cat /tmp/choice.$$`
+			else
+				AUTOLOGIN="FALSE"
+			fi
+
+			rm /tmp/choice.$$
 		fi
 
 	fi
@@ -546,7 +554,6 @@ GrubSelectText () {
 
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
-	#CKLIVE=`mount | grep "live" | grep -v "loop" | awk '{print $1}' | awk -F "/" '{print $3}' | sed -e 's/[0-9]//g'`
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
 	Drives=$(lsblk -l | grep -v NAME | awk '{print $1}')
 
@@ -586,9 +593,7 @@ GrubSelectText () {
 	fi
 
 	# set grub delay
-	#if [ "$CHECKSERVER" != "" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
-	#fi
 
 	if [ "$?" = "0" ]
 	then
@@ -723,7 +728,6 @@ GUILOG="yad"
 
 	# find a partiton for efi image	
 	if [ "$TESTEFI" != "" ]; then
-	#PARTEFI=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 		for i in $PARTEFI; do
 			efipart="$i"
@@ -824,7 +828,6 @@ GUILOG="yad"
 
 	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
 
-	#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART//"`
 	if [ "$TARGETEFI" != "" ]; then
 		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
 	else
@@ -875,7 +878,8 @@ CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
 --field="$LOCAL51" \
 --field="$LOCAL52":H \
 --field="$LOCAL53":H \
---field="$LOCAL54"`
+--field="$LOCAL54" \
+--field="$LOCAL126":CHK`
 
 			if [ "$?" = "0" ]; then
 				TARGETROOTPASS=`echo $CHOICES | cut -d "|" -f 1`
@@ -885,6 +889,7 @@ CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
 				TARGETPASS=`echo $CHOICES | cut -d "|" -f 5`
 				TARGETPASS2=`echo $CHOICES | cut -d "|" -f 6`
 				TARGETHOSTNAME=`echo $CHOICES | cut -d "|" -f 7`
+				AUTOLOGIN=`echo $CHOICES | cut -d "|" -f 8`
 			else 
 				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
 				exit 1
@@ -1024,11 +1029,9 @@ ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
 	cp /usr/share/zoneinfo/$ZONESINFO /etc/localtime
 
 	#xterm -e dpkg-reconfigure tzdata
-	#if [ "$1" = "intl" ]; then
 	#xterm -e $SETLOCALE
 	#xterm -e $SETCONSOLEDATA
 	#xterm -e $SETXSERVER
-	#fi
 
 	if [ "$HOMEPART" != "root" ]; then
 		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
@@ -1458,9 +1461,6 @@ if [ -f /TARGET/etc/sparkybackup/trackerd.desktop.share ]; then
 	mv /TARGET/etc/sparkybackup/trackerd.desktop.share /TARGET/usr/share/autostart/trackerd.desktop
 fi
 
-#restore original inittab as live-initramfs changes it
-#cp /TARGET/usr/share/sysvinit/inittab /TARGET/etc/inittab
-
 # set hostname & hosts
 if [ -f /TARGET/etc/hostname ]; then
 	rm -f /TARGET/etc/hostname
@@ -1498,10 +1498,21 @@ if [ "$TARGETUSER" != "" ]; then
 	fi
 
 	#lightdm section
-	#if [ -f /TARGET/etc/lightdm/lightdm.conf ]; then
-	#	sed -i -e 's/autologin-user=live/#autologin-user=/g' /TARGET/etc/lightdm/lightdm.conf
-	#	sed -i -e 's/autologin-user-timeout=0/#autologin-user-timeout=0/g' /TARGET/etc/lightdm/lightdm.conf
-	#fi
+	if [ -f /TARGET/etc/lightdm/lightdm.conf ]; then
+		sed -i -e 's/autologin-user=live/#autologin-user=/g' /TARGET/etc/lightdm/lightdm.conf
+		sed -i -e 's/autologin-user-timeout=0/#autologin-user-timeout=0/g' /TARGET/etc/lightdm/lightdm.conf
+	fi
+
+	#sddm section
+	if [ -f /TARGET/etc/sddm.conf ]; then
+		if [ -f /usr/share/sparky-desktop-data/kde/etc/sddm.conf ]; then
+			rm -f /TARGET/etc/sddm.conf
+			cp /usr/share/sparky-desktop-data/kde/etc/sddm.conf /TARGET/etc/
+		else
+			sed -i -e 's/User=live/User=/g' /TARGET/etc/sddm.conf
+			sed -i -e 's/Session=plasma.desktop/Session=/g' /TARGET/etc/sddm.conf
+		fi
+	fi
 
 	#cleanup live polkit file from new install
 	rm -f /TARGET/var/lib/polkit-1/localauthority/10-vendor.d/10-live-cd.pkla
@@ -1599,6 +1610,38 @@ else
 	echo "NEW DESKTOP INSTALLATION CHOSEN=no" >> /var/log/sparkylinux-installer.log
 	echo "==============================================================" >> /var/log/sparkylinux-installer.log
 fi
+
+# enable autologin if required
+if [ "$AUTOLOGIN" = "TRUE" ]; then
+	if [ -f /TARGET/etc/lightdm/lightdm.conf ]; then
+		sed -i -e 's/#autologin-user=/autologin-user='"$TARGETUSER"'/g' /TARGET/etc/lightdm/lightdm.conf
+		sed -i -e 's/#autologin-user-timeout=0/autologin-user-timeout=0/g' /TARGET/etc/lightdm/lightdm.conf
+		echo "Lightdm AUTOLOGIN=yes" >> /var/log/sparkylinux-installer.log
+		echo "==============================================================" >> /var/log/sparkylinux-installer.log
+	else
+		echo "Lightdm AUTOLOGIN=no" >> /var/log/sparkylinux-installer.log
+		echo "==============================================================" >> /var/log/sparkylinux-installer.log
+	fi
+
+	if [ -f /TARGET/usr/bin/sddm ]; then
+		if [ -f /TARGET/etc/sddm.conf ]; then
+			sed -i -e 's/Session=/Session=plasma.desktop/g' /TARGET/etc/sddm.conf
+			sed -i -e 's/User=/User='"$TARGETUSER"'/g' /TARGET/etc/sddm.conf
+			echo "SDDM AUTOLOGIN=yes" >> /var/log/sparkylinux-installer.log
+			echo "==============================================================" >> /var/log/sparkylinux-installer.log
+		#else
+		#	echo "[Autologin]" >> /TARGET/etc/sddm.conf
+		#	echo "Session=plasma.desktop" /TARGET/etc/sddm.conf
+		#	echo "User=$TARGETUSER" /TARGET/etc/sddm.conf
+		#	echo "SDDM AUTOLOGIN=yes" >> /var/log/sparkylinux-installer.log
+		#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
+		fi
+	else
+		echo "SDDM AUTOLOGIN=no" >> /var/log/sparkylinux-installer.log
+		echo "==============================================================" >> /var/log/sparkylinux-installer.log
+	fi
+fi
+
 echo "End of Sparky Advanced Installer Log" >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
 
