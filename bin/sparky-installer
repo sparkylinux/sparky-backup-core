@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/03/10 22:12 by pavroo
+# Last update 2019/03/11 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1429,9 +1429,9 @@ if [ -f /TARGET/etc/skel/Desktop/calamares.desktop ]; then
 	rm -f /TARGET/etc/skel/Desktop/calamares.desktop
 fi
 
-if [ -f /TARGET/usr/share/applications/calamares.desktop ]; then
-	rm -f /TARGET/usr/share/applications/calamares.desktop
-fi
+#if [ -f /TARGET/usr/share/applications/calamares.desktop ]; then
+#	rm -f /TARGET/usr/share/applications/calamares.desktop
+#fi
 
 # remove diverted update-initramfs as live-initramfs makes it a dummy file when booting the livecd
 if [ -f /TARGET/usr/sbin/update-initramfs.debian ]; then
@@ -1668,6 +1668,8 @@ sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /
 sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
 if [ "$SETDELAY" = "No" ]; then
 	sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g" /TARGET/etc/default/grub
+	echo "GRUB_HIDDEN_TIMEOUT=10" >> /TARGET/etc/default/grub
+	echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" >> /TARGET/etc/default/grub
 elif [ "$SETDELAY" = "5" ]; then
 	echo "Grub delay with no changes..."
 else
