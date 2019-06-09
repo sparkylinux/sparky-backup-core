@@ -10,7 +10,7 @@
 # Copyright 2013-2019 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2019/05/06 by pavroo
+# Last update 2019/06/09 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -549,10 +549,12 @@ function cdfs {
 	CHECKBUDGIEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep budgie`
 	CHECKCDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cde`
 	CHECKCINNAMONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cinnamon`
+	CHECKDRACOISO=`cat /etc/sparkybackup/sparkybackup.conf | grep draco`
 	CHECKEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep enlightenment`
 	CHECKFLUXBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep fluxbox`
 	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
 	CHECKGNOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gnome`
+	CHECKGRAPHENEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep graphene`
 	CHECKI3ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep i3`
 	CHECKICEWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep icewm`
 	CHECKJADEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep jade`
@@ -573,8 +575,10 @@ function cdfs {
 	CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
 	CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep light`
 	CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
+	CHECKSWAYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sway`
 	CHECKTRINITYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep trinity`
 	CHECKTDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep tde`
+	CHECKUKUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep ukui`
 	CHECKWINDOWMAKERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep windowmaker`
 	CHECKWMAKERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep wmaker`
 	CHECKXFCEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep xfce`
@@ -599,6 +603,9 @@ function cdfs {
 	elif [ "$CHECKCINNAMONISO" != "" ]
 	then
 		LIVEVERSION="Cinnamon"
+	elif [ "$CHECKDRACOISO" != "" ]
+	then
+		LIVEVERSION="Draco"
 	elif [ "$CHECKEISO" != "" ]
 	then
 		LIVEVERSION="Enlightenment"
@@ -611,6 +618,9 @@ function cdfs {
 	elif [ "$CHECKGNOMEISO" != "" ]
 	then
 		LIVEVERSION="GNOME"
+	elif [ "$CHECKGRAPHENEISO" != "" ]
+	then
+		LIVEVERSION="Graphene"
 	elif [ "$CHECKI3ISO" != "" ]
 	then
 		LIVEVERSION="i3"
@@ -671,12 +681,18 @@ function cdfs {
 	elif [ "$CHECKSBSERVERISO" != "" ]
 	then
 		LIVEVERSION="Small Business Server"
+	elif [ "$CHECKSWAYISO" != "" ]
+	then
+		LIVEVERSION="Sway"
 	elif [ "$CHECKTRINITYISO" != "" ]
 	then
 		LIVEVERSION="TDE"
 	elif [ "$CHECKTDEISO" != "" ]
 	then
 		LIVEVERSION="TDE"
+	elif [ "$CHECKUKUIISO" != "" ]
+	then
+		LIVEVERSION="UKUI"
 	elif [ "$CHECKWINDOWMAKERISO" != "" ]
 	then
 		LIVEVERSION="WindowMaker"
@@ -712,8 +728,8 @@ function cdfs {
 	sed -i -e 's/__LIVELABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	
 	# copy grub-efi live files for dual-booting isolinux and grub-efi
-	# but don't copy the stuff if building iso with bios support only
-	# the stuff is required for building sparky rescue edition
+	# but don't need to copy the stuff if building iso with bios support only,
+	# but the stuff is required for building sparky rescue edition anyway
 	EFI_PARAMS=
 	if [ -f /home/offline/efibootmgr* ] || [ -f /usr/bin/sparky-chrooter ]
 	then
@@ -899,8 +915,30 @@ FOO
 
 	#add some stuff the log in case of problems so I can troubleshoot it easier
 	log_debug "------------------------------------------------------"
-	log_debug "Mount information"
+	log_debug "Mount info"
 	mount >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "CPU info"
+	lscpu >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "Kernels installed info"
+	ls /boot | grep vmlinuz >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "Machine info"
+	uname -a >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "Virtual machine detect info"
+	VMACHINE=`cat /proc/cpuinfo | grep hypervisor`
+	if [ "$VMACHINE" != "" ]
+	then
+		log_info "Runing sparkybackup on a virtual machine" >> $WORKDIR/sparkybackup.log
+	else
+		log_info "Runing sparkybackup on a physical machine" >> $WORKDIR/sparkybackup.log
+	fi	
 
 	log_debug "------------------------------------------------------"
 	log_debug "/etc/sparkybackup/sparkybackup.conf info"
@@ -927,8 +965,17 @@ FOO
 	cat /etc/X11/default-display-manager >> $WORKDIR/sparkybackup.log
 
 	log_debug "------------------------------------------------------"
-	log_debug "SparkyBackup Version info"
+	log_debug "SparkyBackup Core version info"
 	cat /etc/sparkybackup/sparkybackup.version >> $WORKDIR/sparkybackup.log
+
+	log_debug "------------------------------------------------------"
+	log_debug "SparkyBackup Sys (GUI) version info"
+	if [ -f /usr/bin/sparkybackup-gui ]
+	then
+		dpkg-query -s sparky-backup-sys | grep Version >> $WORKDIR/sparkybackup.log
+	else
+		log_debug "sparky-backup-sys not installed"
+	fi
 
 	log_debug "------------------------------------------------------"
 	log_debug "Command-line options = $@"
@@ -946,6 +993,14 @@ FOO
 	log_debug "------------------------------------------------------"
 	log_debug "User's default locale info"
 	cat /etc/default/locale >> $WORKDIR/sparkybackup.log
+	log_debug "------------------------------------------------------"
+
+	log_debug "User's session type info"
+	echo $XDG_SESSION_TYPE >> $WORKDIR/sparkybackup.log
+	log_debug "------------------------------------------------------"
+
+	log_debug "User's desktop environment info"
+	echo $DESKTOP_SESSION >> $WORKDIR/sparkybackup.log
 	log_debug "------------------------------------------------------"
 	
 	sleep 1
