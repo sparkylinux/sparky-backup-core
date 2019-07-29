@@ -10,7 +10,7 @@
 # Copyright 2013-2019 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2019/06/09 by pavroo
+# Last update 2019/07/21 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -739,17 +739,33 @@ function cdfs {
 		EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot"
 	fi
 	
-	# check Sparky version (4 based on Debian stable 9; 5 on Debian testing "Buster")
-	SPARKYVERCHECK="`cat /etc/issue | grep 5`"
-	if [ "$SPARKYVERCHECK" != "" ]
+	# check Sparky version (4 based on Debian 9; 5 on Debian 10; 6 on Debian Bullseye)
+	SPARKYVERCHECK4="`cat /etc/lsb-release | grep Tyche`"
+	SPARKYVERCHECK5="`cat /etc/lsb-release | grep Nibiru`"
+	SPARKYVERCHECK6="`cat /etc/lsb-release | grep Tolo`"
+	if [ "$SPARKYVERCHECK4" != "" ]
 	then
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub.png
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub6.png
+		mv $WORKDIR/ISOTMP/boot/grub/grub4.png $WORKDIR/ISOTMP/boot/grub/grub.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background6.png
+		mv $WORKDIR/ISOTMP/isolinux/background4.png $WORKDIR/ISOTMP/isolinux/background.png
+	elif [ "$SPARKYVERCHECK5" != "" ]
+	then
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub4.png
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub6.png
 		mv $WORKDIR/ISOTMP/boot/grub/grub5.png $WORKDIR/ISOTMP/boot/grub/grub.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background4.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background6.png
 		mv $WORKDIR/ISOTMP/isolinux/background5.png $WORKDIR/ISOTMP/isolinux/background.png
 	else
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub4.png
 		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
+		mv $WORKDIR/ISOTMP/boot/grub/grub6.png $WORKDIR/ISOTMP/boot/grub/grub.png
+		rm -f $WORKDIR/ISOTMP/isolinux/background4.png
 		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
+		mv $WORKDIR/ISOTMP/isolinux/background6.png $WORKDIR/ISOTMP/isolinux/background.png
 	fi
 
 	# replace grub & isolinux background of 100 edition

@@ -43,6 +43,7 @@ passwd
 rsync
 sed
 sparky-backup-desktop (>= 20180729) | sparky-server
+sparky-info
 sparky-xterm (>= 0.2.0)
 squashfs-tools
 syslinux-utils

@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/03/11 by pavroo
+# Last update 2019/07/17 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1636,7 +1636,7 @@ if [ "$AUTOLOGIN" = "TRUE" ]; then
 		#	echo "SDDM AUTOLOGIN=yes" >> /var/log/sparkylinux-installer.log
 		#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
 		fi
-	else
+	if
 		echo "SDDM AUTOLOGIN=no" >> /var/log/sparkylinux-installer.log
 		echo "==============================================================" >> /var/log/sparkylinux-installer.log
 	fi
