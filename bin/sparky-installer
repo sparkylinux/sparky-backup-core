@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/07/17 by pavroo
+# Last update 2019/08/01.1 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -45,9 +45,9 @@ CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/spa
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
-if [ -f /usr/bin/sparky-xterm ];then
+if [ -f /usr/bin/sparky-xterm ]; then
 	SPARKYXTERM="/usr/bin/sparky-xterm"
-elif [ -f /usr/bin/sparky-terminal ];then
+elif [ -f /usr/bin/sparky-terminal ]; then
 	SPARKYXTERM="/usr/bin/sparky-terminal -e"
 else
 	echo "sparky-xterm is missing... Exiting..."
@@ -203,18 +203,15 @@ else
 fi
 
 # the first dialog window
-if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
-then
+if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
-elif [ "$CHECKSERVER" != "" ]
-then
+elif [ "$CHECKSERVER" != "" ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL118 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
 	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 fi
 
-if [ "$TESTEFI" != "" ]
-then
+if [ "$TESTEFI" != "" ]; then
 	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 else
 	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
@@ -527,7 +524,7 @@ GUILOG="cli"
 			rm /tmp/choice.$$
 
 			# autologin section
-			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT TRUE "$LOCAL127" FALSE "$LOCAL128" 2>/tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				AUTOLOGIN=`cat /tmp/choice.$$`
 			else
@@ -595,8 +592,7 @@ GrubSelectText () {
 	# set grub delay
 	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
 
-	if [ "$?" = "0" ]
-	then
+	if [ "$?" = "0" ]; then
 		SETDELAY=`cat /tmp/choice.$$`
 	else
 		SETDELAY="5"
@@ -712,8 +708,7 @@ GUILOG="yad"
 	done
 
 	PARTDRIVE=""
-	while [ "$PARTDRIVE" = "" ]
-	do
+	while [ "$PARTDRIVE" = "" ]; do
 		PARTDRIVE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL19\n$LOCAL20" Exit "$LOCAL21" $partdrivemenu`
 	done
 
@@ -736,8 +731,7 @@ GUILOG="yad"
 		done
 
 		TARGETEFI=""
-		while [ "$TARGETEFI" = "" ]
-		do
+		while [ "$TARGETEFI" = "" ]; do
 			TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL23\n$LOCAL24" Exit "$LOCAL21" $efipartmenu`
 		done
 
@@ -751,8 +745,7 @@ GUILOG="yad"
 	
 		#format the efi partition?
 		FORMATEFIPART=""
-		while [ "$FORMATEFIPART" = "" ]
-		do
+		while [ "$FORMATEFIPART" = "" ]; do
 			FORMATEFIPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL25" noformatefi "$LOCAL26" formatefi "$LOCAL27"`
 		done
 	
@@ -777,8 +770,7 @@ GUILOG="yad"
 	done
 
 	SWAP=""
-	while [ "$SWAP" = "" ]
-	do
+	while [ "$SWAP" = "" ]; do
 		SWAP=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL28\n$LOCAL29" Exit "$LOCAL21" $swappartmenu`
 	done
 
@@ -807,8 +799,7 @@ GUILOG="yad"
 	done
 
 	TARGETPART=""
-	while [ "$TARGETPART" = "" ]
-	do
+	while [ "$TARGETPART" = "" ]; do
 		TARGETPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL30\n$LOCAL31" Exit "$LOCAL21" $partmenu`
 	done
 
@@ -821,8 +812,7 @@ GUILOG="yad"
 	fi
 
 	FSTYPE=""
-	while [ "$FSTYPE" = "" ]
-	do
+	while [ "$FSTYPE" = "" ]; do
 		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL32" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
 	done
 
@@ -840,8 +830,7 @@ GUILOG="yad"
 	done
 
 	HOMEPART=""
-	while [ "$HOMEPART" = "" ]
-	do
+	while [ "$HOMEPART" = "" ]; do
 		HOMEPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL34\n$LOCAL35" root "$LOCAL36" $homepartmenu`
 	done
 
@@ -849,8 +838,7 @@ GUILOG="yad"
 
 	if [ "$HOMEPART" != "root" ]; then
 		HFSTYPE=""
-		while [ "$HFSTYPE" = "" ]
-		do
+		while [ "$HFSTYPE" = "" ]; do
 			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL37" noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
 		done
 	fi
@@ -982,8 +970,7 @@ SETDELAY=`$DIALOGMENU $TITLE"$TITLETEXT" $MSGBOX $MENU $TEXT"$LOCAL123" \
 30 "30 sec" \
 No "0 sec $LOCAL125"`
 
-	if [ "$?" = "0" ]
-	then
+	if [ "$?" = "0" ]; then
 		SETDELAY=`echo $SETDELAY | cut -d "|" -f 1`
 	else
 		SETDELAY="5"
@@ -1013,8 +1000,7 @@ GrubSelectGUI
 	rm /tmp/sparkylinux-installer.zoneinfo
 
 	ZONESINFO=""
-	while [ "$ZONESINFO" = "" ]
-	do
+	while [ "$ZONESINFO" = "" ]; do
 		ZONESINFO=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL78" Exit "$LOCAL21" $ZONES`
 	done
 
@@ -1578,13 +1564,10 @@ if [ "$GUI" != "" ]; then
 fi
 
 # install your favorite desktop of your choice
-if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]
-then
-	if [ "$GUI" = "" ]
-	then
+if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
+	if [ "$GUI" = "" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
-		if [ $? = 0 ]
-		then
+		if [ $? = 0 ]; then
 			DESKTOPCHOOSE="yes"
 			apt-get update 
 			apt-get install sparky-backup-desktop sparky-desktop-data -y
@@ -1592,8 +1575,7 @@ then
 		fi
 	else
 		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108"
-		if [ $? = 0 ]
-		then
+		if [ $? = 0 ]; then
 			DESKTOPCHOOSE="yes"
 			$SPARKYXTERM "apt-get update"
 			$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y"
@@ -1602,8 +1584,7 @@ then
 	fi
 fi
 
-if [ "$DESKTOPCHOOSE" = "yes" ]
-then
+if [ "$DESKTOPCHOOSE" = "yes" ]; then
 	echo "NEW DESKTOP INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
 	echo "==============================================================" >> /var/log/sparkylinux-installer.log
 else
@@ -1636,7 +1617,6 @@ if [ "$AUTOLOGIN" = "TRUE" ]; then
 		#	echo "SDDM AUTOLOGIN=yes" >> /var/log/sparkylinux-installer.log
 		#	echo "==============================================================" >> /var/log/sparkylinux-installer.log
 		fi
-	if
 		echo "SDDM AUTOLOGIN=no" >> /var/log/sparkylinux-installer.log
 		echo "==============================================================" >> /var/log/sparkylinux-installer.log
 	fi
@@ -1646,8 +1626,7 @@ echo "End of Sparky Advanced Installer Log" >> /var/log/sparkylinux-installer.lo
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
 
 # synchronize log files
-if [ -f /var/log/sparkylinux-installer.log ] && [ -f /TARGET/var/log/sparkylinux-installer.log ]
-then
+if [ -f /var/log/sparkylinux-installer.log ] && [ -f /TARGET/var/log/sparkylinux-installer.log ]; then
 	rm -f /TARGET/var/log/sparkylinux-installer.log
 	cp /var/log/sparkylinux-installer.log /TARGET/var/log/sparkylinux-installer.log
 fi
@@ -1720,6 +1699,11 @@ fi
 if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
 	rm -f /TARGET/etc/resolv.conf
 	mv /TARGET/etc/resolv.conf.bak /TARGET/etc/resolv.conf
+fi
+
+# make sure mounted media is removed from the TARGET system
+if [ -d /TARGET/lib/live/mount ]; then
+	rm -rf /TARGET/lib/live/mount
 fi
 
 # Setup grub
