@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/08/01.1 by pavroo
+# Last update 2019/08/12 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1134,6 +1134,8 @@ if [ "$HOMEPART" != "root" ]; then
 		elif [ "$HFSTYPE" = "xfs" ]; then
 			mkfs.xfs -f /dev/$HOMEPART
 		fi
+	elif [ "$HFSTYPE" = "noformat" ]; then
+		HFSTYPE=`blkid | grep $HOMEPART: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
 	fi
 
 	echo "$LOCAL97"
