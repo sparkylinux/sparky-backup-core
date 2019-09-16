@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/08/29 by pavroo
+# Last update 2019/09/17 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -595,16 +595,16 @@ GrubSelectText () {
 	fi
 
 	# set grub delay
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
+	if [ "$GRUBLOCTEST" != "nogrub" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
 
-	if [ "$?" = "0" ]; then
-		SETDELAY=`cat /tmp/choice.$$`
-	else
-		SETDELAY="5"
+		if [ "$?" = "0" ]; then
+			SETDELAY=`cat /tmp/choice.$$`
+		else
+			SETDELAY="5"
+		fi
+		rm /tmp/choice.$$
 	fi
-
-	rm /tmp/choice.$$
-
 }
 	
 GrubSelectText
@@ -968,6 +968,7 @@ GrubSelectGUI () {
 	fi
 
 	# set grub delay
+	if [ "$GRUBLOCTEST" != "nogrub" ]; then
 SETDELAY=`$DIALOGMENU $TITLE"$TITLETEXT" $MSGBOX $MENU $TEXT"$LOCAL123" \
 5 "5 sec $LOCAL124" \
 10 "10 sec" \
@@ -975,12 +976,12 @@ SETDELAY=`$DIALOGMENU $TITLE"$TITLETEXT" $MSGBOX $MENU $TEXT"$LOCAL123" \
 30 "30 sec" \
 No "0 sec $LOCAL125"`
 
-	if [ "$?" = "0" ]; then
-		SETDELAY=`echo $SETDELAY | cut -d "|" -f 1`
-	else
-		SETDELAY="5"
+		if [ "$?" = "0" ]; then
+			SETDELAY=`echo $SETDELAY | cut -d "|" -f 1`
+		else
+			SETDELAY="5"
+		fi
 	fi
-
 }
 
 GrubSelectGUI
@@ -1060,8 +1061,15 @@ fi
 
 sleep 2
 echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
-mkswap /dev/$SWAP
-swapon /dev/$SWAP
+CHECKSWAP=`blkid | grep $SWAP: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
+# do not format swap if exist, use it only
+if [ "$CHECKSWAP" = "swap" ]; then
+	swapon /dev/$SWAP
+# format swap if the chosen partition is not swap
+else
+	mkswap /dev/$SWAP
+	swapon /dev/$SWAP
+fi
 
 if [ "$GUI" != "" ]; then
 	killall -KILL tail
@@ -1652,14 +1660,16 @@ OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /TARGET/etc/default/gr
 OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /TARGET/etc/default/grub)
 sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /TARGET/etc/default/grub
 sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
-if [ "$SETDELAY" = "No" ]; then
-	sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g" /TARGET/etc/default/grub
-	echo "GRUB_HIDDEN_TIMEOUT=10" >> /TARGET/etc/default/grub
-	echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" >> /TARGET/etc/default/grub
-elif [ "$SETDELAY" = "5" ]; then
-	echo "Grub delay with no changes..."
-else
-	sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=$SETDELAY/g" /TARGET/etc/default/grub
+if [ "$SETDELAY" != "" ]; then
+	if [ "$SETDELAY" = "No" ]; then
+		sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g" /TARGET/etc/default/grub
+		echo "GRUB_HIDDEN_TIMEOUT=10" >> /TARGET/etc/default/grub
+		echo "GRUB_HIDDEN_TIMEOUT_QUIET=true" >> /TARGET/etc/default/grub
+	elif [ "$SETDELAY" = "5" ]; then
+		echo "Grub delay with no changes..."
+	else
+		sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=$SETDELAY/g" /TARGET/etc/default/grub
+	fi
 fi
 
 # remove live packages
@@ -1736,7 +1746,6 @@ chmod +x /tmp/Grub-Update
 	fi
 	
 	echo "$LOCAL111"
-	echo
 	echo "$LOCAL112"
 	sleep 1
 	umount -R /TARGET
@@ -1770,7 +1779,6 @@ chmod +x /tmp/Grub-Install
 	fi
 
 	echo "$LOCAL111"
-	echo
 	echo "$LOCAL112"
 	sleep 1
 	umount -R /TARGET

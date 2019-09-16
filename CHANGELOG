@@ -1,4 +1,11 @@
 -------------------------------------------------------------------------------
+  Version 20190917 (2019-09-17)
+-------------------------------------------------------------------------------
+  * Do not format swap if swap exist and noformat swap is chosen
+  * Do not set grub delay if nogrub is chosen
+  * Added Hungarian locale of backup-core
+
+-------------------------------------------------------------------------------
   Version 20190829 (2019-08-29)
 -------------------------------------------------------------------------------
   * Updated Hungarian locale of advanced installer
