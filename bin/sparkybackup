@@ -10,7 +10,7 @@
 # Copyright 2013-2019 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2019/09/16 by pavroo
+# Last update 2019/10/23 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -957,6 +957,23 @@ FOO
 	else
 		log_info "Runing sparkybackup on a physical machine" >> $WORKDIR/sparkybackup.log
 	fi	
+
+	TESTEFI0=`lsmod | grep efi`
+	if [ "$TESTEFI0" != "" ]
+	then
+		log_debug "------------------------------------------------------"
+		log_info "TESTEFI=EFI detected" >> $WORKDIR/sparkybackup.log
+	else
+		log_debug "------------------------------------------------------"
+		log_info "TESTEFI=EFI NOT detected" >> $WORKDIR/sparkybackup.log
+	fi
+
+	if [ -d /home/offline ]
+	then
+		log_debug "------------------------------------------------------"
+		log_debug "Check do efi debs exist at offline dir"
+		ls /home/offline >> $WORKDIR/sparkybackup.log
+	fi
 
 	log_debug "------------------------------------------------------"
 	log_debug "/etc/sparkybackup/sparkybackup.conf info"

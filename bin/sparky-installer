@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/09/17 by pavroo
+# Last update 2019/10/23 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -55,7 +55,7 @@ else
 fi
 
 TESTEFI0=`lsmod | grep efi`
-if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI" != "" ]; then
+if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI0" != "" ]; then
 	TESTEFI="EFI detected"
 else
 	TESTEFI=""

@@ -1,7 +1,6 @@
-# Hungarian localization file for Sparky Advanced Installer.
+# Hungarian localization file for Sparky Advanced Installer. (Translated by Nemomen).
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Translated to Hungarian by Nemomen 2019/08/23
 # Last update 2019/03/09 by pavroo
 LOCAL1="A Fejlett Telepítő lehetővé teszi, hogy élő-rendszert telepítsen a merevlemezére."
 LOCAL2="A Fejlett Telepítő lehetővé teszi, hogy élő-rendszert telepítsen a merevlemezére ahogy van (as it is)."
@@ -114,7 +113,7 @@ LOCAL108="Kívánja most elvégezni?"
 LOCAL109="Az élő-csomagok eltávolítása"
 LOCAL110="A GRUB konfiguráció frissítése"
 LOCAL111="A pótlólagos telepítése lépés befejeződött."
-LOCAL112="A  célpartíció [TARGET partition] leválasztása."
+LOCAL112="A célpartíció [TARGET partition] leválasztása."
 LOCAL113="A SparkyLinux telepítés teljes."
 LOCAL114="Ha minden rendben ment, Önnek telepített az új rendszere és használatra kész ."
 LOCAL115="Emlékezzen rá, hogy NINCSEN rendszerindítás-betöltő telepítve, így azt kézzel kell elvégeznie!"
@@ -122,7 +121,7 @@ LOCAL116="Kíván most újraindítani, hogy kipróbálja a Sparky-t?"
 LOCAL117="Új felhasználó beállítása"
 LOCAL118="Ez is lehetővé teszi Önnek a szerver-kiadás [Server Edition] telepítését és beállítását."
 LOCAL119="Ez lehetővé teszi Önnek a Sparky Kisvállalkozás Szerver-kiadás [Sparky Small Business Server Edition] telepítését és beállítását."
-LOCAL120=" Mielőtt ez elindul, az eszköz ellenőrizni fogja 1 csomag frissítését.
+LOCAL120="Mielőtt ez elindul, az eszköz ellenőrizni fogja 1 csomag frissítését.
 LOCAL121="Az újraindítás után, a Server installáció befejezéséhez, futtassa a sparky-server parancsot"
 LOCAL122="Kérjük, várjon amíg végez..."
 LOCAL123="A rendszerindítás-betöltő betölti az új rendszert 5 másodperces késleltetéssel.\nha módosítani kíván, válassza a saját késleltetési idejét vagy lépjen ki."
