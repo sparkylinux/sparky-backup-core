@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/10/23 by pavroo
+# Last update 2019/11/07 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -127,6 +127,7 @@ Brazilian "Brasileiro" \
 English "English" \
 French "Français" \
 German "Deutsch" \
+Greek "ελληνικά" \
 Hungarian "Magyar" \
 Indonesian "Indonesia" \
 Italian "Italiano" \
@@ -148,6 +149,8 @@ Exit "Exiting now..."`
 		DEFLANG="French"
 	elif [ "$DEFLANGS" = "German" ]; then
 		DEFLANG="German"
+	elif [ "$DEFLANGS" = "Greek" ]; then
+		DEFLANG="Greek"
 	elif [ "$DEFLANGS" = "Hungarian" ]; then
 		DEFLANG="Hungarian"
 	elif [ "$DEFLANGS" = "Indonesian" ]; then
@@ -168,7 +171,7 @@ Exit "Exiting now..."`
 
 elif [ "$GUI" = "" ]; then
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
 
 	if [ "$?" = "0" ]; then
 		DEFLANG=`cat /tmp/sparky-advanced-installer`
@@ -191,6 +194,8 @@ elif [ "$DEFLANG" = "French" ]; then
 . $DEFLOCDIR/fr
 elif [ "$DEFLANG" = "German" ]; then
 . $DEFLOCDIR/de
+elif [ "$DEFLANG" = "Greek" ]; then
+. $DEFLOCDIR/el
 elif [ "$DEFLANG" = "Hungarian" ]; then
 . $DEFLOCDIR/hu
 elif [ "$DEFLANG" = "Indonesian" ]; then
@@ -246,7 +251,7 @@ GUILOG="cli"
 
 		dpkg-reconfigure locales
 		dpkg-reconfigure console-data
-		#dpkg-reconfigure console-setup
+		dpkg-reconfigure console-setup
 		dpkg-reconfigure keyboard-configuration
 
 	fi
@@ -693,7 +698,7 @@ GUILOG="yad"
 
 		$SPARKYXTERM "dpkg-reconfigure locales"
 		$SPARKYXTERM "dpkg-reconfigure console-data"
-		#dpkg-reconfigure -f $FRONTEND console-setup
+		$SPARKYXTERM "dpkg-reconfigure console-setup"
 		$SPARKYXTERM "dpkg-reconfigure keyboard-configuration"
 
 	fi
