@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2019 Under the GNU GPL2 License
-# Last update 2019/11/07 by pavroo
+# Last update 2019/12/01 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -40,6 +40,7 @@ PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
@@ -533,15 +534,17 @@ GUILOG="cli"
 
 			rm /tmp/choice.$$
 
-			# autologin section
-			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
-			if [ "$?" = "0" ]; then
-				AUTOLOGIN=`cat /tmp/choice.$$`
-			else
-				AUTOLOGIN="FALSE"
-			fi
+			# autologin section; do not work with pure cli
+			if [ "$CHECKMINICLI" != "" ]; then
+				$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
+				if [ "$?" = "0" ]; then
+					AUTOLOGIN=`cat /tmp/choice.$$`
+				else
+					AUTOLOGIN="FALSE"
+				fi
 
-			rm /tmp/choice.$$
+				rm /tmp/choice.$$
+			fi
 		fi
 
 	fi
