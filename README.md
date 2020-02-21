@@ -51,7 +51,7 @@ systemd, systemd-sysv
 util-linux
 x11-utils
 xfsprogs
-xorriso
+xorriso | genisoimage
 xz-utils
 
 Conflicts:

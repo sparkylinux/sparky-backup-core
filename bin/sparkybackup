@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/01/21 by pavroo
+# Last update 2020/02/21 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -740,7 +740,7 @@ function cdfs {
 		rsync -a /usr/lib/sparkybackup/boot $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/EFI $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
-		EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot"
+		EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img"
 	fi
 	
 	# check Sparky version (4 based on Debian 9; 5 on Debian 10; 6 on Debian Bullseye)
@@ -1044,18 +1044,6 @@ FOO
 	log_debug "------------------------------------------------------"
 	
 	sleep 1
-
-	#checking the size of the compressed filesystem to ensure it meets the iso9660 spec for a single file" 
-	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
-	if [ "$SQUASHFSSIZE" -gt "3999999" ]
-	then
-		echo "$LOCAL29"
-		log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
-		log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
-		exit 1
-	else
-		log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
-	fi
 }
 
 # check disk space again before creating iso
@@ -1065,7 +1053,42 @@ df -h >> $WORKDIR/sparkybackup.log
 log_debug "------------------------------------------------------"
 
 function iso {
-	CREATEISO="`which xorriso`"
+	TESTXORRISO="`which xorriso`"
+	TESTGENISOIMAGE="`which genisoimage`"
+	if [ "$TESTXORRISO" != "" ] && [ "$TESTGENISOIMAGE" != "" ]
+	then
+		CREATEISO="`which xorriso`"
+	elif [ "$TESTXORRISO" != "" ] && [ "$TESTGENISOIMAGE" = "" ]
+	then
+		CREATEISO="`which xorriso`"
+	elif [ "$TESTGENISOIMAGE" != "" ] && [ "$TESTXORRISO" = "" ]
+	then
+		CREATEISO="`which genisoimage`"
+	else
+		echo "No xorriso nor genisoimage is installed... exiting..."
+		exit 1
+	fi
+
+	#checking the size of the compressed filesystem to ensure it meets the iso9660 spec for a single file" 
+	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
+	if [ "$TESTXORRISO" != "" ]
+	then
+		if [ "$SQUASHFSSIZE" -gt "3999999" ]
+		then
+			echo "$LOCAL29"
+			log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again. Otherwise, install genisoimage, remove xorriso and try again."
+			log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
+			exit 1
+		else
+			echo "The squashfs size is $SQUASHFSSIZE (3999999 maximum)"
+			log_info "The squashfs size is $SQUASHFSSIZE (3999999 maximum)" >> $WORKDIR/sparkybackup.log
+		fi
+	elif [ "$TESTGENISOIMAGE" != "" ] && [ "$TESTXORRISO" = "" ]
+	then
+		echo "The squashfs size is $SQUASHFSSIZE so iso image can be larger than 3.99GB"
+		log_info "The squashfs size is $SQUASHFSSIZE so iso image can be larger than 3.99GB" >> $WORKDIR/sparkybackup.log
+	fi
+	
 	ARCH=`uname -r | grep "amd64" | awk '{print $1}'`
 
 	# check to see if the cd filesystem exists
@@ -1073,15 +1096,6 @@ function iso {
 	then
 		echo "$LOCAL30"
 		log_info "The cd filesystem is missing. Either there was a problem creating the compressed filesystem or you are trying to run sudo sparkybackup dist iso before sudo sparkybackup dist cdfs"
-		exit 1
-	fi
-
-	#checking the size of the compressed filesystem to ensure it meets the iso9660 spec for a single file" 
-	SQUASHFSSIZE=`ls -s $WORKDIR/ISOTMP/live/filesystem.squashfs | awk -F " " '{print $1}'`
-	if [ "$SQUASHFSSIZE" -gt "3999999" ]
-	then
-		echo "$LOCAL29"
-		log_info "The compressed filesystem is larger than the iso9660 specification allows for a single file. You must try to reduce the amount of data you are backing up and try again."
 		exit 1
 	fi
 
@@ -1094,14 +1108,34 @@ function iso {
 
 	if [ "$ARCH" = "" ]
 	then
-		# create iso image
-		echo "$LOCAL20 32bit $LOCAL32"
-		log_info "Creating 32bit iso image"
-		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID32BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+		MYVOLID="$VOLID32BIT"
+		MYARCH="32bit"
 	else
-		echo "$LOCAL20 64bit $LOCAL32"
-		log_info "Creating 64bit iso image"
-		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$VOLID64BIT" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+		MYVOLID="$VOLID64BIT"
+		MYARCH="64bit"
+	fi
+
+	# create iso image
+	echo "$LOCAL20 $MYARCH $LOCAL32"
+	if [ "$TESTXORRISO" != "" ]
+	then
+		# create iso image via xorriso up to 4GB (default)
+		log_info "Creating $MYARCH iso image with $CREATEISO"
+		echo "Creating the iso file using xorriso"
+		$CREATEISO as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$MYVOLID" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+	else
+		# create iso image via genisoimage which can be larger than 4GB (experimental)
+		log_info "Creating $MYARCH iso image with $CREATEISO"
+		echo "Creating the iso file using genisoimage"
+		$CREATEISO -r -V "$MYVOLID" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -udf -o $WORKDIR/$CUSTOMISO "$WORKDIR/ISOTMP"
+	fi
+
+	# check to see if the iso image exists
+	if [ ! -f "$WORKDIR/$CUSTOMISO" ]
+	then
+		echo "The iso image is missing... exiting..."
+		log_info "The iso image is missing... exiting..."
+		exit 1
 	fi
 
 	# create hybrid iso so it can be dd installed to a usb flash drive
