@@ -47,7 +47,8 @@ sparky-info
 sparky-xterm (>= 0.2.0)
 squashfs-tools
 syslinux-utils
-systemd, systemd-sysv
+systemd
+systemd-sysv
 util-linux
 x11-utils
 xfsprogs
@@ -71,6 +72,8 @@ yad
 imagemagick
 librsvg2-bin
 memtest86+ (rescue edition only)
+gparted
+cryptsetup-initramfs
 
 Install:
 -------------

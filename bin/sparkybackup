@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/02/21 by pavroo
+# Last update 2020/02/23 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -1127,7 +1127,7 @@ function iso {
 		# create iso image via genisoimage which can be larger than 4GB (experimental)
 		log_info "Creating $MYARCH iso image with $CREATEISO"
 		echo "Creating the iso file using genisoimage"
-		$CREATEISO -r -V "$MYVOLID" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -udf -o $WORKDIR/$CUSTOMISO "$WORKDIR/ISOTMP"
+		$CREATEISO -r -V "$MYVOLID" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -allow-limited-size -udf -o $WORKDIR/$CUSTOMISO "$WORKDIR/ISOTMP"
 	fi
 
 	# check to see if the iso image exists
