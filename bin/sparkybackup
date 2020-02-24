@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/02/23 by pavroo
+# Last update 2020/02/24 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -734,13 +734,19 @@ function cdfs {
 	# copy grub-efi live files for dual-booting isolinux and grub-efi
 	# but don't need to copy the stuff if building iso with bios support only,
 	# but the stuff is required for building sparky rescue edition anyway
+	TESTXORRISO="`which xorriso`"
 	EFI_PARAMS=
 	if [ -f /home/offline/efibootmgr* ] || [ -f /usr/bin/sparky-chrooter ]
 	then
 		rsync -a /usr/lib/sparkybackup/boot $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/EFI $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
-		EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img"
+		if [ "$TESTXORRISO" = "" ]
+		then
+			EFI_PARAMS="-eltorito-alt-boot -eltorito-boot boot/grub/efi.img"
+		else
+			EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img"
+		fi
 	fi
 	
 	# check Sparky version (4 based on Debian 9; 5 on Debian 10; 6 on Debian Bullseye)
@@ -895,7 +901,7 @@ FOO
 	log_info "Copying your kernel and initrd for the livecd"
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
-	# configure it if you want to enable 2nd kernel in live session 
+	# configure it if you want to enable 2nd kernel in live session (example)
 	#cp /boot/vmlinuz-4.19.0-* $WORKDIR/ISOTMP/live/vmlinuz419
 	#cp /boot/initrd.img-4.19.0-* $WORKDIR/ISOTMP/live/initrd419.img
 
@@ -1124,7 +1130,7 @@ function iso {
 		echo "Creating the iso file using xorriso"
 		$CREATEISO as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$MYVOLID" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
 	else
-		# create iso image via genisoimage which can be larger than 4GB (experimental)
+		# create iso image via genisoimage which can be larger than 4GB (xorriso has to be removed from your system)
 		log_info "Creating $MYARCH iso image with $CREATEISO"
 		echo "Creating the iso file using genisoimage"
 		$CREATEISO -r -V "$MYVOLID" -J -l -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -allow-limited-size -udf -o $WORKDIR/$CUSTOMISO "$WORKDIR/ISOTMP"
@@ -1178,12 +1184,12 @@ function iso {
 	echo "$WORKDIR/$CUSTOMISO $LOCAL35"
 	echo "$LOCAL36"
 	log_info "$WORKDIR/$CUSTOMISO is ready to be burned or tested in a virtual machine."
-	log_info "Check the size and if it is larger than 700MB you will need to burn it to a dvd"
+	log_info "Check the size and if it is larger than 700MB you will need to burn it to a DVD or copy to a USB stick."
 	ls -hs $WORKDIR/$CUSTOMISO
 	ls -hs $WORKDIR/$CUSTOMISO >> $WORKDIR/sparkybackup.log
 	echo "$LOCAL37 'sudo sparkybackup clean' $LOCAL38 $CUSTOMISO"
 	echo " "
-	log_info "It is recommended to run 'sudo sparkybackup clean' once you have burned and tested the $CUSTOMISO"
+	log_info "It is recommended to run 'sudo sparkybackup clean' once you have tested the $CUSTOMISO"
 }
 
 # check to see if either iso or cdfs options have been invoked and proceed accordingly
