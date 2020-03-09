@@ -74,6 +74,7 @@ librsvg2-bin
 memtest86+ (rescue edition only)
 gparted
 cryptsetup-initramfs
+zenity
 
 Install:
 -------------
