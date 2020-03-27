@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2020 Under the GNU GPL2 License
-# Last update 2020/03/09 by pavroo
+# Last update 2020/03/11 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -548,7 +548,7 @@ GUILOG="cli"
 		fi
 
 		# autologin section; do not work with pure cli
-		if [ "$CHECKMINICLI" = "" ]; then
+		if [ "$CHECKMINICLI" = "" ] || [ "$CHECKSERVER" = "" ]; then
 			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
 				AUTOLOGIN=`cat /tmp/choice.$$`

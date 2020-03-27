@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/02/24 by pavroo
+# Last update 2020/03/27 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -743,9 +743,9 @@ function cdfs {
 		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
 		if [ "$TESTXORRISO" = "" ]
 		then
-			EFI_PARAMS="-eltorito-alt-boot -eltorito-boot boot/grub/efi.img"
+			EFI_PARAMS="-eltorito-alt-boot -eltorito-boot boot/grub/efi.img -no-emul-boot"
 		else
-			EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img"
+			EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot"
 		fi
 	fi
 	
@@ -1061,13 +1061,10 @@ log_debug "------------------------------------------------------"
 function iso {
 	TESTXORRISO="`which xorriso`"
 	TESTGENISOIMAGE="`which genisoimage`"
-	if [ "$TESTXORRISO" != "" ] && [ "$TESTGENISOIMAGE" != "" ]
+	if [ "$TESTXORRISO" != "" ]
 	then
 		CREATEISO="`which xorriso`"
-	elif [ "$TESTXORRISO" != "" ] && [ "$TESTGENISOIMAGE" = "" ]
-	then
-		CREATEISO="`which xorriso`"
-	elif [ "$TESTGENISOIMAGE" != "" ] && [ "$TESTXORRISO" = "" ]
+	elif [ "$TESTGENISOIMAGE" != "" ]
 	then
 		CREATEISO="`which genisoimage`"
 	else
@@ -1128,7 +1125,7 @@ function iso {
 		# create iso image via xorriso up to 4GB (default)
 		log_info "Creating $MYARCH iso image with $CREATEISO"
 		echo "Creating the iso file using xorriso"
-		$CREATEISO as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$MYVOLID" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
+		$CREATEISO -as mkisofs -rock -omit-version-number -disable-deep-relocation -joliet -volid "$MYVOLID" -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table $EFI_PARAMS -o "$WORKDIR/$CUSTOMISO" "$WORKDIR/ISOTMP"
 	else
 		# create iso image via genisoimage which can be larger than 4GB (xorriso has to be removed from your system)
 		log_info "Creating $MYARCH iso image with $CREATEISO"
