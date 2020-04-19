@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2020 Under the GNU GPL2 License
-# Last update 2020/04/08.1 by pavroo
+# Last update 2020/04/19 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1350,27 +1350,45 @@ FOO
 		if [ -d /lib/live/mount/medium/offlinesigned ]; then
 			mkdir -p /TARGET/debs
 			cp /lib/live/mount/medium/offlinesigned/* /TARGET/debs/
-		else
+		elif [ -d /run/live/medium/offlinesigned ]; then
 			mkdir -p /TARGET/debs
 			cp /run/live/medium/offlinesigned/* /TARGET/debs/
 		fi
+		
+		if [ -d /TARGET/debs ]; then
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
 FOO
-		chmod +x /TARGET/tmp/signed-install
-		echo "Installing secure boot support"
-		chroot /TARGET /tmp/signed-install
-		rm -f /TARGET/tmp/signed-install
-		rm -rf /TARGET/debs
-		mkdir -p /TARGET/boot/efi/EFI/debian
-		cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
-		if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
-			echo "Installation grub-efi-signed failed"
-			echo "Installation grub-efi-signed failed" >> /var/log/sparkylinux-installer.log
-		else
-			echo "Installation grub-efi-signed ok"
-			echo "Installation grub-efi-signed ok" >> /var/log/sparkylinux-installer.log
+			echo "Installing secure boot support"
+			echo "Installing secure boot support" >> /var/log/sparkylinux-installer.log
+			chmod +x /TARGET/tmp/signed-install
+			chroot /TARGET /tmp/signed-install
+			rm -f /TARGET/tmp/signed-install
+			rm -rf /TARGET/debs
+			mkdir -p /TARGET/boot/efi/EFI/debian
+			cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
+			if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
+				echo "Installation grub-efi-amd64-signed failed"
+				echo "Installation grub-efi-amd64-signed failed" >> /var/log/sparkylinux-installer.log
+			else
+				echo "Installation grub-efi-amd64-signed ok"
+				echo "Installation grub-efi-amd64-signed ok" >> /var/log/sparkylinux-installer.log
+			fi
+			if [ ! -d /TARGET/usr/share/doc/mokutil ]; then
+				echo "Installation mokutil failed"
+				echo "Installation mokutil failed" >> /var/log/sparkylinux-installer.log
+			else
+				echo "Installation mokutil ok"
+				echo "Installation mokutil ok" >> /var/log/sparkylinux-installer.log
+			fi
+			if [ ! -d /TARGET/usr/share/doc/shim-signed ]; then
+				echo "Installation shim-signed failed"
+				echo "Installation shim-signed failed" >> /var/log/sparkylinux-installer.log
+			else
+				echo "Installation shim-signed ok"
+				echo "Installation shim-signed ok" >> /var/log/sparkylinux-installer.log
+			fi
 		fi
 	fi
 fi
