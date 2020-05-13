@@ -47,6 +47,7 @@ CRYPTTAB=""
 FSTAB_BY_UUID=0
 LUKS_TYPE="luks2" #luks1 if no /boot+generate new keyslot to avoid asking for password (for each encrypted drive) and add keys to initramfs
 NO_BOOT_PART=0 #/boot partition manadatory for encryption unless "10" EXPERIMENTAL is chosen
+EXCLUDED_PARTS="@" # quick and dirty, may not be empty as it filters out everything later
 
 # set options depending on mode - text or gui
 DIALOG="`which dialog`"
@@ -279,7 +280,8 @@ get_password() {
 	tmpPASS1="1"
 	tmpPASS2="2"
 	
-	while [ "$tmpPASS1" != "$tmpPASS2" ]; do
+	# empty password reserved for dynamic key generation for swap	
+	while [ "$tmpPASS1" != "$tmpPASS2" ] && [ "$tmpPASS1" != "" ] && [ "$tmpPASS2" != "" ]; do
 	
 		$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Enter $PASS_TYPE password" $HEIGHT $WIDTH 2>$CHOICE_FILE
 		if [ "$?" = "0" ]; then
@@ -362,8 +364,10 @@ collect_encryption_parameters() {
 		exit 1
 	fi
 	ALL_OPEN=0
-	# TODO: remove drives from the list if parameters collected
+	
+	ALREADY_OPEN="@"
 	while [ $ALL_OPEN -eq 0 ]; do
+		ENCRYPTED_DRIVES=$(echo $ENCRYPTED_DRIVES | awk -v EXCL=$ALREADY_OPEN 'BEGIN { RS=" " }; $1 ~ EXCL { getline; next }; { printf "%s ", $0 }')
 		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select drive to open" $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $ENCRYPTED_DRIVES 2>$CHOICE_FILE
 		if [ $? -eq 0 ]; then
 			OPENDRIVE=`cat $CHOICE_FILE`
@@ -394,6 +398,8 @@ collect_encryption_parameters() {
 			else
 				EXCLUDED_PARTS="$EXCLUDED_PARTS|$DRIVE_TO_ENCRYPT"
 			fi
+			# exclude already open drives from the list of candidates for opening
+			ALREADY_OPEN="$ALREADY_OPEN|$DRIVE_TO_ENCRYPT"
 		fi
 	done
 }
@@ -919,6 +925,72 @@ encrypt_drives() {
 	done
 }
 
+configure_lvm() {
+	# TODO: wip; much more sophisticated editor needed)
+	# fill in EXCLUDED_PARTS for pvs
+
+	# 1. select pvs (+remove them from the list)
+	PVS_SELECTED=0
+	PVS="@" #quick and dirty
+	while [ $PVS_SELECTED -eq 0 ]; do
+		DRIVES=`lsblk -l -p | grep part | egrep -v $EXCLUDED_PARTS | egrep -v $PVS | awk '{print $1}'`
+		partdrivemenu=""
+		for i in $DRIVES; do
+			partdrive="$i"
+			partdrivesize=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$i" | awk '{print $2}'`
+			partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
+		done
+		
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select drive for lvm pv." $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $partdrivemenu 2>$CHOICE_FILE
+		if [ "$?" = "0" ]; then
+			PV=`cat $CHOICE_FILE`
+		else
+			PV="Exit"
+		fi
+		rm $CHOICE_FILE
+
+		if [ "$PV" != "Exit" ]; then
+			if [ "$PVS" = "" ]; then
+				PVS="$PV"
+			else
+				PVS="$PVS|$PV" 
+			fi
+			$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to add another pv?" $HEIGHT $WIDTH
+			if [ $? != 0 ]; then
+				PVS_SELECTED=1
+			fi
+		else
+			PVS_SELECTED=1
+		fi
+	done
+	if [ "$EXCLUDED_PARTS" = "" ]; then
+		EXCLUDED_PARTS="$PVS"
+	else
+		EXCLUDED_PARTS="$EXCLUDED_PARTS|$PVS" 
+	fi
+	PVS_TO_CREATE=$(echo $PVS | tr "|" " ")
+	pvcreate $PVS_TO_CREATE
+
+	# 2. create vgs and assign them to pvs (+remove assigned pvs)
+	VGS_CREATED=0
+	while [ $VGS_CREATED -eq 0 ]; do
+		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"Enter VG name" $HEIGHT $WIDTH 2>/tmp/choice.$$
+		if [ "$?" = "0" ]; then
+			VGNAME=`cat /tmp/choice.$$`
+			[ ${#VGNAME} -eq 0 ] && exit 1
+		else
+			exit 1
+		fi
+		# Select PVS + Exit
+		vgcreate $VG_NAME $LVM_PART_DRIVE 
+		# Create another?
+		# No - VGS_CREATED=1
+	done
+
+	# 3. create lvs in vgs (show vg size, +100%FREE - rest of vg capacity)
+}
+
+
 automatic_partitioning() {
 	case $PARTSCHEMA in
 		"0"|"1"|"2"|"3"|"4") # no encryption
@@ -1335,11 +1407,12 @@ partitioner() {
 			if [ $? -eq 0 ]; then
 				# YES - open drives, fill in CRYPTTAB (further reencryption of partitions NOT POSSIBLE)
 				collect_encryption_parameters
-				encrypt_drives just_open
+				encrypt_drives open_only
 				ENCRYPTED_DRIVES_OPEN=1
 			fi
 			# NO - continue
 		fi
+
 		PARTITIONING_DONE=0
 		while [ $PARTITIONING_DONE -eq 0 ]; do
 			drive_to_part
@@ -1352,9 +1425,22 @@ partitioner() {
 				PARTITIONING_DONE=1
 			fi
 		done
+	
+		# TODO: manual creation of lvm (pvs, vgs, lvs)
+		# old lvm should be visible, no need to notify user for now
+		#$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to configure lvm?" $HEIGHT $WIDTH
+		#if [ $? = 0 ]; then
+		#	LVM=1
+		#	configure_lvm
+		#fi
 
-		EXCLUDED_PARTS="loop|sr0|disk"
-		
+		# if cryptodrives open $EXCLUDED_PARTS is not empty
+		if [ "$EXCLUDED_PARTS" = "" ]; then
+			EXCLUDED_PARTS="loop|sr0|disk"
+		else
+			EXCLUDED_PARTS="loop|sr0|disk|$EXCLUDED_PARTS"
+		fi
+
 		if [ "$TESTEFI" != "" ]; then
 			MANDATORY_PARTS=( efi )
 		else
