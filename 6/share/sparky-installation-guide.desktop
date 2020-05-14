@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Sparky OnLine Installation Guide
+GenericName=Sparky OnLine Installation Guide
+Comment=SparkyLinux OnLine Installation Guide
+Comment[pl_PL]=Przewodnik OnLine Instalacji SparkyLinux
+Exec=x-www-browser https://wiki.sparkylinux.org/doku.php?id=install
+Icon=application-text
+Terminal=false
+MultipleArgs=false
+Type=Application
+Categories=Applications;Network;
+

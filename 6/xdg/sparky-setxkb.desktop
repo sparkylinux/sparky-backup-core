@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Sparky SetXKB
+Comment=Sparky SetXKB
+Exec=/usr/bin/sparky-setxkb
+Icon=preferences-desktop-keyboard
+Terminal=false
+MultipleArgs=false
+Type=Application
+Categories=Applications;System
+Hidden=true
+

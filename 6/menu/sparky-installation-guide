@@ -1,0 +1,1 @@
+?package(sparky-backup-sys):needs="X11" section="Applications/Network"        title="Sparky OnLine Installation Guide" command="x-www-browser https://sparkylinux.org/wiki/doku.php?id=install" icon="application-info"
