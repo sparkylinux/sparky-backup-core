@@ -1,0 +1,5 @@
+?package(sparky-backup-core):needs="x11" section="Applications/System" \
+        title="Sparky (Advanced) Installer DEV" \
+        longtitle="Sparky (Advanced) Installer DEV" \
+        icon="/usr/share/icons/sparky/sparkybackupsys/sparky48.png" \
+        command="remsu 'sparky-xterm /usr/bin/sparky-installer'"

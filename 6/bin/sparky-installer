@@ -10,12 +10,6 @@
 # Copyright 2013-2020 Under the GNU GPL2 License
 # Last update 2020/04/19 by pavroo
 #
-# Auto-partitioning added by darekem73
-# Last update 2020/05/09
-# TODO: optionally add swap to encrypted variants (automatic key generation to encrypt swap)
-# TODO: in manual partitioning add option to create LVM on top of encrypting volumes
-# TODO: introduce language independent variables for text
-# 
 # This script requires either yad or dialog to run
 
 # checking to make sure script is running with root privileges
@@ -30,30 +24,11 @@ if [ -f /tmp/sparky-advanced-installer ]; then
 	rm -f /tmp/sparky-advanced-installer
 fi
 
-#set some constants for autopartitioner
-(( K=1024 ))
-(( M=$K*$K ))
-(( G=$K*$K*$K ))
-DEFAULT_EFIPARTSIZE=300
-DEFAULT_BOOTPARTSIZE=500
-DEFAULT_SWAP_SIZE_G=1
-(( DEFAULT_SWAP_SIZE=$DEFAULT_SWAP_SIZE_G*$G ))
-MIN_PART_SIZE=5 # G
-MAX_PART_SIZE=30 # G
-ROOT_PART_RATIO=3 # 1/3 of target partition
-ENCRYPTED_DRIVES_OPEN=0
-CRYPTTAB=""
-# fstab by partname (enables easy restore after formatting root partition)
-FSTAB_BY_UUID=0
-LUKS_TYPE="luks2" #luks1 if no /boot+generate new keyslot to avoid asking for password (for each encrypted drive) and add keys to initramfs
-NO_BOOT_PART=0 #/boot partition manadatory for encryption unless "10" EXPERIMENTAL is chosen
-EXCLUDED_PARTS="@" # quick and dirty, may not be empty as it filters out everything later
-
 # set options depending on mode - text or gui
 DIALOG="`which dialog`"
-HEIGHT="24"
-WIDTH="85"
-MENUHEIGHT="14"
+HEIGHT="20"
+WIDTH="75"
+MENUHEIGHT="12"
 TITLE="--title "
 TEXT=""
 ENTRY="--inputbox "
@@ -62,16 +37,13 @@ YESNO="--yesno "
 MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
-AUTOPARTITIONPROGRAM="fdisk"
-CHOICE_FILE=/tmp/choice.$$
 TITLETEXT="Sparky (Advanced) Installer"
-
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
-	CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-	CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
-	CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
-	CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
-	CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
+CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
+CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
+CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
 if [ -f /usr/bin/sparky-xterm ]; then
@@ -241,7 +213,7 @@ else
 . $DEFLOCDIR/en
 fi
 
-# the first dialog text
+# the first dialog window
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 elif [ "$CHECKSERVER" != "" ]; then
@@ -251,1421 +223,29 @@ else
 fi
 
 if [ "$TESTEFI" != "" ]; then
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11 If you want to encrypt root partition prepare a 500M boot partition that will remain unencrypted.\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 else
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11 If you want to encrypt root partition prepare a 500M boot partition that will remain unencrypted.\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 fi
 
 progressbar () {
-	# check yad version, replace it with zenity of the progressbar if yad is a sparky build
-	TESTZENITY="`which zenity`"
-	if [ "$TESTZENITY" != "" ]; then
-		YADVERSION="`dpkg-query -l | grep yad | grep sparky`"
-		if [ "$YADVERSION" != "" ]; then
-			tail -f /usr/bin/sparky-installer | `which zenity` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=450 --progress --pulsate --auto-close --no-cancel --auto-kill --title="$TITLETEXT" --text="$@"
-		else
-			tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
-		fi
+# check yad version, replace it with zenity of the progressbar if yad is a sparky build
+TESTZENITY="`which zenity`"
+if [ "$TESTZENITY" != "" ]; then
+	YADVERSION="`dpkg-query -l | grep yad | grep sparky`"
+	if [ "$YADVERSION" != "" ]; then
+		tail -f /usr/bin/sparky-installer | `which zenity` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=450 --progress --pulsate --auto-close --no-cancel --auto-kill --title="$TITLETEXT" --text="$@"
 	else
 		tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
 	fi
+else
+	tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
+fi
 }
 
 . /etc/live/config.conf
 . /etc/sparkybackup/sparkybackup.conf
 . /etc/sparkybackup/sparkylinux-installer.conf
-
-get_password() {
-	PASS_TYPE=$1
-	tmpPASS1="1"
-	tmpPASS2="2"
-	
-	# empty password reserved for dynamic key generation for swap	
-	while [ "$tmpPASS1" != "$tmpPASS2" ] && [ "$tmpPASS1" != "" ] && [ "$tmpPASS2" != "" ]; do
-	
-		$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Enter $PASS_TYPE password" $HEIGHT $WIDTH 2>$CHOICE_FILE
-		if [ "$?" = "0" ]; then
-			tmpPASS1=`cat $CHOICE_FILE`
-		else
-			exit 1
-		fi
-	
-		rm $CHOICE_FILE
-		$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"Re-enter $PASS_TYPE password" $HEIGHT $WIDTH 2>$CHOICE_FILE
-		if [ "$?" = "0" ]; then
-			tmpPASS2=`cat $CHOICE_FILE`
-		else
-			exit 1
-		fi
-	
-		rm $CHOICE_FILE
-	
-		if [ "$tmpPASS1" != "$tmpPASS2" ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL41" $HEIGHT $WIDTH
-		fi
-	done
-	THE_PASSWORD=$tmpPASS1
-	rm $CHOICE_FILE
-}
-
-clear_lvm() {
-	LIST_OF_VGS=$(vgs | sed 1D | awk '{printf "%s ", $1}')
-	LIST_OF_PVS=$(pvs | sed 1D | awk '{printf "%s ", $1}')
-	LIST_OF_LVS=$(lvs | sed 1D | awk '{printf "%s ", $1}')
-
-	if [ "$LIST_OF_VGS" != "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Delete all LVM objects\nVGs: $LIST_OF_VGS\nLVs: $LIST_OF_LVS\nPVs: $LIST_OF_PVS?" $HEIGHT $WIDTH
-		if [ $? != 0 ]; then
-			exit 1
-		fi
-		for vg in LIST_OF_VGS; do
-			vgchange -an $vg
-		done
-		for f in $LIST_OF_VGS; do
-			yes | lvremove $f
-			yes | vgremove $f
-		done
-	
-		for f in $LIST_OF_PVS; do
-			yes | pvremove $f
-		done
-	fi
-}
-
-check_lvm() {
-	LIST_OF_VGS=$(vgs | sed 1D | awk '{printf "%s ", $1}')
-	LIST_OF_PVS=$(pvs | sed 1D | awk '{printf "%s ", $1}')
-	LIST_OF_LVS=$(lvs | sed 1D | awk '{printf "%s ", $1}')
-	if [ "$LIST_OF_VGS" != "" ]; then
-		return 1
-	else
-		return 0
-	fi
-}
-
-collect_encrypted_drives() {
-	DRIVES=`lsblk -l -p -o NAME,TYPE,FSTYPE | grep 'crypto_LUKS' | awk '{print $1}'`
-	if [ "$DRIVES" = "" ]; then
-		return 1
-	fi
-	ENCRYPTED_DRIVES=""
-	for i in $DRIVES; do
-		encrdrive="$i"
-		encrdrivesize=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$i" | awk '{print $2}'`
-		ENCRYPTED_DRIVES="$ENCRYPTED_DRIVES $encrdrive $encrdrivesize"
-	done
-	return 0
-}
-
-collect_encryption_parameters() {
-	# ENCRYPTED_DRIVES must be set
-	if [ "$ENCRYPTED_DRIVES" == "" ]; then
-		echo "ENCRYPTED_DRIVES must be set"
-		exit 1
-	fi
-	ALL_OPEN=0
-	
-	ALREADY_OPEN="@"
-	while [ $ALL_OPEN -eq 0 ]; do
-		ENCRYPTED_DRIVES=$(echo $ENCRYPTED_DRIVES | awk -v EXCL=$ALREADY_OPEN 'BEGIN { RS=" " }; $1 ~ EXCL { getline; next }; { printf "%s ", $0 }')
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select drive to open" $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $ENCRYPTED_DRIVES 2>$CHOICE_FILE
-		if [ $? -eq 0 ]; then
-			OPENDRIVE=`cat $CHOICE_FILE`
-		else
-			OPENDRIVE="Exit"
-		fi
-		rm $CHOICE_FILE
-		if [ "$OPENDRIVE" = "Exit" ]; then
-			ALL_OPEN=1
-		else
-			DRIVE_TO_ENCRYPT="$OPENDRIVE"
-			get_password "$DRIVE_TO_ENCRYPT"
-			DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-			if [ "$DRIVES_TO_ENCRYPT_TEXT_ONLY" = "" ]; then
-				DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-			else
-				DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-			fi
-			CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-			if [ "$DRIVES_TO_ENCRYPT" = "" ]; then
-				DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-			else
-				DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-			fi
-			# exclude encryption host drives from selecting as target partitions to mount
-        		if [ "$EXCLUDED_PARTS" = "" ]; then
-				EXCLUDED_PARTS="$DRIVE_TO_ENCRYPT"
-			else
-				EXCLUDED_PARTS="$EXCLUDED_PARTS|$DRIVE_TO_ENCRYPT"
-			fi
-			# exclude already open drives from the list of candidates for opening
-			ALREADY_OPEN="$ALREADY_OPEN|$DRIVE_TO_ENCRYPT"
-		fi
-	done
-}
-
-drive_to_part() {
-	if [ $ENCRYPTED_DRIVES_OPEN -eq 1 ]; then
-		# if drive has open encrypted partitions - remove drive from list
-		if [ "$DRIVES_TO_ENCRYPT" = "" ]; then
-			echo "This should not happen. DRIVES_TO_ENCRYPT should be set if ENCRYPTED_DRIVES_OPEN set to 1."
-			exit 1
-		else
-			EXCLUSION_LIST=""
-			NF=$(echo $DRIVES_TO_ENCRYPT | awk -F"|" '{print NF}')
-			for i in `seq $NF`; do
-				CMD=$(echo $DRIVES_TO_ENCRYPT | cut -d "|" -f $i)
-				PART=$(echo $CMD | cut -d: -f1)
-				PASS=$(echo $CMD | cut -d: -f2)
-				MAPPED=$(echo $CMD | cut -d: -f3)
-				if [ "$EXCLUSION_LIST" = "" ]; then
-					EXCLUSION_LIST="${PART%?}" #remove partition number, dirty way of not showing the same disk for partitioning
-				else
-					EXCLUSION_LIST="$EXCLUSION_LIST|${PART%?}" 
-				fi
-			done
-			DRIVES=`lsblk -l -p | grep 'disk' | egrep -v $EXCLUSION_LIST | awk '{print $1}'`
-		fi
-	else
-		DRIVES=`lsblk -l -p | grep 'disk' | awk '{print $1}'`
-	fi
-	partdrivemenu=""
-	for i in $DRIVES; do
-		partdrive="$i"
-		partdrivesize=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$i" | awk '{print $2}'`
-		partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
-	done
-	
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select drive to partition" $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $partdrivemenu 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-		PARTDRIVE=`cat $CHOICE_FILE`
-		PARTDRIVESIZE=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$PARTDRIVE" | awk '{print $2}'`
-	else
-		PARTDRIVE="Exit"
-	fi
-	
-	rm $CHOICE_FILE
-}
-
-ask_for_part() {
-	TYPE="$1"
-	PARTITIONS=`lsblk -o NAME,SIZE,TYPE -l -p -b | sed 1D | egrep -v $EXCLUDED_PARTS | awk '{print $1}'`
-	PARTLIST=`echo $PARTITIONS`
-	partmenu=""
-	for i in $PARTLIST; do
-		part="$i"
-		partsize=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$i" | awk '{print $2}'`
-		partmenu="$partmenu $part $partsize"
-	done
-	
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select partition for $TYPE" $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $partmenu 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-		PARTTOMOUNT=`cat $CHOICE_FILE`
-		PARTTOMOUNT="$PARTTOMOUNT"
-	else
-		PARTTOMOUNT="Exit"
-	fi
-	
-	rm $CHOICE_FILE
-}
-
-ask_for_mountpoint() {
-	LOCATION="$1"
-
-	$DIALOG $TITLE"$TITLETEXT" --inputbox "Mountpoint for $LOCATION" $HEIGHT $WIDTH 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-                MOUNTPOINT=`cat $CHOICE_FILE`
-        else
-		echo "Error in mountpoint"
-                exit 1
-        fi
-        rm $CHOICE_FILE
-}
-
-ask_for_filesystem() {
-	LOCATION="$1"
-	if [ "$2" = "noformat" ]; then
-		NOFORMAT="$2 noformat"
-	else
-		NOFORMAT=""
-	fi
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select filesystem for $LOCATION" $HEIGHT $WIDTH $MENUHEIGHT $NOFORMAT ext4 "ext4" ext3 "ext3" ext2 "ext2" btrfs "Btrfs" xfs "Xfs" 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-		FSTYPE=`cat $CHOICE_FILE`
-	else
-	        FSTYPE="ext4"
-	fi
-	rm $CHOICE_FILE
-}
-
-gather_part_data() {
-	PART_TYPE="$1"
-	status=0
-	
-	PARTTOMOUNT=""
-	ask_for_part $PART_TYPE
-
-	if [ "$?" != "0" ]; then
-		exit 1
-	fi
-	
-	case $PART_TYPE in
-		"efi")
-			FSTYPE="vfat"
-			MOUNTPOINT="/boot/efi"
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				status=1
-			else
-				$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Format $PART_TYPE?" $HEIGHT $WIDTH
-				if [ $? != 0 ]; then
-					FSTYPE="noformat"
-				fi
-				status=0
-			fi
-			FSTABOPT="defaults"
-			DUMP_PASS="0	0"
-			TARGETEFI=$PARTTOMOUNT #needed for final message
-			FORMATEFIPART=$FSTYPE #needed for final message
-			;;
-		"root")
-			MOUNTPOINT="/"
-			FSTYPE=""
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				status=1
-			else
-				ask_for_filesystem $PART_TYPE "format"
-				status=0
-			fi
-			case $FSTYPE in
-				"ext2"|"ext3"|"ext4")
-					FSTABOPT="errors=remount-ro,defaults"
-					;;
-				"xfs")
-					FSTABOPT="noatime,defaults"
-					;;
-				"btrfs")
-					FSTABOPT="subvol=@,noatime,space_cache,autodefrag,defaults" #for direct storing in store_part
-					HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag" # needed for subvolume fstab entry
-					;;
-			esac
-			ENCRYPT_ROOT=0
-			# if encrypted drives opnen for installation - do not offer reencryption
-			if [ $ENCRYPTED_DRIVES_OPEN -eq 0 ]; then
-				$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Encrypt root partition?\n$PARTTOMOUNT" $HEIGHT $WIDTH
-				if [ $? -eq 0 ]; then
-					ENCRYPT_ROOT=1
-				fi
-			fi
-			if [ $ENCRYPT_ROOT -eq 1 ]; then
-				DRIVE_TO_ENCRYPT="$PARTTOMOUNT"
-				get_password "$DRIVE_TO_ENCRYPT encryption"
-				DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-				if [ "$DRIVES_TO_ENCRYPT_TEXT_ONLY" = "" ]; then
-					DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-				else
-					DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-				fi
-				CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-				if [ "$DRIVES_TO_ENCRYPT" = "" ]; then
-					DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-				else
-					DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-				fi
-				CRYPT=1
-        			EXCLUDED_PARTS="$EXCLUDED_PARTS|$DRIVE_TO_ENCRYPT"
-				PARTTOMOUNT="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-				DUMP_PASS="0	1"
-				ROOTFSTYPE=$FSTYPE #needed for final message
-				TARGETPART=$PARTTOMOUNT #needed below for GRUB installation
-				# change the next swap partition to boot
-        			index=0
-			        while [ "${MANDATORY_PARTS[$index]}" != "swap" ] && [ $index -lt "${#MANDATORY_PARTS[@]}" ]; do ((index++)); done
-			        if [ $index -lt "${#MANDATORY_PARTS[@]}" ]; then
-			                MANDATORY_PARTS[$index]="boot"
-			        fi
-			else
-				DUMP_PASS="0	1"
-				ROOTFSTYPE=$FSTYPE #needed for final message
-				TARGETPART=$PARTTOMOUNT #needed below for GRUB installation
-			fi
-			;;
-		"swap")
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				FSTYPE="noswap"
-				MOUNTPOINT="noswap"
-				status=0
-			else 
-				FSTYPE="swap"
-				MOUNTPOINT="none"
-				FSTABOPT="sw"
-				DUMP_PASS="0	0"
-				status=0
-			fi
-			SWAP=$PARTTOMOUNT #for logging
-			;;
-		"home")
-			MOUNTPOINT="/home"
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				FSTYPE=""
-				status=0
-			else
-				FSTYPE=""
-				ask_for_filesystem $PART_TYPE "noformat"
-				status=0
-			fi
-			case $FSTYPE in
-				"noformat"|"ext2"|"ext3"|"ext4")
-					FSTABOPT="defaults"
-					;;
-				"xfs")
-					FSTABOPT="noatime,defaults"
-					;;
-				"btrfs")
-					FSTABOPT="defaults,noatime,space_cache,autodefrag" #for storing in store_part
-					HFSTABOPT="defaults,noatime,space_cache,autodefrag" #will overwrite HFSTAB from root FS entry; to be used only if btrfs and HOMEPART=Exit
-					;;
-			esac
-			ENCRYPT_HOME=0
-			# if encrypted drives opnen for installation - do not offer reencryption
-			if [ $ENCRYPTED_DRIVES_OPEN -eq 0]; then
-				if [[ "$FSTYPE" != "noformat" && "$PARTTOMOUNT" != "Exit" ]]; then
-					$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Encrypt home partition?\n$PARTTOMOUNT" $HEIGHT $WIDTH
-					if [ $? -eq 0 ]; then
-						ENCRYPT_HOME=1
-					fi
-				fi
-			fi
-			if [ $ENCRYPT_HOME -eq 1 ]; then
-				DRIVE_TO_ENCRYPT="$PARTTOMOUNT"
-				get_password "$DRIVE_TO_ENCRYPT encryption"
-				DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-				if [ "$DRIVES_TO_ENCRYPT_TEXT_ONLY" = "" ]; then
-					DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-				else
-					DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-				fi
-				CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-				if [ "$DRIVES_TO_ENCRYPT" = "" ]; then
-					DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-				else
-					DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-				fi
-				CRYPT=1
-        			EXCLUDED_PARTS="$EXCLUDED_PARTS|$DRIVE_TO_ENCRYPT"
-				PARTTOMOUNT="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-				DUMP_PASS="0	2"
-				HFSTYPE="ext4" #needed below final message
-				HOMEPART="$PARTTOMOUNT" # needed below for final message
-			else
-				DUMP_PASS="0	2"
-				HFSTYPE=$FSTYPE #needed below for choosing folders for rsync if noformat and for final message
-				HOMEPART=$PARTTOMOUNT # Exit=home_on_root or @home subvolume needs to be created, other options n/a; needed below for final message
-			fi
-			;;
-		"boot")
-			# only due to encryption this becomes mandatory, which means no swap
-			FSTYPE="ext4"
-			MOUNTPOINT="/boot"
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				status=1
-			else
-				FSTABOPT="defaults"
-				DUMP_PASS="0	2"
-				status=0
-			fi
-			;;
-		"other")
-			MOUNTPOINT=""
-			FSTYPE=""
-			if [ "$PARTTOMOUNT" = "Exit" ]; then
-				status=0
-			else
-				ask_for_mountpoint $PARTTOMOUNT
-				if [ "$MOUNTPOINT" != "" ]; then
-					ask_for_filesystem $PART_TYPE "noformat"
-					status=0
-				else
-					status=1
-				fi
-			fi
-			FSTABOPT="defaults"
-			DUMP_PASS="0	2"
-			;;
-	esac
-
-	return $status
-}
-
-store_parts() {
-	if [ "$PARTS_TO_MOUNT" = "" ]; then
-		PARTS_TO_MOUNT="$PARTTOMOUNT:$MOUNTPOINT:$FSTYPE:$FSTABOPT:$DUMP_PASS"
-	else
-		PARTS_TO_MOUNT="$PARTS_TO_MOUNT|$PARTTOMOUNT:$MOUNTPOINT:$FSTYPE:$FSTABOPT:$DUMP_PASS"
-	fi
-        EXCLUDED_PARTS="$EXCLUDED_PARTS|$PARTTOMOUNT"
-}
-
-parts_to_mount_to_text() {
-	NF=$(echo $PARTS_TO_MOUNT | awk -F"|" '{print NF}')
-	PARTS_TO_MOUNT_TEXT=""
-	for i in `seq $NF`; do
-		CMD=$(echo $PARTS_TO_MOUNT | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		MOUNT=$(echo $CMD | cut -d: -f2)
-		FS=$(echo $CMD | cut -d: -f3)
-		FSTABOPT=$(echo $CMD | cut -d: -f4)
-		DUMP_PASS=$(echo $CMD | cut -d: -f5)
-		if [ "$PARTS_TO_MOUNT_TEXT" = "" ]; then
-			PARTS_TO_MOUNT_TEXT="$PART	$MOUNT	$FS"
-		else
-			PARTS_TO_MOUNT_TEXT="$PARTS_TO_MOUNT_TEXT\n$PART	$MOUNT	$FS"
-		fi
-	done
-}
-
-select_mount_points() {
-	# mount mandatory partitions
-	CRYPT=0
-	PARTTOMOUNT=""
-	for p in `seq 1 ${#MANDATORY_PARTS[@]}`; do
-		(( i=p-1 ))
-		part=${MANDATORY_PARTS[$i]}
-		gather_part_data $part
-		if [ $? -eq 0 ]; then
-			# home on root = Exit, don't mount separate partition
-			if [ "$PARTTOMOUNT" != "Exit" ]; then
-				store_parts
-			fi
-		else
-			echo "Error in selecting partitions"
-			exit 1
-		fi
-	done
-	
-	# mount any other partitions
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to mount other partitions?" $HEIGHT $WIDTH
-	if [ $? = 0 ]; then
-		PARTTOMOUNT=""
-		while [ "$PARTTOMOUNT" != "Exit" ]; do
-		
-			gather_part_data "other"
-		
-			if [ "$PARTTOMOUNT" != "Exit" ]; then
-				store_parts
-			else
-				break
-			fi
-		
-		done
-	fi
-}
-
-calc_root_size() {
-	if [ $1 -gt $(( $MAX_PART_SIZE*$G )) ]; then
-		(( ROOT_PART_SIZE=$MAX_PART_SIZE*$G ))
-	elif [ $1 -gt $(( $MIN_PART_SIZE*$G )) ]; then
-		(( ROOT_PART_SIZE=$1/$ROOT_PART_RATIO ))
-	fi
-}
-
-create_partitions() {
-	# $PARTS_TO_CREATE must be set
-	if [ "$PARTS_TO_CREATE" == "" ]; then
-		echo "PARTS_TO_CREATE must be set"
-		exit 1
-	fi
-
-	if [ "$TESTEFI" != "" ]; then
-		echo "g" > $CHOICE_FILE
-	else
-		echo "o" > $CHOICE_FILE
-	fi
-	NF=$(echo $PARTS_TO_CREATE | awk -F"|" '{print NF}')
-	for i in `seq $NF`; do
-		CMD=$(echo $PARTS_TO_CREATE | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		TYPE=$(echo $CMD | cut -d: -f2)
-		SIZE=$(echo $CMD | cut -d: -f3)
-		echo "n" >> $CHOICE_FILE
-		if [ "$TESTEFI" == "" ]; then
-			echo "p" >> $CHOICE_FILE
-		fi
-		echo $PART >> $CHOICE_FILE
-		echo "" >> $CHOICE_FILE
-		if [ "$SIZE" == "" ]; then
-			echo "" >> $CHOICE_FILE
-		else
-			(( SIZE=$SIZE/$M ))
-			echo "+$SIZE""M" >> $CHOICE_FILE
-		fi
-		echo "t" >> $CHOICE_FILE
-		if [ "$PART" != "1" ]; then
-			echo $PART >> $CHOICE_FILE
-		fi
-		echo $TYPE >> $CHOICE_FILE
-	done
-	if [ "$TESTEFI" == "" ]; then
-		#make boot partition bootable if not EFI
-		echo "a" >> $CHOICE_FILE
-		echo "1" >> $CHOICE_FILE
-	fi
-	echo "w" >> $CHOICE_FILE
-
-	# unmount all /TARGET & swapoff prior to autopartition
-	PARTSTOUNMOUNT=$(lsblk -o NAME,MOUNTPOINT -l -p -b | sed 1D | grep $PARTDRIVE | grep -v "SWAP" | awk 'NF>1 {print $1}')
-	for p in $PARTSTOUNMOUNT; do
-		# warning - possible deadlock(?)
-		while [ "`mount | grep $p`" ]; do
-			umount -R $(lsblk -o NAME,MOUNTPOINT -l -p -b | sed 1D | grep -v "SWAP" | grep -m 1 $p | awk 'NF>1 {print $2}')
-		done
-	done
-	CHECKSWAP=$(lsblk -o NAME,MOUNTPOINT -l -p -b | sed 1D | awk 'NF>1 && $2 ~ /SWAP/ {print $1}')
-	if [ "$CHECKSWAP" != "" ]; then
-		swapoff $CHECKSWAP
-	fi
-
-	#autopartition device
-	cat $CHOICE_FILE | $AUTOPARTITIONPROGRAM $PARTDRIVE
-	sleep 2
-	rm $CHOICE_FILE
-}
-
-parts_to_create_to_text() {
-	PARTS_TO_CREATE_TEXT=""
-	NF=$(echo $PARTS_TO_CREATE | awk -F"|" '{print NF}')
-	for i in `seq $NF`; do
-		CMD=$(echo $PARTS_TO_CREATE | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		TYPE=$(echo $CMD | cut -d: -f2)
-		SIZE=$(echo $CMD | cut -d: -f3)
-		if [ "$SIZE" = "" ]; then
-			SIZE_TEXT="rest of drive"
-		else
-			SIZE_TEXT=$SIZE"b"
-		fi
-		if [ "$PARTS_TO_CREATE_TEXT" = "" ]; then
-			PARTS_TO_CREATE_TEXT="$PARTDRIVE$PART	Size: $SIZE_TEXT	Type: $TYPE"
-		else
-			PARTS_TO_CREATE_TEXT="$PARTS_TO_CREATE_TEXT\n$PARTDRIVE$PART	Size: $SIZE_TEXT	Type: $TYPE"
-		fi
-	done
-}
-
-generate_encryption_key() {
-	KEYFILE="$1"
-	echo $KEYFILE
-	mkdir -p -m0700 /etc/keys
-	umask 0077 && dd if=/dev/urandom bs=1 count=64 of=/etc/keys/$KEYFILE conv=excl,fsync
-}
-
-add_encryption_key_slot() {
-	PART=$1
-	PASS=$2
-	KEYFILE=$3
-	echo $PASS | cryptsetup luksAddKey $PART /etc/keys/$KEYFILE -l ${#PASS} -q -d -
-}
-
-encrypt_drives() {
-	# DRIVES_TO_ENCRYPT and DRIVES_TO_ENCRYPT_TEXT_ONLY must be set
-	if [ "$DRIVES_TO_ENCRYPT" == "" ]; then
-		echo "DRIVES_TO_ENCRYPT must be set"
-		exit 1
-	fi
-	FORMAT=0
-	if [ "$1" = "format" ]; then
-		FORMAT=1
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Encrypt $DRIVES_TO_ENCRYPT_TEXT_ONLY?\nIt can take several seconds so don't panick!" $HEIGHT $WIDTH
-	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Open $DRIVES_TO_ENCRYPT_TEXT_ONLY?\nIt can take several seconds so don't panick!" $HEIGHT $WIDTH
-	fi
-	if [ $? != 0 ]; then
-		exit 1
-	fi
-
-	# closing open crypt volumes
-	for f in $(lsblk -l -p | grep crypt | awk '{ print $1 }'); do
-		cryptsetup close $f
-	done
-
-	#CRYPTTAB=""
-	NF=$(echo $DRIVES_TO_ENCRYPT | awk -F"|" '{print NF}')
-	for i in `seq $NF`; do
-		CMD=$(echo $DRIVES_TO_ENCRYPT | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		PASS=$(echo $CMD | cut -d: -f2)
-		MAPPED=$(echo $CMD | cut -d: -f3)
-		KEY_ADDED=0
-		if [ $FORMAT -eq 1 ]; then
-			KEY_FILE=""
-			echo $PASS | cryptsetup luksFormat --type $LUKS_TYPE -l ${#PASS} -q -d - $PART
-			sleep 2
-			if [ $NO_BOOT_PART -eq 1 ]; then
-				# if no /boot then KEY_FILE=$PART.key; KEY_ADDED=1
-				KEY_FILE=$(echo $PART | tr "/" "_" | sed 's/^.//')".key"
-				generate_encryption_key $KEY_FILE
-				add_encryption_key_slot $PART $PASS $KEY_FILE
-				KEY_ADDED=1
-			fi
-		fi
-		echo $PASS | cryptsetup luksOpen $PART $MAPPED -l ${#PASS} -d -
-		sleep 2
-		UUID=$(blkid -o value -s UUID $PART)
-		OPTIONS="luks,discard"
-		if [ $KEY_ADDED -eq 1 ]; then
-			KEY=/etc/keys/$KEY_FILE
-			OPTIONS="$OPTIONS,key-slot=1"
-		else
-			KEY="none"
-		fi
-		if [ "$CRYPTTAB" = "" ]; then
-			CRYPTTAB="$MAPPED:$UUID:$KEY	$OPTIONS" 
-		else
-			CRYPTTAB="$CRYPTTAB|$MAPPED:$UUID:$KEY	$OPTIONS,initramfs" 
-		fi
-	done
-}
-
-configure_lvm() {
-	# TODO: wip; much more sophisticated editor needed)
-	# fill in EXCLUDED_PARTS for pvs
-
-	# 1. select pvs (+remove them from the list)
-	PVS_SELECTED=0
-	PVS="@" #quick and dirty
-	while [ $PVS_SELECTED -eq 0 ]; do
-		DRIVES=`lsblk -l -p | grep part | egrep -v $EXCLUDED_PARTS | egrep -v $PVS | awk '{print $1}'`
-		partdrivemenu=""
-		for i in $DRIVES; do
-			partdrive="$i"
-			partdrivesize=`lsblk -o NAME,SIZE,TYPE -l -p -b | grep -m 1 "$i" | awk '{print $2}'`
-			partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
-		done
-		
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select drive for lvm pv." $HEIGHT $WIDTH $MENUHEIGHT Exit "Exit" $partdrivemenu 2>$CHOICE_FILE
-		if [ "$?" = "0" ]; then
-			PV=`cat $CHOICE_FILE`
-		else
-			PV="Exit"
-		fi
-		rm $CHOICE_FILE
-
-		if [ "$PV" != "Exit" ]; then
-			if [ "$PVS" = "" ]; then
-				PVS="$PV"
-			else
-				PVS="$PVS|$PV" 
-			fi
-			$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to add another pv?" $HEIGHT $WIDTH
-			if [ $? != 0 ]; then
-				PVS_SELECTED=1
-			fi
-		else
-			PVS_SELECTED=1
-		fi
-	done
-	if [ "$EXCLUDED_PARTS" = "" ]; then
-		EXCLUDED_PARTS="$PVS"
-	else
-		EXCLUDED_PARTS="$EXCLUDED_PARTS|$PVS" 
-	fi
-	PVS_TO_CREATE=$(echo $PVS | tr "|" " ")
-	pvcreate $PVS_TO_CREATE
-
-	# 2. create vgs and assign them to pvs (+remove assigned pvs)
-	VGS_CREATED=0
-	while [ $VGS_CREATED -eq 0 ]; do
-		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"Enter VG name" $HEIGHT $WIDTH 2>/tmp/choice.$$
-		if [ "$?" = "0" ]; then
-			VGNAME=`cat /tmp/choice.$$`
-			[ ${#VGNAME} -eq 0 ] && exit 1
-		else
-			exit 1
-		fi
-		# Select PVS + Exit
-		vgcreate $VG_NAME $LVM_PART_DRIVE 
-		# Create another?
-		# No - VGS_CREATED=1
-	done
-
-	# 3. create lvs in vgs (show vg size, +100%FREE - rest of vg capacity)
-}
-
-
-automatic_partitioning() {
-	case $PARTSCHEMA in
-		"0"|"1"|"2"|"3"|"4") # no encryption
-			CRYPT=0
-			if [ "$TESTEFI" != "" ]; then
-				(( EFIPARTSIZE=$DEFAULT_EFIPARTSIZE*$M ))
-				(( PARTDRIVESIZE=$PARTDRIVESIZE-$EFIPARTSIZE ))
-			fi
-			case $PARTSCHEMA in
-				"0") #aio
-					LVM=0
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
-					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
-						#part1 bootable
-					fi
-					HOMEPART="Exit" # needed for summary text
-					;;
-				"1") #aio
-					LVM=0
-					(( SWAPPARTSIZE=$DEFAULT_SWAP_SIZE ))
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$SWAPPARTSIZE ))
-					ROOT_PART_SIZE=$PARTDRIVESIZE
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$ROOT_PART_SIZE|3:19: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""3:none:swap:sw:0 0"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
-					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""2:none:swap:sw:0 0"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
-						#part1 bootable
-					fi
-					HOMEPART="Exit" # needed for summary text
-					;;
-				"2") #separate home
-					LVM=0
-					(( SWAPPARTSIZE=$DEFAULT_SWAP_SIZE ))
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$SWAPPARTSIZE ))
-					calc_root_size $PARTDRIVESIZE
-					if [ $ROOT_PART_SIZE -eq 0 ]; then
-						echo "Root partition too small"
-						exit 1
-					fi
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$ROOT_PART_SIZE ))
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$ROOT_PART_SIZE|3:19:$SWAPPARTSIZE|4:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""3:none:swap:sw:0 0|$PARTDRIVE""4:/home:ext4:defaults:0 2"
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
-						ROOTFSTYPE="ext4" #needed for final message
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART=$PARTDRIVE""4 # needed below for final message
-					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19:$SWAPPARTSIZE|3:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""2:none:swap:sw:0 0|$PARTDRIVE""3:/home:ext4:defaults:0 2"
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
-						ROOTFSTYPE="ext4" #needed for final message
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART=$PARTDRIVE""3 # needed below for final message
-						#part1 bootable
-					fi
-					;;
-				"3"|"4") #lvm aio #lvm separate home
-					LVM=1
-					(( BOOTPARTSIZE=$DEFAULT_BOOTPARTSIZE*$M ))
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$BOOTPARTSIZE ))
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="$PARTDRIVE""3"
-					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="$PARTDRIVE""2"
-						#part1 bootable
-					fi
-					;;
-			esac
-			;;
-		"5"|"6"|"7"|"8"|"9"|"10") # with encryption
-			CRYPT=1
-			if [ "$TESTEFI" != "" ]; then
-				(( EFIPARTSIZE=$DEFAULT_EFIPARTSIZE*$M ))
-				(( PARTDRIVESIZE=$PARTDRIVESIZE-$EFIPARTSIZE ))
-			fi
-			(( BOOTPARTSIZE=$DEFAULT_BOOTPARTSIZE*$M ))
-			(( PARTDRIVESIZE=$PARTDRIVESIZE-$BOOTPARTSIZE ))
-			case $PARTSCHEMA in
-				"5") #aio + encryption and no swap
-					LVM=0
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-						#part1 bootable
-					fi
-					;;
-				"6") # separate home + encryption and no swap
-					LVM=0
-					calc_root_size $PARTDRIVESIZE
-					if [ $ROOT_PART_SIZE -eq 0 ]; then
-						echo "Root partition too small"
-						exit 1
-					fi
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$ROOT_PART_SIZE ))
-
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20:$ROOT_PART_SIZE|4:20: "
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""4"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTS_TO_MOUNT|/dev/mapper/$CRYPT_DRIVE_MAPPED:/home:ext4:defaults:0 2"
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
-					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTS_TO_MOUNT|/dev/mapper/$CRYPT_DRIVE_MAPPED:/home:ext4:defaults:0 2"
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
-						#part1 bootable
-					fi
-					;;
-				"7"|"8") # lvm aio #lvm separate home 
-					LVM=1
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-						#part1 bootable
-					fi
-					;;
-				"9") #lvm hybrid: 2 PVs separate home
-					LVM=1
-					calc_root_size $PARTDRIVESIZE
-					if [ $ROOT_PART_SIZE -eq 0 ]; then
-						echo "Root partition too small"
-						exit 1
-					fi
-					(( SWAPPARTSIZE=$DEFAULT_SWAP_SIZE ))
-					(( ROOT_PART_SIZE=$ROOT_PART_SIZE+$SWAPPARTSIZE ))
-					(( PARTDRIVESIZE=$PARTDRIVESIZE-$ROOT_PART_SIZE ))
-
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20:$ROOT_PART_SIZE|4:20: "
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""4"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTS_TO_MOUNT|/dev/mapper/$CRYPT_DRIVE_MAPPED:/home:ext4:defaults:0 2"
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
-					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
-
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVES_TO_ENCRYPT|$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTS_TO_MOUNT|/dev/mapper/$CRYPT_DRIVE_MAPPED:/home:ext4:defaults:0 2"
-						HFSTYPE="ext4" #needed below final message
-						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
-						#part1 bootable
-					fi
-					;;
-				"10") #EXPERIMENTAL: encrypted home on root, no swap, no /boot
-					LVM=0
-					NO_BOOT_PART=1 #with encryption it means adding GRUB_ENABLE_CRYPTODISK=y and chnging to LUKS1
-					LUKS_TYPE="luks1"
-					if [ "$TESTEFI" != "" ]; then
-						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-					else
-						PARTS_TO_CREATE="1:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""1"
-						get_password "$DRIVE_TO_ENCRYPT encryption"
-						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
-						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
-						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
-						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
-						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
-						#part1 bootable
-					fi
-					HOMEPART="Exit" # needed for summary text
-					;;
-			esac
-			;;
-	esac
-
-	parts_to_create_to_text
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Create partitions?\n$PARTS_TO_CREATE_TEXT\non $PARTDRIVE" $HEIGHT $WIDTH
-	if [ $? != 0 ]; then
-		exit 1
-	fi
-	create_partitions
-
-	# encrypt and mount drive(s)
-	if [ $CRYPT -eq 1 ]; then
-		encrypt_drives format
-	fi
-	
-	# create LVM
-	if [ $LVM -eq 1 ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Create LVM on $LVM_PART_DRIVE?" $HEIGHT $WIDTH
-		if [ $? != 0 ]; then
-			exit 1
-		fi
-		#create vg
-		pvcreate $LVM_PART_DRIVE
-		VG_NAME="vgsparky" #dont use "-" in the name
-		vgcreate $VG_NAME $LVM_PART_DRIVE 
-		VGSIZE=$(vgs -o vg_size --units b $VG_NAME | sed 1D | awk '{ print substr($1,1,length($1)-1) }')
-		#create lvs
-		(( VGSIZE=$VGSIZE-$DEFAULT_SWAP_SIZE ))
-		case $PARTSCHEMA in
-			"3"|"7") #lvm aio
-				LVS_TO_CREATE="swap:$DEFAULT_SWAP_SIZE_G""G:none:swap:sw:0 0|root::/:ext4:errors=remount-ro,defaults:0 1"
-				;;
-			"4"|"8") #lvm separate home
-				calc_root_size $VGSIZE
-				if [ $ROOT_PART_SIZE -eq 0 ]; then
-					echo "Root partition too small"
-					exit 1
-				fi
-				(( ROOT_PART_SIZE=$ROOT_PART_SIZE/$G ))
-				LVS_TO_CREATE="swap:$DEFAULT_SWAP_SIZE_G""G:none:swap:sw:0 0|root:$ROOT_PART_SIZE""G:/:ext4:errors=remount-ro,defaults:0 1|home::/home:ext4:defaults:0 2"
-				;;
-			"9") #lvm hybrid: 2 PVs separate home
-				LVS_TO_CREATE="swap:$DEFAULT_SWAP_SIZE_G""G:none:swap:sw:0 0|root::/:ext4:errors=remount-ro,defaults:0 1"
-				;;
-		esac
-		NF=$(echo $LVS_TO_CREATE | awk -F"|" '{print NF}')
-		for i in `seq $NF`; do
-			CMD=$(echo $LVS_TO_CREATE | cut -d "|" -f $i)
-			PART=$(echo $CMD | cut -d: -f1)
-			SIZE=$(echo $CMD | cut -d: -f2)
-			MOUNTPOINT=$(echo $CMD | cut -d: -f3)
-			FSTYPE=$(echo $CMD | cut -d: -f4)
-			FSTABOPT=$(echo $CMD | cut -d: -f5)
-			DUMP_PASS=$(echo $CMD | cut -d: -f6)
-			if [ "$SIZE" != "" ]; then
-				lvcreate -L $SIZE -n $PART $VG_NAME
-			else
-				lvcreate -l +100%FREE -n $PART $VG_NAME
-			fi
-			PART_TO_MOUNT=$(lsblk -l -p -b | egrep "$VG_NAME.*$PART" | awk '{print $1}')
-			if [[ "$PART" == "root" ]]; then
-				TARGETPART="$PART_TO_MOUNT" # needed below for GRUB installation
-				ROOTFSTYPE="ext4" #needed for final message
-			elif [[ "$PART" == "home" ]]; then
-				HFSTYPE="ext4" #needed below final message
-				HOMEPART="$PART_TO_MOUNT" # needed below for final message
-			fi
-			PARTS_TO_MOUNT="$PARTS_TO_MOUNT|$PART_TO_MOUNT:$MOUNTPOINT:$FSTYPE:$FSTABOPT:$DUMP_PASS"
-		done
-	fi
-}
-
-partitioner() {
-	LVM=0
-	CRYPT=0
-	
-	# TODO: why is it here?
-	if [ "$PARTDRIVE" = "Exit" ]; then
-		exit 1
-	fi
-
-	# check for encrypted drives and notify to chose manual partitioning if the user wants to mount them instead of erase
-	collect_encrypted_drives
-	if [ $? -eq 0 ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Encrypted drives found\n$ENCRYPTED_DRIVES\nIf you want to open and mount them before installation, chose manual partitionig scheme" $HEIGHT $WIDTH
-	fi
-
-	unset PART_SCHEMAS
-	declare -a PART_SCHEMAS
-	PART_SCHEMAS[0]="Home on root, no swap"
-	PART_SCHEMAS[1]="Home on root, swap"
-	PART_SCHEMAS[2]="Separate home, swap"
-	PART_SCHEMAS[3]="LVM, home on root, swap"
-	PART_SCHEMAS[4]="LVM, separate home, swap"
-	PART_SCHEMAS[5]="Encrypted, home on root, no swap"
-	PART_SCHEMAS[6]="Encrypted, separate home, no swap"
-	PART_SCHEMAS[7]="Encrypted LVM, home on root, swap"
-	PART_SCHEMAS[8]="Encrypted LVM, separate home, swap"
-	PART_SCHEMAS[9]="Encrypted LVM, hybrid: two PVs, separate home, swap"
-	PART_SCHEMAS[10]="EXPERIMENTAL: encrypted home on root, no swap, no /boot, luks1"
-	
-	partschemamenu=()
-	for f in ${!PART_SCHEMAS[@]}; do
-		partschemamenu=( "${partschemamenu[@]}" "$f" "${PART_SCHEMAS[$f]}" )
-	done
-	
-	partschemamenu=( "Manual" "Manual partitioning" "${partschemamenu[@]}" )
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select partitioning schema" $HEIGHT $WIDTH $MENUHEIGHT "${partschemamenu[@]}" 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-		PARTSCHEMA=`cat $CHOICE_FILE`
-	else
-		PARTSCHEMA="Exit"
-	fi
-		
-	if [ "$PARTSCHEMA" == "Exit" ]; then
-		exit 1
-	fi
-
-	if [ "$PARTSCHEMA" = "Manual" ]; then
-		#manual partitioning
-		if [ "$ENCRYPTED_DRIVES" != "" ]; then
-			# would you like to open encrypted drives and use them for installation YES/NO
-			$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to open encrypted drives and install to them?" $HEIGHT $WIDTH
-			if [ $? -eq 0 ]; then
-				# YES - open drives, fill in CRYPTTAB (further reencryption of partitions NOT POSSIBLE)
-				collect_encryption_parameters
-				encrypt_drives open_only
-				ENCRYPTED_DRIVES_OPEN=1
-			fi
-			# NO - continue
-		fi
-
-		PARTITIONING_DONE=0
-		while [ $PARTITIONING_DONE -eq 0 ]; do
-			drive_to_part
-			if [ "$PARTDRIVE" != "Exit" ]; then
-				$PARTITIONPROG $PARTDRIVE
-				sleep 2
-			fi
-			$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to partition another drive?" $HEIGHT $WIDTH
-			if [ $? != 0 ]; then
-				PARTITIONING_DONE=1
-			fi
-		done
-	
-		# TODO: manual creation of lvm (pvs, vgs, lvs)
-		# old lvm should be visible, no need to notify user for now
-		#$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Do you want to configure lvm?" $HEIGHT $WIDTH
-		#if [ $? = 0 ]; then
-		#	LVM=1
-		#	configure_lvm
-		#fi
-
-		# if cryptodrives open $EXCLUDED_PARTS is not empty
-		if [ "$EXCLUDED_PARTS" = "" ]; then
-			EXCLUDED_PARTS="loop|sr0|disk"
-		else
-			EXCLUDED_PARTS="loop|sr0|disk|$EXCLUDED_PARTS"
-		fi
-
-		if [ "$TESTEFI" != "" ]; then
-			MANDATORY_PARTS=( efi )
-		else
-			MANDATORY_PARTS=()
-		fi
-		MANDATORY_PARTS=( ${MANDATORY_PARTS[@]} root swap home )
-
-		select_mount_points
-		
-		if [ $CRYPT -eq 1 ]; then
-			encrypt_drives format
-		fi
-	else
-		drive_to_part
-		if [ "$PARTDRIVE" = "Exit" ]; then
-			exit 1
-		fi
-		# delete LVM if present, before partitioning
-		clear_lvm
-		automatic_partitioning
-	fi
-	PARTS_TO_MOUNT=$(echo $PARTS_TO_MOUNT | tr "|" "\n" | sort -t ":" -k 2,2 | tr "\n" "|")
-	PARTS_TO_MOUNT=${PARTS_TO_MOUNT%?}
-}
-
-mount_partitions() {
-	# create commands to mount and make filesystems
-	FSTAB=""
-	NF=$(echo $PARTS_TO_MOUNT | awk -F"|" '{print NF}')
-	
-	mkdir -p /TARGET
-
-	for i in `seq $NF`; do
-		CMD=$(echo $PARTS_TO_MOUNT | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		MOUNT=$(echo $CMD | cut -d: -f2)
-		FS=$(echo $CMD | cut -d: -f3)
-		FSTABOPT=$(echo $CMD | cut -d: -f4)
-		DUMP_PASS=$(echo $CMD | cut -d: -f5)
-		if [ "$FS" == "swap" ]; then
-			CHECKSWAP=$(lsblk -o NAME,MOUNTPOINT -l -p -b | sed 1D | awk 'NF>1 && $2 ~ /SWAP/ {print $1}')
-			if [ "$CHECKSWAP" != "" ]; then
-				swapoff $CHECKSWAP
-			fi
-			CHECKSWAP=`blkid | grep $PART: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
-			if [ "$CHECKSWAP" = "swap" ]; then
-				swapon $PART
-			else
-				mkswap $PART
-				swapon $PART
-			fi
-			UUIDSWAP=$(blkid -o value -s UUID $PART)
-		else
-			# unmount all mountpoints of $PART; TODO warning - possible deadlock(?)
-			while [ "`mount | grep $PART`" ]; do
-				umount -R $(lsblk -o NAME,MOUNTPOINT -l -p -b | sed 1D | grep -v "SWAP" | grep -m 1 $PART | awk 'NF>1 {print $2}')
-			done
-			if [ "$FS" != "noformat" ]; then
-				case $FS in
-					"vfat"|"ext2"|"ext3"|"ext4")
-						yes | mkfs -t $FS $PART
-						;;
-					"xfs")
-						mkfs.xfs -f $PART
-						;;
-					"btrfs")
-						mkfs.btrfs -f $PART
-						sleep 2
-						# TODO: refactor; move mounting below
-						if [ "$MOUNT" = "/" ]; then
-							mount -o rw $PART /mnt
-							# Create subvolume
-							btrfs subvolume create /mnt/@
-							# Mount the subvolume
-							mount -t btrfs -o subvol=@,defaults,nodatacow $PART /TARGET
-							if [ "$HOMEPART" = "Exit" ]; then
-								# @home subvolume is needed
-								btrfs subvolume create /mnt/@home
-								mkdir -p /TARGET/home
-								mount -t btrfs -o subvol=@home,defaults,nodatacow $PART /TARGET/home
-							fi
-						fi
-						;;
-				esac
-				sleep 2
-			else
-				FS=$(blkid -o value -s TYPE $PART)
-			fi
-			# TODO: mounting above not elegant, introduce SUBVOLS_TO_MOUNT(?)
-			# actually mount partition; if root and btrfs - partitions will have been mounted above
-			if [[ "$FS" != "btrfs" || "$MOUNT" != "/" ]]; then
-				mkdir -p /TARGET/$MOUNT
-				mount -t $FS $PART /TARGET/$MOUNT -o rw
-				sleep 2
-				if [[ $FS =~ ext[234] ]]; then
-					tune2fs -c 0 -i -0 $PART
-				fi
-			fi
-		fi
-		UUID=$(blkid -o value -s UUID $PART)
-		if [ "$FSTAB" == "" ];then
-			FSTAB="$PART:$UUID:$MOUNT:$FS:$FSTABOPT:$DUMP_PASS"
-			# TODO: not elegant
-			if [[ "$FS" = "btrfs" && "$HOMEPART" = "Exit" ]]; then
-				HOMEUUID=$UUID
-				FSTAB="$FSTAB|$PART:$UUID:/home:$FS:$HFSTABOPT:0 2"
-			fi
-		else
-			FSTAB="$FSTAB|$PART:$UUID:$MOUNT:$FS:$FSTABOPT:$DUMP_PASS"
-			# TODO: not elegant
-			if [[ "$FS" = "btrfs" && "$HOMEPART" = "Exit" ]]; then
-				HOMEUUID=$UUID
-				FSTAB="$FSTAB|$PART:$UUID:/home:$FS:$HFSTABOPT:0 2"
-			fi
-		fi
-	done
-}
-
-generate_crypttab() {
-	# $CRYPTTAB must be set
-	CRYPTTAB_FILE="$1"
-
-	echo "# /etc/crypttab: mappings for encrypted partitions." > $CRYPTTAB_FILE
-	echo "#" >> $CRYPTTAB_FILE
-	echo "# Each mapped device will be created in /dev/mapper, so your /etc/fstab" >> $CRYPTTAB_FILE
-	echo "# should use the /dev/mapper/<name> paths for encrypted devices." >> $CRYPTTAB_FILE
-	echo "#" >> $CRYPTTAB_FILE
-	echo "# See crypttab(5) for the supported syntax." >> $CRYPTTAB_FILE
-	echo "#" >> $CRYPTTAB_FILE
-	echo "# NOTE: Do not list your root (/) partition here, it must be set up" >> $CRYPTTAB_FILE
-	echo "#       beforehand by the initramfs (/etc/mkinitcpio.conf). The same applies" >> $CRYPTTAB_FILE
-	echo "#       to encrypted swap, which should be set up with mkinitcpio-openswap" >> $CRYPTTAB_FILE
-	echo "#       for resume support." >> $CRYPTTAB_FILE
-	echo "#" >> $CRYPTTAB_FILE
-	echo "# <name>               <device>                         <password> <options>" >> $CRYPTTAB_FILE
-
-	NF=$(echo $CRYPTTAB | awk -F"|" '{print NF}')
-	for i in `seq $NF`; do
-		CMD=$(echo $CRYPTTAB | cut -d "|" -f $i)
-		MAPPED=$(echo $CMD | cut -d: -f1)
-		UUID=$(echo $CMD | cut -d: -f2)
-		OPTIONS=$(echo $CMD | cut -d: -f3)
-		echo "$MAPPED	UUID=$UUID	$OPTIONS" >> $CRYPTTAB_FILE
-	done
-}
-
-generate_fstab() {
-	# $FSTAB must be set
-	FSTAB_FILE="$1"
-
-	echo "# /etc/fstab: static file system information." > $FSTAB_FILE
-	echo "#" >> $FSTAB_FILE
-	echo "# <file system> <mount point>   <type>  <options>       <dump>  <pass>" >> $FSTAB_FILE
-	echo "" >> $FSTAB_FILE
-
-	NF=$(echo $FSTAB | awk -F"|" '{print NF}')
-	for i in `seq $NF`; do
-		CMD=$(echo $FSTAB | cut -d "|" -f $i)
-		PART=$(echo $CMD | cut -d: -f1)
-		UUID=$(echo $CMD | cut -d: -f2)
-		MOUNT=$(echo $CMD | cut -d: -f3)
-		FS=$(echo $CMD | cut -d: -f4)
-		FSTABOPT=$(echo $CMD | cut -d: -f5)
-		DUMP_PASS=$(echo $CMD | cut -d: -f6)
-		echo "# $PART" >> $FSTAB_FILE
-		if [ $FSTAB_BY_UUID -eq 1 ]; then
-			echo "UUID=$UUID	$MOUNT	$FS	$FSTABOPT	$DUMP_PASS" >> $FSTAB_FILE
-		else
-			echo "$PART	$MOUNT	$FS	$FSTABOPT	$DUMP_PASS" >> $FSTAB_FILE
-		fi
-	done
-	echo "# cdrom"
-	echo "$TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0" >> $FSTAB_FILE
-}
-
-GrubSelectText () {
-	## Blank the array in case this function is being rerun
-	GrubMenu=()
-	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-	Drives=$(lsblk -l -p | grep -v NAME | awk '{print $1}')
-
-	for i in $Drives; do
-		PartDrive="$i"
-		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
-			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
-		fi
-	done
-
-	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70" )
-
-	#grub location
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>$CHOICE_FILE
-	if [ "$?" = "0" ]; then
-		GRUBLOCTEST=`cat $CHOICE_FILE`
-	fi
-	rm $CHOICE_FILE
-
-	if [ "$GRUBLOCTEST" = "nogrub" ]; then
-		GRUBLOCTEXT="$LOCAL72"
-	elif [ "$GRUBLOCTEST" = "root" ]; then
-		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
-		GRUBLOC="$TARGETPART"
-	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
-		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
-		GRUBLOC="$PARTDRIVE"
-	elif [ "$GRUBLOCTEST" = "" ]; then
-		# TODO: while loop instead of recursion
-		GrubSelectText
-		exit 0
-	else
-		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
-		GRUBLOC="$GRUBLOCTEST"
-	fi
-
-	# set grub delay
-	if [ "$GRUBLOCTEST" != "nogrub" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>$CHOICE_FILE
-		if [ "$?" = "0" ]; then
-			SETDELAY=`cat $CHOICE_FILE`
-		else
-			SETDELAY="5"
-		fi
-		rm $CHOICE_FILE
-	fi
-}
 
 if [ "$GUI" = "" ]; then
 GUILOG="cli"
@@ -1689,17 +269,223 @@ GUILOG="cli"
 	fi
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
+	#choose the drive to partition
+	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
+	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
 
-	partitioner
+	for i in $DRIVES; do
+		partdrive="$i"
+		partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+		partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
+	done
+
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL19\n$LOCAL20" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partdrivemenu 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		PARTDRIVE=`cat /tmp/choice.$$`
+	else
+		PARTDRIVE="Exit"
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$PARTDRIVE" = "Exit" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+		exit 1
+	fi
+
+	$PARTITIONPROG /dev/$PARTDRIVE
+
+	# find a partiton for efi image
+	if [ "$TESTEFI" != "" ]; then
+	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+		for i in $PARTEFI; do
+			efipart="$i"
+			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+			efipartmenu="$efipartmenu $efipart $efipartsize"
+		done
+		
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL23\n$LOCAL24" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $efipartmenu 2>/tmp/choice.$$
+
+		if [ "$?" = "0" ]; then
+			TARGETEFI=`cat /tmp/choice.$$`
+			TARGETEFI="$TARGETEFI:"
+		else
+			TARGETEFI="Exit"
+		fi
+
+		rm /tmp/choice.$$
+
+		if [ "$TARGETEFI" = "Exit" ]; then
+			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+			exit 1
+		fi
+
+		#format the efi partition?
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL25" $HEIGHT $WIDTH $MENUHEIGHT noformatefi "$LOCAL26" formatefi "$LOCAL27" 2>/tmp/choice.$$
+
+		if [ "$?" = "0" ]; then
+			FORMATEFIPART=`cat /tmp/choice.$$`
+		else
+			FORMATEFIPART="formatefi"
+		fi
+
+		rm /tmp/choice.$$
+	fi
+
+	#find the swap partition
+	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
+	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
+	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
+	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
+	if [ "$TARGETEFI" != "" ]; then
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
+	else
+		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+	fi
+	for i in $TARGETSWAP; do
+		swappart="$i"
+		swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+		swappartmenu="$swappartmenu $swappart $swappartsize"
+	done
+
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		SWAP=`cat /tmp/choice.$$`
+		SWAP="$SWAP:"
+	else
+		SWAP="Exit"
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$SWAP" = "Exit" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+		exit 1
+	fi
+
+	#choose the partition to install to
+	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
+	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
+	if [ "$TARGETEFI" != "" ]; then
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
+	else
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
+	fi
+	PARTINST=`echo $PARTITIONS`
+
+	for i in $PARTITIONS; do
+		part="$i"
+		partsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+		partmenu="$partmenu $part $partsize"
+	done
+
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL30\n$LOCAL31" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partmenu 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		TARGETPART=`cat /tmp/choice.$$`
+		TARGETPART="$TARGETPART:"
+	else
+		TARGETPART="Exit"
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$TARGETPART" = "Exit" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+		exit 1
+	fi
+
+	#choose filesystem type
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		FSTYPE=`cat /tmp/choice.$$`
+	else
+		FSTYPE="ext4"
+	fi
+
+	rm /tmp/choice.$$
+
+	#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
+	if [ "$TARGETEFI" != "" ]; then
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	else
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+	fi
+
+	for i in $HOMEINST; do
+		homepart="$i"
+		homepartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+		homepartmenu="$homepartmenu $homepart $homepartsize"
+	done
+
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL34\n$LOCAL35" $HEIGHT $WIDTH $MENUHEIGHT root "$LOCAL36" $homepartmenu 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		HOMEPART=`cat /tmp/choice.$$`
+	else
+		HOMEPART="root"
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$HOMEPART" != "root" ]; then
+		#choose filesystem type
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+
+		if [ "$?" = "0" ]; then
+			HFSTYPE=`cat /tmp/choice.$$`
+		else
+			HFSTYPE="ext4"
+		fi
+
+		rm /tmp/choice.$$
+
+	fi
+
+	# set partitions with no ":"
+	if [ "$TESTEFI" != "" ]; then
+		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
+	fi
+	SWAP=`echo $SWAP | cut -f1 -d":"`
+	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
 
 	#check mode and get new user info if it is a dist mode
 	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
 
 	if [ "$testmode" = "" ]; then
 
-		# root password entry selection
-		get_password "root user"	
-		TARGETROOTPASS=$THE_PASSWORD
+		#root password entry section
+		TARGETROOTPASS="1"
+		TARGETROOTPASS2="2"
+
+		while [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; do
+
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL39" $HEIGHT $WIDTH 2>/tmp/choice.$$
+			if [ "$?" = "0" ]; then
+				TARGETROOTPASS=`cat /tmp/choice.$$`
+			else
+				exit 1
+			fi
+
+			rm /tmp/choice.$$
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL40" $HEIGHT $WIDTH 2>/tmp/choice.$$
+			if [ "$?" = "0" ]; then
+				TARGETROOTPASS2=`cat /tmp/choice.$$`
+			else
+				exit 1
+			fi
+
+			rm /tmp/choice.$$
+
+			if [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; then
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL41" $HEIGHT $WIDTH
+			fi
+
+		done
+
+		rm /tmp/choice.$$
 
 		# do not set a regular user on server edition; text mode only
 		if [ "$CHECKSERVER" = "" ]; then
@@ -1727,8 +513,37 @@ GUILOG="cli"
 			TARGETUSER="`echo $TARGETUSER | awk '{print tolower ($0)}'`"
 
 			#password entry section
-			get_password "user $TARGETUSER"
-			TARGETPASS=$THE_PASSWORD
+
+			TARGETPASS="1"
+			TARGETPASS2="2"
+
+			while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
+
+				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
+				if [ "$?" = "0" ]; then
+					TARGETPASS=`cat /tmp/choice.$$`
+				else
+					exit 1
+				fi
+
+				rm /tmp/choice.$$
+
+				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
+				if [ "$?" = "0" ]; then
+					TARGETPASS2=`cat /tmp/choice.$$`
+				else
+					exit 1
+				fi
+
+				rm /tmp/choice.$$
+
+				if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
+					$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
+				fi
+
+			done
+
+			rm /tmp/choice.$$
 
 		fi
 
@@ -1756,8 +571,62 @@ GUILOG="cli"
 	rm /tmp/choice.$$
 
 	#grub location
+GrubSelectText () {
+
+	## Blank the array in case this function is being rerun
+	GrubMenu=()
+	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
+	Drives=$(lsblk -l | grep -v NAME | awk '{print $1}')
+
+	for i in $Drives; do
+		PartDrive="$i"
+
+		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
+			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
+		fi
+	done
+
+	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70")
+
+	#grub location
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		GRUBLOCTEST=`cat /tmp/choice.$$`
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$GRUBLOCTEST" = "nogrub" ]; then
+		GRUBLOCTEXT="$LOCAL72"
+	elif [ "$GRUBLOCTEST" = "root" ]; then
+		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
+		GRUBLOC="/dev/$TARGETPART"
+	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
+		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
+		GRUBLOC="/dev/$PARTDRIVE"
+	elif [ "$GRUBLOCTEST" = "" ]; then
+		GrubSelectText
+		exit 0
+	else
+		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
+		GRUBLOC="/dev/$GRUBLOCTEST"
+	fi
+
+	# set grub delay
+	if [ "$GRUBLOCTEST" != "nogrub" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
+
+		if [ "$?" = "0" ]; then
+			SETDELAY=`cat /tmp/choice.$$`
+		else
+			SETDELAY="5"
+		fi
+		rm /tmp/choice.$$
+	fi
+}
 	
-	GrubSelectText
+GrubSelectText
 
 	#dpkg-reconfigure tzdata
 	#Timezone setting
@@ -1799,16 +668,7 @@ GUILOG="cli"
 	#$SETCONSOLEDATA
 	#$SETXSERVER
 
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Autoupgrade system during installation?" $HEIGHT $WIDTH
-	if [ $? != 0 ]; then
-		AUTOUPGRADE=0
-	else
-		AUTOUPGRADE=1
-	fi
-
-	if [ "$HOMEPART" = "Exit" ]; then
-		HOMETEXT=", /home will be on root filesystem "
-	elif [ "$HOMEPART" != "root" ]; then
+	if [ "$HOMEPART" != "root" ]; then
 		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
 	fi
 
@@ -1816,17 +676,13 @@ GUILOG="cli"
 		HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
 	fi
 
-	# summarize info and ask to install system
-	parts_to_create_to_text
-	parts_to_mount_to_text
-
 	if [ "$testmode" = "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"Partitions created: $PARTS_TO_CREATE_TEXT\nPartitions to mount: $PARTS_TO_MOUNT_TEXT\n$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $ROOTFSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
 		fi
 	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $ROOTFSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
+		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
 		fi
@@ -1887,11 +743,11 @@ GUILOG="yad"
 		exit 1
 	fi
 
-	$PARTITIONPROG $PARTDRIVE
+	$PARTITIONPROG /dev/$PARTDRIVE
 
 	# find a partiton for efi image	
 	if [ "$TESTEFI" != "" ]; then
-		PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 		for i in $PARTEFI; do
 			efipart="$i"
 			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
@@ -1954,8 +810,7 @@ GUILOG="yad"
 	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
 	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
 	if [ "$TARGETEFI" != "" ]; then
-		#PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
-		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk -F: '{print $1}' | grep -v "$TARGETEFI" | grep -v "$SWAP"`
+		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
 	else
 		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
 	fi
@@ -1988,8 +843,7 @@ GUILOG="yad"
 	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
 
 	if [ "$TARGETEFI" != "" ]; then
-		#HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
-		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk -F: '{print $1}' | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART"`
+		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
 	else
 		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
 	fi
@@ -2123,13 +977,13 @@ GrubSelectGUI () {
 		GRUBLOCTEXT="$LOCAL72"
 	elif [ "$GRUBLOCTEST" = "root" ]; then
 		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
-		GRUBLOC="$TARGETPART"
+		GRUBLOC="/dev/$TARGETPART"
 	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
 		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
-		GRUBLOC="$PARTDRIVE"
+		GRUBLOC="/dev/$PARTDRIVE"
 	else
 		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
-		GRUBLOC="$GRUBLOCTEST"
+		GRUBLOC="/dev/$GRUBLOCTEST"
 	fi
 
 	# set grub delay
@@ -2149,7 +1003,7 @@ No "0 sec $LOCAL125"`
 	fi
 }
 
-	GrubSelectGUI
+GrubSelectGUI
 
 	#Timezone setting
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77"
@@ -2175,7 +1029,7 @@ No "0 sec $LOCAL125"`
 		ZONESINFO=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL78" Exit "$LOCAL21" $ZONES`
 	done
 
-	ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
+ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
 
 	if [ "$ZONESINFO" = "Exit" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
@@ -2219,10 +1073,150 @@ fi
 
 ##########install_to_hd section##########
 
-mount_partitions
+# preper swap
+if [ "$GUI" != "" ]; then
+	progressbar "$LOCAL90 $LOCAL91 ... $LOCAL92 ... \n" &
+fi
+
+sleep 2
+echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
+CHECKSWAP=`blkid | grep $SWAP: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
+# do not format swap if exist, use it only
+if [ "$CHECKSWAP" = "swap" ]; then
+	swapon /dev/$SWAP
+# format swap if the chosen partition is not swap
+else
+	mkswap /dev/$SWAP
+	swapon /dev/$SWAP
+fi
+
+if [ "$GUI" != "" ]; then
+	killall -KILL tail
+fi
+
+# preper partitions
+if [ "$GUI" != "" ]; then
+	progressbar "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
+fi
+echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
+
+#make the filesystem and mount the partition on /TARGET
+if [ "`mount | grep $TARGETPART`" ]; then
+	echo "$LOCAL94"
+	umount /dev/$TARGETPART
+fi
+
+if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
+	mke2fs -t $FSTYPE -F /dev/$TARGETPART
+	mkdir -p /TARGET
+	sleep 2
+	echo "$LOCAL95"
+	mount /dev/$TARGETPART /TARGET -o rw
+	sleep 2
+	echo "$LOCAL96"
+	tune2fs -c 0 -i 0 /dev/$TARGETPART 
+	rm -rf "/TARGET/lost+found"
+elif [ "$FSTYPE" = "btrfs" ]; then
+	mkfs.btrfs -f /dev/$TARGETPART
+	sleep 2
+	mount -o rw /dev/$TARGETPART /mnt
+	# Create subvolume
+	btrfs subvolume create /mnt/@
+	# Mount the subvolume
+	sleep 2
+	echo "$LOCAL95"
+	mkdir -p /TARGET
+	mount -t btrfs -o subvol=@,defaults,nodatacow /dev/$TARGETPART /TARGET
+	if [ "$HOMEPART" = "root" ]; then
+		btrfs subvolume create /mnt/@home
+		mkdir -p /TARGET/home
+		mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$TARGETPART /TARGET/home
+	fi
+	rm -rf "/TARGET/lost+found"
+elif [ "$FSTYPE" = "xfs" ]; then
+	mkfs.xfs -f /dev/$TARGETPART
+	mkdir -p /TARGET
+	sleep 2
+	echo "$LOCAL95"
+	mount /dev/$TARGETPART /TARGET -o rw
+	rm -rf "/TARGET/lost+found"
+fi
+
+if [ "$GUI" != "" ]; then
+	killall -KILL tail
+fi
+
+if [ "$HOMEPART" != "root" ]; then
+	if [ "$HFSTYPE" != "noformat" ]; then
+		if [ "$GUI" != "" ]; then
+			progressbar "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
+		fi
+
+		echo "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
+
+		if [ "`mount | grep $HOMEPART`" ]; then
+			echo "$LOCAL94"
+			umount /dev/$HOMEPART
+		fi
+
+		if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
+		elif [ "$HFSTYPE" = "btrfs" ]; then
+			mkfs.btrfs -f /dev/$HOMEPART			
+		elif [ "$HFSTYPE" = "xfs" ]; then
+			mkfs.xfs -f /dev/$HOMEPART
+		fi
+	elif [ "$HFSTYPE" = "noformat" ]; then
+		HFSTYPE=`blkid | grep $HOMEPART: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
+	fi
+
+	echo "$LOCAL97"
+	mkdir -p /TARGET/home
+	if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+		mount /dev/$HOMEPART /TARGET/home -o rw
+		tune2fs -c 0 -i 0 /dev/$HOMEPART
+	elif [ "$HFSTYPE" = "btrfs" ]; then
+		mount /dev/$HOMEPART /TARGET/home -o rw
+	elif [ "$HFSTYPE" = "xfs" ]; then
+		mount /dev/$HOMEPART /TARGET/home -o rw
+	fi
+	rm -rf "/TARGET/home/lost+found"
+	sleep 2
+
+	# Get fs type for home partition in case the user chose not to format
+	if [ "$HFSTYPE" = "noformat" ]; then
+		HFSTYPE=`mount | grep "/dev/$HOMEPART" | awk '{print $5}'`
+	fi
+
+	if [ "$GUI" != "" ]; then
+		killall -KILL tail
+	fi
+
+fi
+
+#format and mount efi part
+if [ "$TESTEFI" != "" ]; then
+	if [ "$FORMATEFIPART" = "formatefi" ]; then
+		if [ "`mount | grep $TARGETEFI`" ]; then
+			echo "$LOCAL98 ..."
+			umount /dev/$TARGETEFI
+		fi
+		
+		mkfs.fat -F32 -v /dev/$TARGETEFI
+	fi
+
+	echo "$LOCAL99 /dev/$TARGETEFI $LOCAL100 /TARGET/boot/efi $LOCAL91 ..."
+
+	if [ ! -d /TARGET/boot/efi ]; then
+		mkdir -p /TARGET/boot/efi
+	fi
+
+	mount -t vfat /dev/$TARGETEFI /TARGET/boot/efi
+
+fi
 
 #get the cdrom device for fstab
-TARGETCDROM="/dev/sr0"
+TARGETCDROM="/dev/cdrom"
 
 sleep 1
 if [ "$GUI" != "" ]; then
@@ -2258,16 +1252,12 @@ TARGETUSER=$TARGETUSER
 TARGETHOSTNAME=$TARGETHOSTNAME
 SWAP=$SWAP
 TARGETPART=$TARGETPART
-FSTYPE=$ROOTFSTYPE
+FSTYPE=$FSTYPE
 HOMEPART=$HOMEPART
 TARGETEFI=$TARGETEFI
 FORMATEFIPART=$FORMATEFIPART
 HFSTYPE=$HFSTYPE
 GRUBLOC=$GRUBLOC
-
-PARTS_TO_CREATE=$PARTS_TO_CREATE
-LVS_TO_CREATE=$LVS_TO_CREATE
-PARTS_TO_MOUNT=$PARTS_TO_MOUNT
 FOO
 
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -2298,7 +1288,7 @@ else
 	rsync -a / /TARGET --ignore-existing --exclude=/{TARGET,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
 fi
 
-mkdir -p /TARGET/{proc,mnt,run,sys,media/cdrom0}
+mkdir -p /TARGET/{proc,mnt,run,sys,media/cdrom}
 
 echo "$LOCAL102"
 
@@ -2364,7 +1354,7 @@ FOO
 			mkdir -p /TARGET/debs
 			cp /run/live/medium/offlinesigned/* /TARGET/debs/
 		fi
-
+		
 		if [ -d /TARGET/debs ]; then
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
@@ -2379,11 +1369,11 @@ FOO
 			mkdir -p /TARGET/boot/efi/EFI/debian
 			cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
 			if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
-				echo "Installation grub-efi-signed failed"
-				echo "Installation grub-efi-signed failed" >> /var/log/sparkylinux-installer.log
+				echo "Installation grub-efi-amd64-signed failed"
+				echo "Installation grub-efi-amd64-signed failed" >> /var/log/sparkylinux-installer.log
 			else
-				echo "Installation grub-efi-signed ok"
-				echo "Installation grub-efi-signed ok" >> /var/log/sparkylinux-installer.log
+				echo "Installation grub-efi-amd64-signed ok"
+				echo "Installation grub-efi-amd64-signed ok" >> /var/log/sparkylinux-installer.log
 			fi
 			if [ ! -d /TARGET/usr/share/doc/mokutil ]; then
 				echo "Installation mokutil failed"
@@ -2403,13 +1393,75 @@ FOO
 	fi
 fi
 
-# generate crypttab if encrypted volumes
-if [ $CRYPT -eq 1 ] || [ "$CRYPTTAB" != "" ]; then
-	generate_crypttab "/TARGET/etc/crypttab"
+#create a new fstab by uuid
+#UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
+#UUIDTARGETPART=`ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}'`
+UUIDTARGETPART=`blkid | grep $TARGETPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
+#UUIDHOMEPART=`ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}'`
+UUIDHOMEPART=`blkid | grep $HOMEPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
+#UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
+UUIDSWAP=`blkid | grep $SWAP: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+#UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
+#UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
+UUIDTARGETEFI=`blkid | grep $TARGETEFI: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+
+if [ -d /TARGET/usr/share/doc/sparky-meta-server ]; then
+	FSTABEXTRA="defaults,relatime,suid,async,acl,user_xattr,barrier=1"
+else
+	FSTABEXTRA="defaults"
 fi
 
-#create a new fstab by uuid
-generate_fstab "/TARGET/etc/fstab"
+if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
+	FSTABOPT="errors=remount-ro,$FSTABEXTRA"
+elif [ "$FSTYPE" = "btrfs" ]; then
+	FSTABOPT="subvol=@,noatime,space_cache,autodefrag,$FSTABEXTRA"
+	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
+elif [ "$FSTYPE" = "xfs" ]; then
+	FSTABOPT="noatime,$FSTABEXTRA"
+fi
+
+if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+	HFSTABOPT="defaults"
+elif [ "$HFSTYPE" = "btrfs" ]; then
+	HFSTABOPT="defaults,noatime,space_cache,autodefrag"
+elif [ "$HFSTYPE" = "xfs" ]; then
+	HFSTABOPT="defaults,noatime"
+fi
+
+cat > /TARGET/etc/fstab <<FOO
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# root /dev/$TARGETPART
+UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
+# swap /dev/$SWAP
+UUID=$UUIDSWAP	none	swap	sw	0	0
+# cdrom
+$TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
+FOO
+
+# add efi part
+if [ "$TESTEFI" != "" ]; then
+	echo "# efi /dev/$TARGETEFI" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0" >> /TARGET/etc/fstab
+fi
+
+# add home part
+if [ "$HOMEPART" = "root" ]; then
+	if [ "$FSTYPE" = "btrfs" ]; then
+		echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
+		echo "UUID=$UUIDTARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	fi
+else
+	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+fi
 
 # add swap uuid to resume
 if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
@@ -2418,11 +1470,9 @@ fi
 if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
 	rm -f /TARGET/etc/initramfs-tools/conf.d/resume
 fi
-if [ "$UUIDSWAP" != "" && $LVM -eq 0 ]; then
 cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
 RESUME=UUID=$UUIDSWAP
 FOO
-fi
 
 echo "UUIDs & FSTAB" >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -2430,10 +1480,6 @@ echo "INITRAMFS-RESUME:" >> /var/log/sparkylinux-installer.log
 cat /TARGET/etc/initramfs-tools/conf.d/resume >> /var/log/sparkylinux-installer.log
 echo "GENERATED FSTAB:" >> /var/log/sparkylinux-installer.log
 cat /TARGET/etc/fstab >> /var/log/sparkylinux-installer.log
-if [ $CRYPT -eq 1 ] || [ "$CRYPTTAB" != "" ]; then
-	echo "GENERATED CRYPTTAB:" >> /var/log/sparkylinux-installer.log
-	cat /TARGET/etc/crypttab >> /var/log/sparkylinux-installer.log
-fi
 echo "" >> /var/log/sparkylinux-installer.log
 
 # remove the old live installer desktop file 
@@ -2692,25 +1738,12 @@ if [ "$SETDELAY" != "" ]; then
 	fi
 fi
 
-if [ $NO_BOOT_PART -eq 1 ] && { [ $CRYPT -eq 1 ] || [ "$CRYPTTAB" != "" ]; }; then
-	echo "GRUB_ENABLE_CRYPTODISK=y" >> /TARGET/etc/default/grub
-	if [ "$(ls /etc/keys/)" != "" ]; then
-		cp /etc/keys/* /TARGET/etc/keys/
-		echo "KEYFILE_PATTERN=\"/etc/keys/*\"" >> /TARGET/etc/cryptsetup-initramfs/conf-hook
-		echo "UMASK=0077" >> /TARGET/etc/initramfs-tools/initramfs.conf
-	fi
-fi
-
 # remove live packages
 if [ "$GUI" != "" ]; then
 	progressbar "$LOCAL109 ... $LOCAL92 ...\n" &
 fi
 
 echo "$LOCAL109 ... $LOCAL92 ..."
-
-# do not remove lvm if lvm is defined
-check_lvm
-LVM_ACTIVE=$?
 
 cat > /TARGET/bin/tempinstallerscript <<FOO
 #!/bin/bash
@@ -2728,16 +1761,9 @@ apt-get purge --yes live-*
 apt-get purge --yes gparted
 apt-get purge --yes calamares
 apt-get purge --yes mc
-if [ $LVM -eq 0 ] && [ $LVM_ACTIVE -eq 0 ]; then
-	apt-get purge --yes lvm2
-fi
-if [ $CRYPT -eq 0 ] && [ "$CRYPTTAB" = "" ]; then
-	apt-get purge --yes cryptsetup
-fi
+apt-get purge --yes lvm2
+apt-get purge --yes cryptsetup
 apt-get autoremove --yes
-if [ $AUTOUPGRADE -eq 1 ]; then
-	apt-get update && apt-get -yq full-upgrade
-fi
 #update-initramfs -t -c -k $(/bin/uname -r)
 update-initramfs -t -c -k all
 shadowconfig on
@@ -2788,8 +1814,8 @@ chmod +x /tmp/Grub-Update
 	echo "$LOCAL111"
 	echo "$LOCAL112"
 	sleep 1
-	#umount -R /TARGET
-	#sleep 1
+	umount -R /TARGET
+	sleep 1
 
 	if [ "$GUI" != "" ]; then
 		killall -KILL tail
@@ -2819,19 +1845,19 @@ chmod +x /tmp/Grub-Install
 	fi
 
 	echo "$LOCAL111"
-	#echo "$LOCAL112"
+	echo "$LOCAL112"
 	sleep 1
-	#umount -R /TARGET
-	#if [ "$FSTYPE" = "btrfs" ]; then
-	#	umount -R /mnt/@home
-	#	umount -R /mnt/@
-	#	umount -R /mnt
-	#fi
-	#if [ "$HFSTYPE" = "btrfs" ]; then
-	#	umount -R /src/@home
-	#	umount -R /src
-	#fi
-	#sleep 1
+	umount -R /TARGET
+	if [ "$FSTYPE" = "btrfs" ]; then
+		umount -R /mnt/@home
+		umount -R /mnt/@
+		umount -R /mnt
+	fi
+	if [ "$HFSTYPE" = "btrfs" ]; then
+		umount -R /src/@home
+		umount -R /src
+	fi
+	sleep 1
 
 	if [ "$GUI" != "" ]; then
 		killall -KILL tail
@@ -2851,26 +1877,10 @@ else
 	PASTESERVER=""
 fi
 
-# exit and reboot
 $DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL113\n$PASTEGRUB\n$LOCAL114\n$PASTESERVER\n$LOCAL116" $HEIGHT $WIDTH
 if [ $? != 0 ]; then
-	echo "If you created and encrypted your own partitions or opened existing ones, chroot to /TARGET fill in /etc/crypttab and verify /etc/fstab."
-	echo "Afterwards: update-initramfs -u"
-	echo "Remember to umount -R /TARGET before rebooting"
 	exit 0
 else
-	echo "$LOCAL112"
-	umount -R /TARGET
-	if [ "$FSTYPE" = "btrfs" ]; then
-		umount -R /mnt/@home
-		umount -R /mnt/@
-		umount -R /mnt
-	fi
-	if [ "$HFSTYPE" = "btrfs" ]; then
-		umount -R /src/@home
-		umount -R /src
-	fi
-	sleep 1
 	reboot
 fi
 

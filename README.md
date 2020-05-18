@@ -54,8 +54,6 @@ x11-utils
 xfsprogs
 xorriso | genisoimage
 xz-utils
-lvm2
-cryptsetup
 
 Conflicts:
 ------------
