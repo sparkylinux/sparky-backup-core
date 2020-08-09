@@ -10,31 +10,31 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/04/07 by pavroo
+# Last update 2020/08/09 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
 # get default's locale file
 DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
-if [ "`cat /etc/default/locale | grep de`" != "" ]; then
+if [ "`cat /etc/default/locale | grep LANG=de`" != "" ]; then
 . $DEFLOCDIR/de
-elif [ "`cat /etc/default/locale | grep el`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=el`" != "" ]; then
 . $DEFLOCDIR/el
-elif [ "`cat /etc/default/locale | grep fr`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=fr`" != "" ]; then
 . $DEFLOCDIR/fr
-elif [ "`cat /etc/default/locale | grep hu`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=hu`" != "" ]; then
 . $DEFLOCDIR/hu
-elif [ "`cat /etc/default/locale | grep id_ID`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=id_ID`" != "" ]; then
 . $DEFLOCDIR/id_ID
-elif [ "`cat /etc/default/locale | grep it`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=it`" != "" ]; then
 . $DEFLOCDIR/it
-elif [ "`cat /etc/default/locale | grep pl`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=pl`" != "" ]; then
 . $DEFLOCDIR/pl
-elif [ "`cat /etc/default/locale | grep pt_BR`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=pt_BR`" != "" ]; then
 . $DEFLOCDIR/pt_BR
-elif [ "`cat /etc/default/locale | grep pt_PT`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=pt_PT`" != "" ]; then
 . $DEFLOCDIR/pt_PT
-elif [ "`cat /etc/default/locale | grep ru`" != "" ]; then
+elif [ "`cat /etc/default/locale | grep LANG=ru`" != "" ]; then
 . $DEFLOCDIR/ru
 else
 . $DEFLOCDIR/en
@@ -528,24 +528,28 @@ function cdfs {
 	mkdir -p $WORKDIR/ISOTMP/isolinux
 	cp /usr/lib/sparkybackup/isolinux/* $WORKDIR/ISOTMP/isolinux/
 
-	# replace old memtest86+ with the latest one if available
-	if [ -f $WORKDIR/ISOTMP/isolinux/memtest* ]
-	then
-		rm -f $WORKDIR/ISOTMP/isolinux/memtest*
-	fi
-
-	# copy memtest86+ to rescue edition only
-	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
-	if [ "$CHECKRESCUEISO" != "" ]
-	then
-		cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
-
-		echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "label memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	menu label Run memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	kernel /isolinux/memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	fi
+	# copy memtest86+ and hdt to all iso images
+	#if [ -f /home/extra/memtest86.bin ]
+	#then
+	#	cp /home/extra/memtest86.bin $WORKDIR/ISOTMP/isolinux/memtest
+	#	echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "label memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	menu label Memory Test" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	kernel /isolinux/memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#fi
+	#if [ -f /home/extra/hdt.c32 ]
+	#then
+	#	cp /home/extra/hdt.c32 $WORKDIR/ISOTMP/isolinux/hdt.c32
+	#	cp /home/extra/libmenu.c32 $WORKDIR/ISOTMP/isolinux/libmenu.c32
+	#	cp /home/extra/libgpl.c32 $WORKDIR/ISOTMP/isolinux/libgpl.c32
+	#	cp /home/extra/pci.ids $WORKDIR/ISOTMP/isolinux/pci.ids
+	#	echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "label hdt" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	menu label Hardware Detection" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	kernel /isolinux/hdt.c32" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#fi
 
 	# set live iso label depends of edition
 	CHECKAWESOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep awesome`
@@ -1033,14 +1037,22 @@ FOO
 	log_debug "Command-line options = $@"
 	log_debug "------------------------------------------------------"
 
-	log_debug "------------------------------------------------------"
-	log_debug "memtest info"
-	if [ -f $WORKDIR/ISOTMP/isolinux/memtest ]
-	then
-		log_debug "memtest copied ok"
-	else
-		log_debug "memtest not copied"
-	fi
+	#log_debug "------------------------------------------------------"
+	#log_debug "memtest info"
+	#if [ -f $WORKDIR/ISOTMP/isolinux/memtest ]
+	#then
+	#	log_debug "memtest copied ok"
+	#else
+	#	log_debug "memtest not copied"
+	#fi
+	#log_debug "------------------------------------------------------"
+	#log_debug "hdt info"
+	#if [ -f $WORKDIR/ISOTMP/isolinux/hdt.c32 ]
+	#then
+	#	log_debug "hdt copied ok"
+	#else
+	#	log_debug "hdt not copied"
+	#fi
 
 	log_debug "------------------------------------------------------"
 	log_debug "User's default locale info"

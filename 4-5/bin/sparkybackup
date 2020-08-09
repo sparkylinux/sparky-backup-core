@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/04/07 by pavroo
+# Last update 2020/08/09 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -529,23 +529,23 @@ function cdfs {
 	cp /usr/lib/sparkybackup/isolinux/* $WORKDIR/ISOTMP/isolinux/
 
 	# replace old memtest86+ with the latest one if available
-	if [ -f $WORKDIR/ISOTMP/isolinux/memtest* ]
-	then
-		rm -f $WORKDIR/ISOTMP/isolinux/memtest*
-	fi
+	#if [ -f $WORKDIR/ISOTMP/isolinux/memtest* ]
+	#then
+	#	rm -f $WORKDIR/ISOTMP/isolinux/memtest*
+	#fi
 
 	# copy memtest86+ to rescue edition only
-	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
-	if [ "$CHECKRESCUEISO" != "" ]
-	then
-		cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
-
-		echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "label memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	menu label Run memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	kernel /isolinux/memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-	fi
+	#CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+	#if [ "$CHECKRESCUEISO" != "" ]
+	#then
+	#	cp /boot/memtest86+.bin $WORKDIR/ISOTMP/isolinux/memtest
+	#
+	#	echo "" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "label memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	menu label Run memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	kernel /isolinux/memtest" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	echo "	append -" >> $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#fi
 
 	# set live iso label depends of edition
 	CHECKAWESOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep awesome`
@@ -1033,14 +1033,14 @@ FOO
 	log_debug "Command-line options = $@"
 	log_debug "------------------------------------------------------"
 
-	log_debug "------------------------------------------------------"
-	log_debug "memtest info"
-	if [ -f $WORKDIR/ISOTMP/isolinux/memtest ]
-	then
-		log_debug "memtest copied ok"
-	else
-		log_debug "memtest not copied"
-	fi
+	#log_debug "------------------------------------------------------"
+	#log_debug "memtest info"
+	#if [ -f $WORKDIR/ISOTMP/isolinux/memtest ]
+	#then
+	#	log_debug "memtest copied ok"
+	#else
+	#	log_debug "memtest not copied"
+	#fi
 
 	log_debug "------------------------------------------------------"
 	log_debug "User's default locale info"
