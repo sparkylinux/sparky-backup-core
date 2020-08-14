@@ -10,13 +10,12 @@
 # Copyright 2013-2020 Under the GNU GPL2 License
 #
 # Auto-partitioning added by darekem73
-# Last update 2020/05/09
 # TODO: optionally add swap to encrypted variants (automatic key generation to encrypt swap)
 # TODO: in manual partitioning add option to create LVM on top of encrypting volumes
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2020/05/18 by pavroo
+# Last update 2020/08/11 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup

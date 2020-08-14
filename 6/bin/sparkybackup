@@ -10,7 +10,7 @@
 # Copyright 2013-2020 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/08/09 by pavroo
+# Last update 2020/08/12 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -512,6 +512,7 @@ function cdfs {
 			echo $LINE | xargs -i sed -e 's/{},//g' $WORKDIR/dummysys/etc/group.new1 > $WORKDIR/dummysys/etc/group.new2
 			echo $LINE | xargs -i sed -e 's/{}//g' $WORKDIR/dummysys/etc/group.new2 > $WORKDIR/dummysys/etc/group
 			rm -rf $WORKDIR/dummysys/etc/group.new1 $WORKDIR/dummysys/etc/group.new2
+			#grep 'autologin' /etc/group >> $WORKDIR/dummysys/etc/group
 		done
 
 		OLDUSER=`grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'`
@@ -885,6 +886,7 @@ FOO
 	echo "export LIVE_USERNAME=\"$LIVEUSER\"" > /etc/live/config.conf
 	echo "export LIVE_USER_FULLNAME=\"Live session user\"" >> /etc/live/config.conf
 	echo "export LIVE_HOSTNAME=\"$LIVEUSER\"" >> /etc/live/config.conf
+	#echo "export LIVE_USER_DEFAULT_GROUPS=\"$LIVEUSER,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth,autologin\"" >> /etc/live/config.conf
 
 	#fix for a bug in the debian live boot scripts that starts a second X server
 	if [ "$1" = "dist" ] && [ -f /etc/X11/default-display-manager ]
