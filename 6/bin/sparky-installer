@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2020 Under the GNU GPL2 License
-# Last update 2020/08/11 by pavroo
+# Last update 2020/08/15 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1329,6 +1329,7 @@ if [ "$TESTEFI" != "" ]; then
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
+apt autoremove -y
 FOO
 	chmod +x /TARGET/tmp/efi-install
 	echo "Installing grub-efi"
@@ -1359,7 +1360,11 @@ FOO
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
+# try to fix missing deps
+apt update
+apt install -f -y
 FOO
+
 			echo "Installing secure boot support"
 			echo "Installing secure boot support" >> /var/log/sparkylinux-installer.log
 			chmod +x /TARGET/tmp/signed-install
@@ -1444,7 +1449,6 @@ UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
 UUID=$UUIDSWAP	none	swap	sw	0	0
 # cdrom
 $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
-FOO
 
 # add efi part
 if [ "$TESTEFI" != "" ]; then

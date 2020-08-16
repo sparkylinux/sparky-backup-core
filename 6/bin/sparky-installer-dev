@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2020/08/11 by pavroo
+# Last update 2020/08/15 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -2341,6 +2341,7 @@ if [ "$TESTEFI" != "" ]; then
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
+apt autoremove -y
 FOO
 	chmod +x /TARGET/tmp/efi-install
 	echo "Installing grub-efi"
@@ -2371,6 +2372,9 @@ FOO
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
 dpkg -i /debs/*
+# try to fix missing deps
+apt update
+apt install -f -y
 FOO
 			echo "Installing secure boot support"
 			echo "Installing secure boot support" >> /var/log/sparkylinux-installer.log
