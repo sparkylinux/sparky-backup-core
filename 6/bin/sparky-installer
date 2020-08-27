@@ -1449,6 +1449,7 @@ UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
 UUID=$UUIDSWAP	none	swap	sw	0	0
 # cdrom
 $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
+FOO
 
 # add efi part
 if [ "$TESTEFI" != "" ]; then
@@ -1466,7 +1467,6 @@ else
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
 	echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 fi
-FOO
 
 # add swap uuid to resume
 if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
