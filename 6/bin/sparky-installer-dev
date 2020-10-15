@@ -41,7 +41,7 @@ DEFAULT_BOOTPARTSIZE=500
 DEFAULT_SWAP_SIZE_G=1
 (( DEFAULT_SWAP_SIZE=$DEFAULT_SWAP_SIZE_G*$G ))
 MIN_PART_SIZE=5 # G
-MAX_PART_SIZE=30 # G
+MAX_PART_SIZE=32 # G
 ROOT_PART_RATIO=3 # 1/3 of target partition
 ENCRYPTED_DRIVES_OPEN=0
 CRYPTTAB=""
@@ -833,6 +833,9 @@ create_partitions() {
 }
 
 parts_to_create_to_text() {
+	#add support for NVME drives
+	[ `echo $PARTDRIVE | grep "nvme"` ] && NVME="p" || NVME=""
+	
 	PARTS_TO_CREATE_TEXT=""
 	NF=$(echo $PARTS_TO_CREATE | awk -F"|" '{print NF}')
 	for i in `seq $NF`; do
@@ -846,9 +849,9 @@ parts_to_create_to_text() {
 			SIZE_TEXT=$SIZE"b"
 		fi
 		if [ "$PARTS_TO_CREATE_TEXT" = "" ]; then
-			PARTS_TO_CREATE_TEXT="$PARTDRIVE$PART	Size: $SIZE_TEXT	Type: $TYPE"
+			PARTS_TO_CREATE_TEXT="$PARTDRIVE$NVME$PART	Size: $SIZE_TEXT	Type: $TYPE"
 		else
-			PARTS_TO_CREATE_TEXT="$PARTS_TO_CREATE_TEXT\n$PARTDRIVE$PART	Size: $SIZE_TEXT	Type: $TYPE"
+			PARTS_TO_CREATE_TEXT="$PARTS_TO_CREATE_TEXT\n$PARTDRIVE$NVME$PART	Size: $SIZE_TEXT	Type: $TYPE"
 		fi
 	done
 }
@@ -994,6 +997,9 @@ configure_lvm() {
 
 
 automatic_partitioning() {
+	#add support for NVME drives
+	[ `echo $PARTDRIVE | grep "nvme"` ] && NVME="p" || NVME=""
+
 	case $PARTSCHEMA in
 		"0"|"1"|"2"|"3"|"4") # no encryption
 			CRYPT=0
@@ -1006,14 +1012,14 @@ automatic_partitioning() {
 					LVM=0
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
+						TARGETPART=$PARTDRIVE$NVME""2 # needed below for GRUB installation
 					else
 						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
+						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
 						#part1 bootable
 					fi
 					HOMEPART="Exit" # needed for summary text
@@ -1025,14 +1031,14 @@ automatic_partitioning() {
 					ROOT_PART_SIZE=$PARTDRIVESIZE
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$ROOT_PART_SIZE|3:19: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""3:none:swap:sw:0 0"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""3:none:swap:sw:0 0"
 						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
+						TARGETPART=$PARTDRIVE$NVME""2 # needed below for GRUB installation
 					else
 						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""2:none:swap:sw:0 0"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""2:none:swap:sw:0 0"
 						ROOTFSTYPE="ext4" #needed for final message
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
+						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
 						#part1 bootable
 					fi
 					HOMEPART="Exit" # needed for summary text
@@ -1049,18 +1055,18 @@ automatic_partitioning() {
 					(( PARTDRIVESIZE=$PARTDRIVESIZE-$ROOT_PART_SIZE ))
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$ROOT_PART_SIZE|3:19:$SWAPPARTSIZE|4:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""3:none:swap:sw:0 0|$PARTDRIVE""4:/home:ext4:defaults:0 2"
-						TARGETPART=$PARTDRIVE""2 # needed below for GRUB installation
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""3:none:swap:sw:0 0|$PARTDRIVE$NVME""4:/home:ext4:defaults:0 2"
+						TARGETPART=$PARTDRIVE$NVME""2 # needed below for GRUB installation
 						ROOTFSTYPE="ext4" #needed for final message
 						HFSTYPE="ext4" #needed below final message
-						HOMEPART=$PARTDRIVE""4 # needed below for final message
+						HOMEPART=$PARTDRIVE$NVME""4 # needed below for final message
 					else
 						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19:$SWAPPARTSIZE|3:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE""2:none:swap:sw:0 0|$PARTDRIVE""3:/home:ext4:defaults:0 2"
-						TARGETPART=$PARTDRIVE""1 # needed below for GRUB installation
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""2:none:swap:sw:0 0|$PARTDRIVE$NVME""3:/home:ext4:defaults:0 2"
+						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
 						ROOTFSTYPE="ext4" #needed for final message
 						HFSTYPE="ext4" #needed below final message
-						HOMEPART=$PARTDRIVE""3 # needed below for final message
+						HOMEPART=$PARTDRIVE$NVME""3 # needed below for final message
 						#part1 bootable
 					fi
 					;;
@@ -1070,12 +1076,12 @@ automatic_partitioning() {
 					(( PARTDRIVESIZE=$PARTDRIVESIZE-$BOOTPARTSIZE ))
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="$PARTDRIVE""3"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2"
+						LVM_PART_DRIVE="$PARTDRIVE$NVME""3"
 					else
 						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
-						LVM_PART_DRIVE="$PARTDRIVE""2"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2"
+						LVM_PART_DRIVE="$PARTDRIVE$NVME""2"
 						#part1 bootable
 					fi
 					;;
@@ -1094,23 +1100,23 @@ automatic_partitioning() {
 					LVM=0
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 					else
 						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 						#part1 bootable
 					fi
@@ -1127,17 +1133,17 @@ automatic_partitioning() {
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20:$ROOT_PART_SIZE|4:20: "
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""4"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""4"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
@@ -1149,17 +1155,17 @@ automatic_partitioning() {
 					else
 						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
@@ -1175,23 +1181,23 @@ automatic_partitioning() {
 					LVM=1
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
 					else
 						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
 						#part1 bootable
 					fi
@@ -1210,16 +1216,16 @@ automatic_partitioning() {
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20:$BOOTPARTSIZE|3:20:$ROOT_PART_SIZE|4:20: "
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE""2:/boot:ext4:defaults:0 2"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""4"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""4"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
@@ -1231,16 +1237,16 @@ automatic_partitioning() {
 					else
 						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot:ext4:defaults:0 2"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
 
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""3"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""3"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVES_TO_ENCRYPT_TEXT_ONLY|$DRIVE_TO_ENCRYPT"
@@ -1258,18 +1264,18 @@ automatic_partitioning() {
 					LUKS_TYPE="luks1"
 					if [ "$TESTEFI" != "" ]; then
 						PARTS_TO_CREATE="1:1:$EFIPARTSIZE|2:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""2"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
 						CRYPT_DRIVE_MAPPED=$(echo $DRIVE_TO_ENCRYPT | awk -F"/" '{print $NF"_crypt"}')
 						DRIVES_TO_ENCRYPT="$DRIVE_TO_ENCRYPT:$DRIVE_TO_ENCRYPT_PASS:$CRYPT_DRIVE_MAPPED"
-						PARTS_TO_MOUNT="$PARTDRIVE""1:/boot/efi:vfat:defaults:0 0|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
+						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 					else
 						PARTS_TO_CREATE="1:20: "
-						DRIVE_TO_ENCRYPT="$PARTDRIVE""1"
+						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""1"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
 						DRIVES_TO_ENCRYPT_TEXT_ONLY="$DRIVE_TO_ENCRYPT"
@@ -1622,7 +1628,7 @@ GrubSelectText () {
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-	Drives=$(lsblk -l -p | grep -v NAME | awk '{print $1}')
+	Drives=$(lsblk -l -p | egrep -v "NAME|loop|rom" | awk '{print $1}')
 
 	for i in $Drives; do
 		PartDrive="$i"
