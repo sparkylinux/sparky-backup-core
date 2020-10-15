@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2020/08/27 by pavroo
+# Last update 2020/10/15 by darekem73
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -40,7 +40,7 @@ DEFAULT_EFIPARTSIZE=300
 DEFAULT_BOOTPARTSIZE=500
 DEFAULT_SWAP_SIZE_G=1
 (( DEFAULT_SWAP_SIZE=$DEFAULT_SWAP_SIZE_G*$G ))
-MIN_PART_SIZE=5 # G
+MIN_PART_SIZE=8 # G
 MAX_PART_SIZE=32 # G
 ROOT_PART_RATIO=3 # 1/3 of target partition
 ENCRYPTED_DRIVES_OPEN=0
@@ -87,6 +87,7 @@ fi
 
 TESTEFI0=`lsmod | grep efi`
 if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI0" != "" ]; then
+#if [ -d /sys/firmware/efi ]; then
 	TESTEFI="EFI detected"
 else
 	TESTEFI=""
@@ -763,10 +764,17 @@ select_mount_points() {
 }
 
 calc_root_size() {
+	if [ $1 -lt $(( $MIN_PART_SIZE*$G )) ]; then
+		echo "Not enough space for root partition $MIN_PART_SIZE G"
+		exit 1
+	fi
+
 	if [ $1 -gt $(( $MAX_PART_SIZE*$G )) ]; then
 		(( ROOT_PART_SIZE=$MAX_PART_SIZE*$G ))
-	elif [ $1 -gt $(( $MIN_PART_SIZE*$G )) ]; then
+	elif [ $(( $1/$ROOT_PART_RATIO )) -gt $(( $MIN_PART_SIZE*$G )) ]; then
 		(( ROOT_PART_SIZE=$1/$ROOT_PART_RATIO ))
+	else
+		(( ROOT_PART_SIZE=$MIN_PART_SIZE*$G ))
 	fi
 }
 
@@ -1016,7 +1024,7 @@ automatic_partitioning() {
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART=$PARTDRIVE$NVME""2 # needed below for GRUB installation
 					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE"
+						PARTS_TO_CREATE="1:83:$ROOT_PART_SIZE"
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1"
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
@@ -1035,7 +1043,7 @@ automatic_partitioning() {
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART=$PARTDRIVE$NVME""2 # needed below for GRUB installation
 					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19: "
+						PARTS_TO_CREATE="1:83:$ROOT_PART_SIZE|2:82: "
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""2:none:swap:sw:0 0"
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
@@ -1061,7 +1069,7 @@ automatic_partitioning() {
 						HFSTYPE="ext4" #needed below final message
 						HOMEPART=$PARTDRIVE$NVME""4 # needed below for final message
 					else
-						PARTS_TO_CREATE="1:20:$ROOT_PART_SIZE|2:19:$SWAPPARTSIZE|3:20: "
+						PARTS_TO_CREATE="1:83:$ROOT_PART_SIZE|2:82:$SWAPPARTSIZE|3:83: "
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/:ext4:errors=remount-ro,defaults:0 1|$PARTDRIVE$NVME""2:none:swap:sw:0 0|$PARTDRIVE$NVME""3:/home:ext4:defaults:0 2"
 						TARGETPART=$PARTDRIVE$NVME""1 # needed below for GRUB installation
 						ROOTFSTYPE="ext4" #needed for final message
@@ -1079,7 +1087,7 @@ automatic_partitioning() {
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="$PARTDRIVE$NVME""3"
 					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
+						PARTS_TO_CREATE="1:83:$BOOTPARTSIZE|2:83: "
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="$PARTDRIVE$NVME""2"
 						#part1 bootable
@@ -1109,7 +1117,7 @@ automatic_partitioning() {
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2|/dev/mapper/$CRYPT_DRIVE_MAPPED:/:ext4:errors=remount-ro,defaults:0 1"
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
+						PARTS_TO_CREATE="1:83:$BOOTPARTSIZE|2:83: "
 						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
@@ -1153,7 +1161,7 @@ automatic_partitioning() {
 						HFSTYPE="ext4" #needed below final message
 						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
 					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
+						PARTS_TO_CREATE="1:83:$BOOTPARTSIZE|2:83:$ROOT_PART_SIZE|3:83: "
 
 						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
@@ -1190,7 +1198,7 @@ automatic_partitioning() {
 						PARTS_TO_MOUNT="$PARTDRIVE$NVME""1:/boot/efi:vfat:defaults:0 0|$PARTDRIVE$NVME""2:/boot:ext4:defaults:0 2"
 						LVM_PART_DRIVE="/dev/mapper/$CRYPT_DRIVE_MAPPED"
 					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20: "
+						PARTS_TO_CREATE="1:83:$BOOTPARTSIZE|2:83: "
 						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
@@ -1235,7 +1243,7 @@ automatic_partitioning() {
 						HFSTYPE="ext4" #needed below final message
 						HOMEPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for final message
 					else
-						PARTS_TO_CREATE="1:20:$BOOTPARTSIZE|2:20:$ROOT_PART_SIZE|3:20: "
+						PARTS_TO_CREATE="1:83:$BOOTPARTSIZE|2:83:$ROOT_PART_SIZE|3:83: "
 
 						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""2"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
@@ -1274,7 +1282,7 @@ automatic_partitioning() {
 						ROOTFSTYPE="ext4" #needed for final message
 						TARGETPART="/dev/mapper/$CRYPT_DRIVE_MAPPED" # needed below for GRUB installation
 					else
-						PARTS_TO_CREATE="1:20: "
+						PARTS_TO_CREATE="1:83: "
 						DRIVE_TO_ENCRYPT="$PARTDRIVE$NVME""1"
 						get_password "$DRIVE_TO_ENCRYPT encryption"
 						DRIVE_TO_ENCRYPT_PASS=$THE_PASSWORD
@@ -2430,7 +2438,7 @@ fi
 if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
 	rm -f /TARGET/etc/initramfs-tools/conf.d/resume
 fi
-if [ "$UUIDSWAP" != "" && $LVM -eq 0 ]; then
+if [[ "$UUIDSWAP" != "" && $LVM -eq 0 ]]; then
 cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
 RESUME=UUID=$UUIDSWAP
 FOO
