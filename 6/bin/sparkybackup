@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2020 under the GNU GPL2 License
+# Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2020/10/06 by pavroo
+# Last update 2021/01/31 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -917,6 +917,12 @@ FOO
 	#cp /boot/vmlinuz-4.19.0-* $WORKDIR/ISOTMP/live/vmlinuz419
 	#cp /boot/initrd.img-4.19.0-* $WORKDIR/ISOTMP/live/initrd419.img
 
+	# fix sddm conf
+	if [ -f /lib/live/config/0085-sddm ]
+	then
+		sed -i -e 's/startkde/startplasma-x11/g' /lib/live/config/0085-sddm
+	fi
+	
 	# Step 5 - Make filesystem.squashfs
 
 	if [ -f $WORKDIR/ISOTMP/live/filesystem.squashfs ]
