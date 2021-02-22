@@ -10,7 +10,7 @@
 # Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2021/01/31 by pavroo
+# Last update 2021/02/22 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -754,42 +754,16 @@ function cdfs {
 		fi
 	fi
 	
-	# check Sparky version (4 based on Debian 9; 5 on Debian 10; 6 on Debian Bullseye)
-	SPARKYVERCHECK4="`cat /etc/lsb-release | grep Tyche`"
-	SPARKYVERCHECK5="`cat /etc/lsb-release | grep Nibiru`"
-	SPARKYVERCHECK6="`cat /etc/lsb-release | grep Tolo`"
-	if [ "$SPARKYVERCHECK4" != "" ]
-	then
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub6.png
-		mv $WORKDIR/ISOTMP/boot/grub/grub4.png $WORKDIR/ISOTMP/boot/grub/grub.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background6.png
-		mv $WORKDIR/ISOTMP/isolinux/background4.png $WORKDIR/ISOTMP/isolinux/background.png
-	elif [ "$SPARKYVERCHECK5" != "" ]
-	then
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub4.png
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub6.png
-		mv $WORKDIR/ISOTMP/boot/grub/grub5.png $WORKDIR/ISOTMP/boot/grub/grub.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background4.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background6.png
-		mv $WORKDIR/ISOTMP/isolinux/background5.png $WORKDIR/ISOTMP/isolinux/background.png
-	else
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub4.png
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub5.png
-		mv $WORKDIR/ISOTMP/boot/grub/grub6.png $WORKDIR/ISOTMP/boot/grub/grub.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background4.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background5.png
-		mv $WORKDIR/ISOTMP/isolinux/background6.png $WORKDIR/ISOTMP/isolinux/background.png
-	fi
+	mv $WORKDIR/ISOTMP/boot/grub/grub.png $WORKDIR/ISOTMP/boot/grub/grub.png
+	mv $WORKDIR/ISOTMP/isolinux/background.png $WORKDIR/ISOTMP/isolinux/background.png
 
 	# replace grub & isolinux background of 100 edition
-	if [ -f /opt/sparky-100-grub.png ]; then
-		rm -f $WORKDIR/ISOTMP/boot/grub/grub.png
-		cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/boot/grub/grub.png
-		rm -f $WORKDIR/ISOTMP/isolinux/background.png
-		cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/isolinux/background.png
-	fi
+	#if [ -f /opt/sparky-100-grub.png ]; then
+	#	rm -f $WORKDIR/ISOTMP/boot/grub/grub.png
+	#	cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/boot/grub/grub.png
+	#	rm -f $WORKDIR/ISOTMP/isolinux/background.png
+	#	cp /opt/sparky-100-grub.png $WORKDIR/ISOTMP/isolinux/background.png
+	#fi
 
 	# replace isolinux and grub configs for rescue edition
 	if [ "$CHECKRESCUEISO" != "" ]
