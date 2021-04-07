@@ -10,7 +10,7 @@
 # Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2021/02/22 by pavroo
+# Last update 2021/04/06 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -20,6 +20,8 @@ if [ "`cat /etc/default/locale | grep LANG= | grep de`" != "" ]; then
 . $DEFLOCDIR/de
 elif [ "`cat /etc/default/locale | grep LANG= | grep el`" != "" ]; then
 . $DEFLOCDIR/el
+elif [ "`cat /etc/default/locale | grep LANG= | grep es`" != "" ]; then
+. $DEFLOCDIR/es
 elif [ "`cat /etc/default/locale | grep LANG= | grep fr`" != "" ]; then
 . $DEFLOCDIR/fr
 elif [ "`cat /etc/default/locale | grep LANG= | grep hu`" != "" ]; then
@@ -559,6 +561,7 @@ function cdfs {
 	CHECKCDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cde`
 	CHECKCINNAMONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cinnamon`
 	CHECKDRACOISO=`cat /etc/sparkybackup/sparkybackup.conf | grep draco`
+	CHECKEDEXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep edex`
 	CHECKEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep enlightenment`
 	CHECKFLUXBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep fluxbox`
 	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
@@ -615,6 +618,9 @@ function cdfs {
 	elif [ "$CHECKDRACOISO" != "" ]
 	then
 		LIVEVERSION="Draco"
+	elif [ "$CHECKEDEXISO" != "" ]
+	then
+		LIVEVERSION="eDEX-UI"
 	elif [ "$CHECKEISO" != "" ]
 	then
 		LIVEVERSION="Enlightenment"

@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2020/10/15 by darekem73
+# Last update 2021/04/06 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -203,7 +203,7 @@ fi
 
 #elif [ "$GUI" = "" ]; then
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Spanish "Español" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
 
 	if [ "$?" = "0" ]; then
 		DEFLANG=`cat /tmp/sparky-advanced-installer`
@@ -240,6 +240,8 @@ elif [ "$DEFLANG" = "Portuguese" ]; then
 . $DEFLOCDIR/pt_PT
 elif [ "$DEFLANG" = "Russian" ]; then
 . $DEFLOCDIR/ru
+elif [ "$DEFLANG" = "Spanish" ]; then
+. $DEFLOCDIR/es
 else
 . $DEFLOCDIR/en
 fi

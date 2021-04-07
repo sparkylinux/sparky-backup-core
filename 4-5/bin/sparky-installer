@@ -7,8 +7,8 @@
 #
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2020 Under the GNU GPL2 License
-# Last update 2020/10/06 by pavroo
+# Copyright 2013-2021 Under the GNU GPL2 License
+# Last update 2021/04/07 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -135,6 +135,7 @@ Italian "Italiano" \
 Polish "Polski" \
 Portuguese "Português" \
 Russian "Pусский" \
+Spanish "Español" \
 Exit "Exiting now..."`
 
 	if [ "$?" = "0" ]; then
@@ -164,6 +165,8 @@ Exit "Exiting now..."`
 		DEFLANG="Portuguese"
 	elif [ "$DEFLANGS" = "Russian" ]; then
 		DEFLANG="Russian"
+	elif [ "$DEFLANGS" = "Spanish" ]; then
+		DEFLANG="Spanish"
 	elif [ "$DEFLANGS" = "Exit" ]; then
 		exit 1
 	else
@@ -172,7 +175,7 @@ Exit "Exiting now..."`
 
 elif [ "$GUI" = "" ]; then
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Spanish "Español" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
 
 	if [ "$?" = "0" ]; then
 		DEFLANG=`cat /tmp/sparky-advanced-installer`
@@ -209,6 +212,8 @@ elif [ "$DEFLANG" = "Portuguese" ]; then
 . $DEFLOCDIR/pt_PT
 elif [ "$DEFLANG" = "Russian" ]; then
 . $DEFLOCDIR/ru
+elif [ "$DEFLANG" = "Spanish" ]; then
+. $DEFLOCDIR/es
 else
 . $DEFLOCDIR/en
 fi
