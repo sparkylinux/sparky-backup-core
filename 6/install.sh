@@ -28,7 +28,7 @@ if [ "$1" = "uninstall" ]; then
 	rm -f /usr/share/menu/sparky-installation-guide
 	rm -f /usr/share/menu/sparkylinux-installer
 	rm -f /usr/share/applications/sparkylinux-installer.desktop
-	rm -f /usr/share/applications/sparkylinux-installer-dev.desktop
+	#rm -f /usr/share/applications/sparkylinux-installer-dev.desktop
 	rm -f /usr/share/applications/sparky-installation-guide.desktop
 	rm -f /lib/live/config/0091-sddm
 	rm -f /lib/live/config/1181-calamares-icon

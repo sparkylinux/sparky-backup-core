@@ -1,4 +1,13 @@
 -------------------------------------------------------------------------------
+  Version 20210721~sparky6~0 (2021-07-21)
+-------------------------------------------------------------------------------
+  * Replace GRUB and Isolinux config on CLI
+  * Added Openbox Noir to ISO config
+  * Do not use other lang then English on CLI installer
+  * Clening installer-dev
+  * Removed installer-dev-desktop entry
+
+-------------------------------------------------------------------------------
   Version 20210612~sparky6~0 (2021-06-12)
 -------------------------------------------------------------------------------
   * Don't kill thunar daemon on OpenBox

@@ -10,7 +10,7 @@
 # Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2021/04/06 by pavroo
+# Last update 2021/07/21 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -581,6 +581,7 @@ function cdfs {
 	CHECKMINIMALGUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalgui`
 	CHECKMULTIMEDIAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep multimedia`
 	CHECKOPENBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep openbox`
+	CHECKOPENBOXNOIRISO=`cat /etc/sparkybackup/sparkybackup.conf | grep openbox | grep noir`
 	CHECKPANTHEONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pantheon`
 	CHECKPEKWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pekwm`
 	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
@@ -669,6 +670,9 @@ function cdfs {
 	elif [ "$CHECKMINIMALCLIISO" != "" ]
 	then
 		LIVEVERSION="MinimalCLI"
+		# change isolinux.cfg if CLI image
+		rm -f $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+		mv $WORKDIR/ISOTMP/isolinux/isolinux-cli.cfg $WORKDIR/ISOTMP/isolinux/isolinux.cfg
 	elif [ "$CHECKMINIMALGUIISO" != "" ]
 	then
 		LIVEVERSION="MinimalGUI"
@@ -678,6 +682,9 @@ function cdfs {
 	elif [ "$CHECKOPENBOXISO" != "" ]
 	then
 		LIVEVERSION="Openbox"
+	elif [ "$CHECKOPENBOXNOIRISO" != "" ]
+	then
+		LIVEVERSION="Openbox Noir"
 	elif [ "$CHECKPANTHEONISO" != "" ]
 	then
 		LIVEVERSION="Pantheon"
@@ -799,6 +806,13 @@ function cdfs {
 			rm -f $WORKDIR/dummysys/etc/sparky-installation-guide.desktop
 		fi
 	fi
+	
+	# change sparky.cfg if CLI image
+	CHECKMINIMALCLIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
+	if [ "$CHECKMINIMALCLIISO" != "" ]
+	then
+		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		mv $WORKDIR/ISOTMP/boot/grub/sparky-cli.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 
 	if [ -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg ]
 	then
