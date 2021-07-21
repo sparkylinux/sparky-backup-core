@@ -813,6 +813,7 @@ function cdfs {
 	then
 		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
 		mv $WORKDIR/ISOTMP/boot/grub/sparky-cli.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+	fi
 
 	if [ -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg ]
 	then
