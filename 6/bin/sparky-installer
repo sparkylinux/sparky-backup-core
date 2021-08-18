@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/07/21 by pavroo
+# Last update 2021/08/18 by pavroo
 #
 # This script requires either yad or dialog to run
 
@@ -1316,6 +1316,10 @@ mount -o bind /dev /TARGET/dev
 mount -o bind /dev/shm /TARGET/dev/shm
 mount -o bind /dev/pts /TARGET/dev/pts
 mount -o bind /sys /TARGET/sys
+mount -o bind /run /TARGET/run
+if [ -d /sys/firmware/efi/efivars ]; then
+mount -B /sys/firmware/efi/efivars /TARGET/sys/firmware/efi/efivars
+fi
 rm -f /TARGET/etc/fstab
 rm -f /TARGET/etc/profile.d/zz-live.sh
 mv /TARGET/etc/resolv.conf /TARGET/etc/resolv.conf.bak
@@ -1838,7 +1842,6 @@ else
 cat > /tmp/Grub-Install << FOO
 #!/bin/bash
 chroot /TARGET grub-install --force --no-floppy "$GRUBLOC"
-#chroot /TARGET grub-mkconfig -o /boot/grub/grub.cfg
 chroot /TARGET update-grub
 exit 0
 FOO
