@@ -1,0 +1,11 @@
+table Icon
+  Caption: Sparky Installer
+  CaptionTip: SparkyLinux Installer
+  Icon: /usr/share/icons/sparky/sparkybackupsys/sparky48-installer.png
+  Width: 48
+  Height: 48
+  X: 50
+  Y: 30
+  Command[0]: remsu calamares
+end
+

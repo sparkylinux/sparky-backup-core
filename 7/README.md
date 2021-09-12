@@ -16,3 +16,67 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Dependencies:
+---------------
+apt
+bash
+btrfs-progs
+console-data
+coreutils
+dialog
+dosfstools
+dpkg
+findutils
+gawk
+grep
+hwdata
+iputils-ping
+keyboard-configuration
+laptop-detect
+live-boot, live-config, live-config-systemd, live-boot-initramfs-tools
+locales
+mount
+nano
+os-prober
+passwd
+rsync
+sed
+sparky-backup-desktop (>= 20180729) | sparky-server
+sparky-info
+squashfs-tools
+syslinux-utils
+systemd
+systemd-sysv
+util-linux
+x11-utils
+xfsprogs
+xorriso | genisoimage
+xz-utils
+lvm2
+cryptsetup
+
+Conflicts:
+------------
+sparky-remastersys
+sparky-backup-sys (<= 20180606)
+
+Replaces:
+------------
+sparky-backup-sys (<= 20180606)
+
+Suggests:
+-------------
+aptitude
+grub-pc
+cryptsetup-initramfs
+
+Install:
+-------------
+su (or sudo) 
+./install.sh
+
+Uninstall:
+-------------
+su (or sudo)
+./install.sh uninstall

@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2021/07/21 by pavroo
+# Last update 2021/09/12 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -66,7 +66,7 @@ PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 AUTOPARTITIONPROGRAM="fdisk"
 CHOICE_FILE=/tmp/choice.$$
-TITLETEXT="Sparky (Advanced) Installer"
+TITLETEXT="Sparky (Advanced) DEV Installer"
 
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 	CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
@@ -2161,9 +2161,9 @@ if [ -d /etc/skel ]; then
 fi
 apt-get purge --yes sparky-backup-*
 apt-get purge --yes live-*
-apt-get purge --yes gparted
+#apt-get purge --yes gparted
 apt-get purge --yes calamares
-apt-get purge --yes mc
+#apt-get purge --yes mc
 if [ $LVM -eq 0 ] && [ $LVM_ACTIVE -eq 0 ]; then
 	apt-get purge --yes lvm2
 fi
