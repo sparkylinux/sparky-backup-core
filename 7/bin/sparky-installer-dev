@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2021/09/12 by pavroo
+# Last update 2021/09/13 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -1254,7 +1254,7 @@ partitioner() {
 	done
 	
 	partschemamenu=( "Manual" "Manual partitioning" "${partschemamenu[@]}" )
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Select partitioning schema" $HEIGHT $WIDTH $MENUHEIGHT "${partschemamenu[@]}" 2>$CHOICE_FILE
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Only Manual partitioning lets you choose a partition without formatting a whole disk.\n\nOther options (0-10) will format and erase a chosen disk.\n\nSelect partitioning schema:" $HEIGHT $WIDTH $MENUHEIGHT "${partschemamenu[@]}" 2>$CHOICE_FILE
 	if [ "$?" = "0" ]; then
 		PARTSCHEMA=`cat $CHOICE_FILE`
 	else
@@ -1486,7 +1486,7 @@ GrubSelectText () {
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-	Drives=$(lsblk -l -p | egrep -v "NAME|loop|rom" | awk '{print $1}')
+	Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
 
 	for i in $Drives; do
 		PartDrive="$i"

@@ -1,7 +1,7 @@
 # English localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2019/03/09 by pavroo
+# Last update 2019/09/13 by pavroo
 LOCAL1="The Advanced Installer lets you install the live system to your hard drive."
 LOCAL2="The Advanced Installer lets you install the live system to your hard drive as it is."
 LOCAL3="It also lets you install your favorite desktop with"
@@ -130,5 +130,5 @@ LOCAL125="no delay"
 LOCAL126="Log in automatically without asking for password"
 LOCAL127="Yes, enable autologin"
 LOCAL128="No, thank's"
-LOCAL129="Would you like to try the development version of Sparky CLI Installer with disk encryption and LUKS support?"
-LOCAL130="Choose YES to launch the DEV installer or NO to use the present installer."
+LOCAL129="It is the standard Sparky CLI Installer, but you can try out a development version of Sparky CLI (DEV) Installer with disk encryption and LUKS support (for advanced users only)."
+LOCAL130="Choose YES to use the present, standard installer or NO to launch the DEV installer."

@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/09/12 by pavroo
+# Last update 2021/09/13 by pavroo
 #
 # This script requires either dialog to run
 
@@ -224,6 +224,15 @@ DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 . $DEFLOCDIR/en
 #fi
 
+#ask for testing dev installer
+$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
+if [ $? = 0 ]; then
+	echo "using the standard installer"
+else
+	sparky-installer-dev
+	exit 0
+fi
+	
 # the first dialog window
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
@@ -266,12 +275,6 @@ GUILOG="cli"
 	#inform them what this is and ask if they want to continue
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
 	if [ $? != 0 ]; then
-		exit 0
-	fi
-	#ask for testing dev installer
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
-	if [ $? = 0 ]; then
-		sparky-installer-dev
 		exit 0
 	fi
 	
@@ -593,7 +596,7 @@ GrubSelectText () {
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-	Drives=$(lsblk -l | grep -v NAME | awk '{print $1}')
+	Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
 
 	for i in $Drives; do
 		PartDrive="$i"
