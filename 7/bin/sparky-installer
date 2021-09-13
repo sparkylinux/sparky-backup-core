@@ -197,7 +197,7 @@ echo "$DEFLANG" > /tmp/sparky-advanced-installer
 #fi
 
 # get default's locale file
-#DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
+DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 #if [ "$DEFLANG" = "Brazilian" ]; then
 #. $DEFLOCDIR/pt_BR
 #elif [ "$DEFLANG" = "French" ]; then
