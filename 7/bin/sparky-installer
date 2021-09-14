@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/09/13 by pavroo
+# Last update 2021/09/14 by pavroo
 #
 # This script requires either dialog to run
 
@@ -26,9 +26,9 @@ fi
 
 # set options depending on mode - text or gui
 DIALOG="`which dialog`"
-HEIGHT="20"
-WIDTH="75"
-MENUHEIGHT="12"
+HEIGHT="24"
+WIDTH="85"
+MENUHEIGHT="14"
 TITLE="--title "
 TEXT=""
 ENTRY="--inputbox "

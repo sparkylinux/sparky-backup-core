@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2021/09/13 by pavroo
+# Last update 2021/09/14 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -66,7 +66,7 @@ PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 AUTOPARTITIONPROGRAM="fdisk"
 CHOICE_FILE=/tmp/choice.$$
-TITLETEXT="Sparky (Advanced) DEV Installer"
+TITLETEXT="Sparky (Advanced) Installer DEV"
 
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 	CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
@@ -1486,7 +1486,7 @@ GrubSelectText () {
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
 	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-	Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
+	Drives=$(lsblk -l -p | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
 
 	for i in $Drives; do
 		PartDrive="$i"
