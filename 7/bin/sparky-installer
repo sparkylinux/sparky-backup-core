@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/09/14 by pavroo
+# Last update 2021/09/18 by pavroo
 #
 # This script requires either dialog to run
 
@@ -26,9 +26,9 @@ fi
 
 # set options depending on mode - text or gui
 DIALOG="`which dialog`"
-HEIGHT="24"
-WIDTH="85"
-MENUHEIGHT="14"
+HEIGHT="20"
+WIDTH="80"
+MENUHEIGHT="12"
 TITLE="--title "
 TEXT=""
 ENTRY="--inputbox "
@@ -1676,21 +1676,21 @@ rm /TARGET/bin/newuserscript
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	#if [ "$GUI" = "" ]; then
-	#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
+	if [ $? = 0 ]; then
+		DESKTOPCHOOSE="yes"
+		apt-get update 
+		apt-get install sparky-backup-desktop sparky-desktop-data -y
+		/usr/bin/sparkylinux-desktop-installer
+	fi
+	#else
+	#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108"
 	#	if [ $? = 0 ]; then
 	#		DESKTOPCHOOSE="yes"
-	#		apt-get update 
-	#		apt-get install sparky-backup-desktop sparky-desktop-data -y
-	#		/usr/bin/sparkylinux-desktop-installer
+	#		$SPARKYXTERM "apt-get update"
+	#		$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y"
+	#		/usr/bin/sparkylinux-desktop-installer gui
 	#	fi
-	#else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108"
-		if [ $? = 0 ]; then
-			DESKTOPCHOOSE="yes"
-			$SPARKYXTERM "apt-get update"
-			$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y"
-			/usr/bin/sparkylinux-desktop-installer gui
-		fi
 	#fi
 fi
 

@@ -6,6 +6,6 @@ table Icon
   Height: 48
   X: 50
   Y: 215
-  Command[0]: x-www-browser https://sparkylinux.org/wiki/doku.php?id=install
+  Command[0]: x-www-browser https://wiki.sparkylinux.org/doku.php/install
 end
 
