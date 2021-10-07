@@ -8,9 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/09/18 by pavroo
-#
-# This script requires either dialog to run
+# Last update 2021/10/07 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -46,15 +44,6 @@ CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/spa
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
-#if [ -f /usr/bin/sparky-xterm ]; then
-#	SPARKYXTERM="/usr/bin/sparky-xterm"
-#elif [ -f /usr/bin/sparky-terminal ]; then
-#	SPARKYXTERM="/usr/bin/sparky-terminal -e"
-#else
-#	echo "sparky-xterm is missing... Exiting..."
-#	exit 1
-#fi
-
 TESTEFI0=`lsmod | grep efi`
 if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI0" != "" ]; then
 	TESTEFI="EFI detected"
@@ -63,166 +52,30 @@ else
 fi
 
 if [ "$1" = "gui" -o "$2" = "gui" ]; then
-	#GUI="$DISPLAY"
 	echo "Yad GUI is not supported any more."
 	echo "Usage is: sudo sparky-installer"
 	exit 1
 fi
 
-#if [ "$GUI" != "" ]; then
-#
-#	testyad=`which yad`
-#
-#	if [ "$testyad" != "" ]; then
-#		DIALOGMENU="`which yad` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=600 --height=400 --fixed --center"
-#		DIALOG="`which yad` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=450 --fixed --center"
-#		TITLE="--always-print-result --dialog-sep --image=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --title="
-#		TEXT="--text="
-#		ENTRY="--entry "
-#		ENTRYTEXT="--entry-text "
-#		MENU="--list --column=Pick --column=Info"
-#		YESNO=" --button=Yes:0 --button=No:1 "
-#		MSGBOX=" --button=Ok:0 "
-#		PASSWORD="--entry --hide-text "
-#		
-#		testgparted=`which gparted`
-#		if [ "$testgparted" = "" ]; then
-#			PARTITIONPROG="$SPARKYXTERM cfdisk"
-#		else
-#			PARTITIONPROG="gparted"
-#		fi
-#		TITLETEXT="Sparky (Advanced) Installer"
-#	fi
-#
-#fi
-
 # if NOT Live system just quit, do nothing
 testmode=`grep "1000" /etc/passwd | grep -v "Live"`
 if [ "$testmode" != "" ]; then
-	#if [ "$GUI" != "" ]; then
-	#	xmessage "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
-	#	exit 1
-	#else
-		echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
-		exit 1
-	#fi
+	echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
+	exit 1
 fi
 
 # if no dialog or yad installed just quit
 if [ "$DIALOG" = "" ]; then
-	#if [ "$GUI" != "" ]; then
-	#	xmessage "Cannot find dialog or yad. Exiting now..."
-	#	exit 1
-	#else
-		echo "Cannot find dialog. Exiting now..."
-		exit 1
-	#fi
+	echo "Cannot find dialog. Exiting now..."
+	exit 1
 fi
-
-# choose installer language
-#if [ -f /tmp/sparky-advanced-installer ]; then
-#	rm -f /tmp/sparky-advanced-installer
-#fi
-
-#if [ "$GUI" != "" ]; then
-#
-#DEFLANGS=`$DIALOGMENU $TITLE"$TITLETEXT" $YESNO $MENU $TEXT"Please choose the Advanced Installer language:" \
-#Brazilian "Brasileiro" \
-#English "English" \
-#French "Français" \
-#German "Deutsch" \
-#Greek "ελληνικά" \
-#Hungarian "Magyar" \
-#Indonesian "Indonesia" \
-#Italian "Italiano" \
-#Polish "Polski" \
-#Portuguese "Português" \
-#Russian "Pусский" \
-#Spanish "Español" \
-#Exit "Exiting now..."`
-#
-#	if [ "$?" = "0" ]; then
-#		DEFLANGS=`echo $DEFLANGS | cut -d "|" -f 1`
-#		echo "$DEFLANGS" > /tmp/sparky-advanced-installer
-#	fi
-#
-#	if [ "$DEFLANGS" = "Brazilian" ]; then
-#		DEFLANG="Brazilian"
-#	elif [ "$DEFLANGS" = "English" ]; then
-#		DEFLANG="English"
-#	elif [ "$DEFLANGS" = "French" ]; then
-#		DEFLANG="French"
-#	elif [ "$DEFLANGS" = "German" ]; then
-#		DEFLANG="German"
-#	elif [ "$DEFLANGS" = "Greek" ]; then
-#		DEFLANG="Greek"
-#	elif [ "$DEFLANGS" = "Hungarian" ]; then
-#		DEFLANG="Hungarian"
-#	elif [ "$DEFLANGS" = "Indonesian" ]; then
-#		DEFLANG="Indonesian"
-#	elif [ "$DEFLANGS" = "Italian" ]; then
-#		DEFLANG="Italian"
-#	elif [ "$DEFLANGS" = "Polish" ]; then
-#		DEFLANG="Polish"
-#	elif [ "$DEFLANGS" = "Portuguese" ]; then
-#		DEFLANG="Portuguese"
-#	elif [ "$DEFLANGS" = "Russian" ]; then
-#		DEFLANG="Russian"
-#	elif [ "$DEFLANGS" = "Spanish" ]; then
-#		DEFLANG="Spanish"
-#	elif [ "$DEFLANGS" = "Exit" ]; then
-#		exit 1
-#	else
-#		exit 1
-#	fi
-#
-#elif [ "$GUI" = "" ]; then
-
-#	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Please choose the Advanced Installer language:" $HEIGHT $WIDTH $MENUHEIGHT Brazilian "Brasileiro" English "English" French "Français" German "Deutsch" Greek "ελληνικά" Hungarian "Magyar" Indonesian "Indonesia" Italian "Italiano" Polish "Polski" Portuguese "Português" Russian "Pусский" Spanish "Español" Exit "Exiting now..." 2>/tmp/sparky-advanced-installer
-
-#	if [ "$?" = "0" ]; then
-#		DEFLANG=`cat /tmp/sparky-advanced-installer`
-#	else
-#		DEFLANG="Exit"
-#	fi
-#
-#	if [ "$DEFLANG" = "Exit" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"Exiting the Installer now..." $HEIGHT $WIDTH
-#		exit 1
-#	fi
 
 # pointless to use non English lang in text console :(
 DEFLANG="English"
 echo "$DEFLANG" > /tmp/sparky-advanced-installer
-#fi
-
 # get default's locale file
 DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
-#if [ "$DEFLANG" = "Brazilian" ]; then
-#. $DEFLOCDIR/pt_BR
-#elif [ "$DEFLANG" = "French" ]; then
-#. $DEFLOCDIR/fr
-#elif [ "$DEFLANG" = "German" ]; then
-#. $DEFLOCDIR/de
-#elif [ "$DEFLANG" = "Greek" ]; then
-#. $DEFLOCDIR/el
-#elif [ "$DEFLANG" = "Hungarian" ]; then
-#. $DEFLOCDIR/hu
-#elif [ "$DEFLANG" = "Indonesian" ]; then
-#. $DEFLOCDIR/id_ID
-#elif [ "$DEFLANG" = "Italian" ]; then
-#. $DEFLOCDIR/it
-#elif [ "$DEFLANG" = "Polish" ]; then
-#. $DEFLOCDIR/pl
-#elif [ "$DEFLANG" = "Portuguese" ]; then
-#. $DEFLOCDIR/pt_PT
-#elif [ "$DEFLANG" = "Russian" ]; then
-#. $DEFLOCDIR/ru
-#elif [ "$DEFLANG" = "Spanish" ]; then
-#. $DEFLOCDIR/es
-#else
 . $DEFLOCDIR/en
-#fi
 
 #ask for testing dev installer
 $DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
@@ -248,26 +101,10 @@ else
 	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 fi
 
-#progressbar () {
-# check yad version, replace it with zenity of the progressbar if yad is a sparky build
-#TESTZENITY="`which zenity`"
-#if [ "$TESTZENITY" != "" ]; then
-#	YADVERSION="`dpkg-query -l | grep yad | grep sparky`"
-#	if [ "$YADVERSION" != "" ]; then
-#		tail -f /usr/bin/sparky-installer | `which zenity` --window-icon=/usr/share/icons/sparky/sparkybackupsys/sparky48.png --width=450 --progress --pulsate --auto-close --no-cancel --auto-kill --title="$TITLETEXT" --text="$@"
-#	else
-#		tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
-#	fi
-#else
-#	tail -f /usr/bin/sparky-installer | $DIALOG $TITLE"$TITLETEXT" $TEXT"$@" --no-buttons --progress --pulsate --auto-close --progress-text="$LOCAL122"
-#fi
-#}
-
 . /etc/live/config.conf
 . /etc/sparkybackup/sparkybackup.conf
 . /etc/sparkybackup/sparkylinux-installer.conf
 
-#if [ "$GUI" = "" ]; then
 GUILOG="cli"
 
 ##########TEXT MODE##########
@@ -290,7 +127,6 @@ GUILOG="cli"
 
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
 	#choose the drive to partition
-	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
 	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
 
 	for i in $DRIVES; do
@@ -354,10 +190,6 @@ GUILOG="cli"
 	fi
 
 	#find the swap partition
-	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
-	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
-	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI`
 	if [ "$TARGETEFI" != "" ]; then
 		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
 	else
@@ -369,7 +201,7 @@ GUILOG="cli"
 		swappartmenu="$swappartmenu $swappart $swappartsize"
 	done
 
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu NoSwap "$LOCAL131" 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		SWAP=`cat /tmp/choice.$$`
 		SWAP="$SWAP:"
@@ -385,8 +217,6 @@ GUILOG="cli"
 	fi
 
 	#choose the partition to install to
-	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]" | grep -v $TARGETEFI | grep -v $SWAP`
 	if [ "$TARGETEFI" != "" ]; then
 		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
 	else
@@ -468,8 +298,10 @@ GUILOG="cli"
 	if [ "$TESTEFI" != "" ]; then
 		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
 	fi
-	SWAP=`echo $SWAP | cut -f1 -d":"`
-	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
+	if [ "$SWAP" != "NoSwap" ]; then
+		SWAP=`echo $SWAP | cut -f1 -d":"`
+		TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
+	fi
 
 	#check mode and get new user info if it is a dist mode
 	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
@@ -595,7 +427,6 @@ GrubSelectText () {
 
 	## Blank the array in case this function is being rerun
 	GrubMenu=()
-	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
 	Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
 
 	for i in $Drives; do
@@ -710,414 +541,28 @@ GrubSelectText
 
 ##########END TEXT MODE##########
 
-#else
-#GUILOG="yad"
-##########GUI MODE##########
-#
-#	#inform them what this is and ask if they want to continue
-#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1"
-#	if [ $? != 0 ]; then
-#		exit 0
-#	fi
-#
-#	#FRONTTEST=`cat /etc/X11/default-display-manager | grep sddm`
-#	#if [ "$FRONTTEST" = "" ]; then
-#	#	FRONTEND="gnome"
-#	#else
-#	#	FRONTEND="kde"
-#	#fi
-#
-#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18"
-#	if [ $? = 0 ]; then
-#
-#		$SPARKYXTERM "dpkg-reconfigure locales"
-#		$SPARKYXTERM "dpkg-reconfigure console-data"
-#		$SPARKYXTERM "dpkg-reconfigure console-setup"
-#		$SPARKYXTERM "dpkg-reconfigure keyboard-configuration"
-#
-#	fi
-#
-#	#fix for gparted being inhibited by udisks-daemon
-#	#killall -KILL udisks-daemon
-#
-#	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT"
-#	#choose the drive to partition
-#	#DRIVES=`cat /proc/partitions | grep -v loop | grep -v major | grep -v "^$" | awk '{print $4}' | grep -v "[0-9]"`
-#	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
-#
-#	for i in $DRIVES; do
-#		partdrive="$i"
-#		partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-#		partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
-#	done
-#
-#	PARTDRIVE=""
-#	while [ "$PARTDRIVE" = "" ]; do
-#		PARTDRIVE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL19\n$LOCAL20" Exit "$LOCAL21" $partdrivemenu`
-#	done
-#
-#	PARTDRIVE=`echo $PARTDRIVE | cut -d "|" -f 1`
-#
-#	if [ "$PARTDRIVE" = "Exit" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#		exit 1
-#	fi
-#
-#	$PARTITIONPROG /dev/$PARTDRIVE
-#
-#	# find a partiton for efi image	
-#	if [ "$TESTEFI" != "" ]; then
-#	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
-#		for i in $PARTEFI; do
-#			efipart="$i"
-#			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-#			efipartmenu="$efipartmenu $efipart $efipartsize"
-#		done
-#
-#		TARGETEFI=""
-#		while [ "$TARGETEFI" = "" ]; do
-#			TARGETEFI=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL23\n$LOCAL24" Exit "$LOCAL21" $efipartmenu`
-#		done
-#
-#		TARGETEFI=`echo $TARGETEFI | cut -d "|" -f 1`
-#		TARGETEFI="$TARGETEFI:"
-#
-#		if [ "$TARGETEFI" = "Exit" ]; then
-#			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#			exit 1
-#		fi		
-#	
-#		#format the efi partition?
-#		FORMATEFIPART=""
-#		while [ "$FORMATEFIPART" = "" ]; do
-#			FORMATEFIPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL25" noformatefi "$LOCAL26" formatefi "$LOCAL27"`
-#		done
-#	
-#		FORMATEFIPART=`echo $FORMATEFIPART | cut -d "|" -f 1`
-#
-#	fi
-#
-#	#find the swap partition
-#	#TARGETSWAP=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-#	#TARGETSWAP=`fdisk -l | grep swap | awk '{print $1}' | cut -d "/" -f3`
-#	#TARGETSWAP=`echo $TARGETSWAP | sed -r "s/\/dev\///g"`
-#	#TARGETSWAP=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
-#	if [ "$TARGETEFI" != "" ]; then
-#		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
-#	else
-#		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
-#	fi
-#	for i in $TARGETSWAP; do
-#		swappart="$i"
-#		swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-#		swappartmenu="$swappartmenu $swappart $swappartsize"
-#	done
-#
-#	SWAP=""
-#	while [ "$SWAP" = "" ]; do
-#		SWAP=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL28\n$LOCAL29" Exit "$LOCAL21" $swappartmenu`
-#	done
-#
-#	SWAP=`echo $SWAP | cut -d "|" -f 1`
-#	SWAP="$SWAP:"
-#
-#	if [ "$SWAP" = "Exit" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#		exit 1
-#	fi
-#
-#	#choose the partition to install to
-#	#PARTITIONS=`cat /proc/partitions | grep -v "loop" | grep -v "sr0" | awk '{print $4}' | grep "[0-9]"`
-#	#PARTITIONS=`lsblk -l | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | grep "[0-9]"`
-#	if [ "$TARGETEFI" != "" ]; then
-#		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
-#	else
-#		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
-#	fi
-#	PARTINST=`echo $PARTITIONS`
-#
-#	for i in $PARTITIONS; do
-#		part="$i"
-#		partsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-#		partmenu="$partmenu $part $partsize"
-#	done
-#
-#	TARGETPART=""
-#	while [ "$TARGETPART" = "" ]; do
-#		TARGETPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL30\n$LOCAL31" Exit "$LOCAL21" $partmenu`
-#	done
-#
-#	TARGETPART=`echo $TARGETPART | cut -d "|" -f 1`
-#	TARGETPART="$TARGETPART:"
-#
-#	if [ "$TARGETPART" = "Exit" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#		exit 1
-#	fi
-#
-#	FSTYPE=""
-#	while [ "$FSTYPE" = "" ]; do
-#		FSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL32" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
-#	done
-#
-#	FSTYPE=`echo $FSTYPE | cut -d "|" -f 1`
-#
-#	if [ "$TARGETEFI" != "" ]; then
-#		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
-#	else
-#		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
-#	fi
-#	for i in $HOMEINST; do
-#		homepart="$i"
-#		homepartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-#		homepartmenu="$homepartmenu $homepart $homepartsize"
-#	done
-#
-#	HOMEPART=""
-#	while [ "$HOMEPART" = "" ]; do
-#		HOMEPART=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL34\n$LOCAL35" root "$LOCAL36" $homepartmenu`
-#	done
-#
-#	HOMEPART=`echo $HOMEPART | cut -d "|" -f 1`
-#
-#	if [ "$HOMEPART" != "root" ]; then
-#		HFSTYPE=""
-#		while [ "$HFSTYPE" = "" ]; do
-#			HFSTYPE=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL37" noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33"`
-#		done
-#	fi
-#
-#	HFSTYPE=`echo $HFSTYPE | cut -d "|" -f 1`
-#
-#	# set partitions with no ":"
-#	if [ "$TESTEFI" != "" ]; then
-#		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
-#	fi
-#	SWAP=`echo $SWAP | cut -f1 -d":"`
-#	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
-#
-#	#check mode and get new user info if it is a dist mode
-#	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
-#
-#	if [ "$testmode" = "" ]; then
-#
-#		while [ "$PASSOK" != "Yes" ]; do
-#
-#CHOICES=`$DIALOGMENU $TITLE"$TITLETEXT" --form \
-#--field="$LOCAL48":H \
-#--field="$LOCAL49":H \
-#--field="$LOCAL50" \
-#--field="$LOCAL51" \
-#--field="$LOCAL52":H \
-#--field="$LOCAL53":H \
-#--field="$LOCAL54" \
-#--field="$LOCAL126":CHK`
-#
-#			if [ "$?" = "0" ]; then
-#				TARGETROOTPASS=`echo $CHOICES | cut -d "|" -f 1`
-#				TARGETROOTPASS2=`echo $CHOICES | cut -d "|" -f 2`
-#				TARGETUSERFULLNAME=`echo $CHOICES | cut -d "|" -f 3`
-#				TARGETUSER=`echo $CHOICES | cut -d "|" -f 4`
-#				TARGETPASS=`echo $CHOICES | cut -d "|" -f 5`
-#				TARGETPASS2=`echo $CHOICES | cut -d "|" -f 6`
-#				TARGETHOSTNAME=`echo $CHOICES | cut -d "|" -f 7`
-#				AUTOLOGIN=`echo $CHOICES | cut -d "|" -f 8`
-#			else 
-#				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#				exit 1
-#			fi
-#
-#[ "$TARGETROOTPASS" != "" ] && \
-#[ "$TARGETROOTPASS" = "$TARGETROOTPASS2" ] && \
-#[ "$TARGETUSERFULLNAME" != "" ] && \
-#[ "$TARGETUSER" != "" ] && \
-#[ "$TARGETUSER" != "$LIVE_USERNAME" ] && \
-#[ "$TARGETPASS" != "" ] && \
-#[ "$TARGETPASS" = "$TARGETPASS2" ] && \
-#[ "$TARGETROOTPASS" != "$TARGETPASS" ] && \
-#[ "$TARGETHOSTNAME" != "" ] && \
-#PASSOK="Yes"
-#
-#[ "$TARGETROOTPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL55"
-#
-#[ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL56"
-#
-#[ "$TARGETUSERFULLNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL57"
-#
-#[ "$TARGETUSER" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL58"
-#
-#[ "$TARGETUSER" = "$LIVE_USERNAME" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL59"
-#
-#[ "$TARGETPASS" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL60"
-#
-#[ "$TARGETPASS" != "$TARGETPASS2" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL61"
-#
-#[ "$TARGETROOTPASS" = "$TARGETPASS" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL62\n\n$LOCAL63"
-#
-#[ "$TARGETHOSTNAME" = "" ] && $DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL64"
-#
-#		done
-#
-#	fi
-#
-#grub location
-#
-#GrubSelectGUI () {
-#
-#	GrubMenu=()
-#	#Drives=$(cat /proc/partitions | grep -v loop | grep -v "Extended" | grep -v "extended" | grep -v "swap" | grep -v "Swap" | grep -v "Hidden" | grep -v major | grep -v "^$" | awk '{ print $4}')
-#	Drives=$(lsblk -l | grep -v NAME | awk '{print $1}')
-#
-#	for i in $Drives; do
-#		PartDrive="$i"
-#
-#		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
-#			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
-#		fi
-#	done
-#
-#	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70" )
-#
-#	#grub location
-#	GRUBLOCTEST=$($DIALOGMENU $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" "${GrubMenu[@]}")
-#
-#	ret="$?"
-#
-#	if [ "$ret" = "252" ]; then
-#		GrubSelectGUI
-#		exit 0
-#	elif [ "$GRUBLOCTEST" = "" ]; then
-#		GrubSelectGUI
-#		exit 0
-#	fi
-#
-#	GRUBLOCTEST=$(echo "$GRUBLOCTEST" | awk -F '|' '{print $1}')
-#
-#	if [ "$GRUBLOCTEST" = "nogrub" ]; then
-#		GRUBLOCTEXT="$LOCAL72"
-#	elif [ "$GRUBLOCTEST" = "root" ]; then
-#		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
-#		GRUBLOC="/dev/$TARGETPART"
-#	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
-#		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
-#		GRUBLOC="/dev/$PARTDRIVE"
-#	else
-#		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
-#		GRUBLOC="/dev/$GRUBLOCTEST"
-#	fi
-#
-#	# set grub delay
-#	if [ "$GRUBLOCTEST" != "nogrub" ]; then
-#SETDELAY=`$DIALOGMENU $TITLE"$TITLETEXT" $MSGBOX $MENU $TEXT"$LOCAL123" \
-#5 "5 sec $LOCAL124" \
-#10 "10 sec" \
-#20 "20 sec" \
-#30 "30 sec" \
-#No "0 sec $LOCAL125"`
-#
-#		if [ "$?" = "0" ]; then
-#			SETDELAY=`echo $SETDELAY | cut -d "|" -f 1`
-#		else
-#			SETDELAY="5"
-#		fi
-#	fi
-#}
-#
-#GrubSelectGUI
-#
-#	#Timezone setting
-#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77"
-#	if [ $? = 0 ]; then
-#		if [ "$(grep "UTC" /etc/adjtime)" != "" ]; then
-#			sed -i -e "s|UTC|LOCALTIME|g" /etc/adjtime
-#		fi
-#	else
-#		if [ "$(grep "LOCALTIME" /etc/adjtime)" != "" ]; then
-#			sed -i -e "s|LOCALTIME|UTC|g" /etc/adjtime
-#		fi
-#	fi
-#
-#	cat /usr/share/zoneinfo/zone.tab | awk '{print $3}' | grep "/" | sort > /tmp/sparkylinux-installer.zoneinfo
-#	for i in `cat /tmp/sparkylinux-installer.zoneinfo`; do
-#		ZONES="$ZONES $i Timezone"
-#	done
-#
-#	rm /tmp/sparkylinux-installer.zoneinfo
-#
-#	ZONESINFO=""
-#	while [ "$ZONESINFO" = "" ]; do
-#		ZONESINFO=`$DIALOGMENU $TITLE"$TITLETEXT" $MENU  $TEXT"$LOCAL78" Exit "$LOCAL21" $ZONES`
-#	done
-#
-#ZONESINFO=`echo $ZONESINFO | cut -d "|" -f 1`
-#
-#	if [ "$ZONESINFO" = "Exit" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#		exit 1
-#	fi
-#
-#	echo "$ZONESINFO" > /etc/timezone
-#	cp /usr/share/zoneinfo/$ZONESINFO /etc/localtime
-#
-#	#xterm -e dpkg-reconfigure tzdata
-#	#xterm -e $SETLOCALE
-#	#xterm -e $SETCONSOLEDATA
-#	#xterm -e $SETXSERVER
-#
-#	if [ "$HOMEPART" != "root" ]; then
-#		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
-#	fi
-#
-#	if [ "$HFSTYPE" = "noformat" ]; then
-#		HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
-#	fi
-#
-#	if [ "$testmode" = "" ]; then
-#		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT \n$LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89"
-#		if [ $? != 0 ]; then
-#			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#			exit 1
-#		fi
-#	else
-#		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL88n $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT \n$LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89"
-#		if [ $? != 0 ]; then
-#			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22"
-#			exit 1
-#
-#		fi
-#	fi
-#
-##########END GUI MODE##########
-
-#fi
-
 ##########install_to_hd section##########
 
 # preper swap
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL90 $LOCAL91 ... $LOCAL92 ... \n" &
-#fi
+if [ "$SWAP" = "NoSwap" ]; then
+	echo "No SWAP choosen"
+elif [ "$SWAP" != "NoSwap" ]; then
+	sleep 1
+	echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
+	CHECKSWAP=`blkid | grep $SWAP: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
+	
+	# do not format swap if exist, use it only
+	if [ "$CHECKSWAP" = "swap" ]; then
+		swapon /dev/$SWAP
 
-sleep 1
-echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
-CHECKSWAP=`blkid | grep $SWAP: | awk '{print $3}' | cut -f2 -d"=" | sed -e 's/"//g'`
-# do not format swap if exist, use it only
-if [ "$CHECKSWAP" = "swap" ]; then
-	swapon /dev/$SWAP
-# format swap if the chosen partition is not swap
-else
-	mkswap /dev/$SWAP
-	swapon /dev/$SWAP
+	# format swap if the chosen partition is not swap
+	else
+		mkswap /dev/$SWAP
+		swapon /dev/$SWAP
+	fi
 fi
 
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
-
 # preper partitions
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
-#fi
 echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 #make the filesystem and mount the partition on /TARGET
@@ -1162,16 +607,8 @@ elif [ "$FSTYPE" = "xfs" ]; then
 	rm -rf "/TARGET/lost+found"
 fi
 
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
-
 if [ "$HOMEPART" != "root" ]; then
 	if [ "$HFSTYPE" != "noformat" ]; then
-		#if [ "$GUI" != "" ]; then
-		#	progressbar "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ... \n" &
-		#fi
-
 		echo "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 		if [ "`mount | grep $HOMEPART`" ]; then
@@ -1207,11 +644,6 @@ if [ "$HOMEPART" != "root" ]; then
 	if [ "$HFSTYPE" = "noformat" ]; then
 		HFSTYPE=`mount | grep "/dev/$HOMEPART" | awk '{print $5}'`
 	fi
-
-	#if [ "$GUI" != "" ]; then
-	#	killall -KILL tail
-	#fi
-
 fi
 
 #format and mount efi part
@@ -1239,9 +671,6 @@ fi
 TARGETCDROM="/dev/cdrom"
 
 sleep 1
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
 
 testmode=`grep "1000" /etc/passwd | grep -v "Live"`
 
@@ -1294,13 +723,8 @@ echo "==============================================================" >> /var/lo
 cat /etc/live/config.conf >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
 
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL101 ... $LOCAL92 ... \n" &
-#fi
-
 # copy the live system to the hd
 echo "$LOCAL101 ... $LOCAL92 ..."
-#echo "This may take a while so please wait until completed."
 
 if [ "$HFSTYPE" = "noformat" ]; then
 	rsync -a / /TARGET --ignore-existing --exclude=/{TARGET,home,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
@@ -1311,14 +735,6 @@ fi
 mkdir -p /TARGET/{proc,mnt,run,sys,media/cdrom}
 
 echo "$LOCAL102"
-
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
-
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL103 ... $LOCAL92 ... \n" &
-#fi
 
 echo "$LOCAL103 ... $LOCAL92 ..."
 
@@ -1423,20 +839,11 @@ FOO
 fi
 
 #create a new fstab by uuid
-#UUIDTARGETPART=`lsblk -f | grep $TARGETPART | awk '{print $3}'`
-#UUIDTARGETPART=`ls -l /dev/disk/by-uuid/ | grep $TARGETPART | awk '{print $9}'`
 UUIDTARGETPART=`blkid | grep $TARGETPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
-
-#UUIDHOMEPART=`lsblk -f | grep $HOMEPART | awk '{print $3}'`
-#UUIDHOMEPART=`ls -l /dev/disk/by-uuid/ | grep $HOMEPART | awk '{print $9}'`
 UUIDHOMEPART=`blkid | grep $HOMEPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
-
-#UUIDSWAP=`lsblk -f | grep $SWAP | awk '{print $3}'`
-#UUIDSWAP=`ls -l /dev/disk/by-uuid/ | grep $SWAP | awk '{print $9}'`
+if [ "$SWAP" != "NoSwap" ]; then
 UUIDSWAP=`blkid | grep $SWAP: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
-
-#UUIDTARGETEFI=`lsblk -f | grep $TARGETEFI | awk '{print $3}'`
-#UUIDTARGETEFI=`ls -l /dev/disk/by-uuid/ | grep $TARGETEFI | awk '{print $9}'`
+fi
 UUIDTARGETEFI=`blkid | grep $TARGETEFI: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
 
 if [ -d /TARGET/usr/share/doc/sparky-meta-server ]; then
@@ -1469,11 +876,15 @@ cat > /TARGET/etc/fstab <<FOO
 
 # root /dev/$TARGETPART
 UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
-# swap /dev/$SWAP
-UUID=$UUIDSWAP	none	swap	sw	0	0
 # cdrom
 $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
 FOO
+
+# add swap part
+if [ "$SWAP" != "NoSwap" ]; then
+	echo "# swap /dev/$SWAP" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDSWAP	none	swap	sw	0	0" >> /TARGET/etc/fstab
+fi
 
 # add efi part
 if [ "$TESTEFI" != "" ]; then
@@ -1493,15 +904,17 @@ else
 fi
 
 # add swap uuid to resume
-if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
-	mkdir -p /TARGET/etc/initramfs-tools/conf.d
-fi
-if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
-	rm -f /TARGET/etc/initramfs-tools/conf.d/resume
-fi
+if [ "$SWAP" != "NoSwap" ]; then
+	if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
+		mkdir -p /TARGET/etc/initramfs-tools/conf.d
+	fi
+	if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
+		rm -f /TARGET/etc/initramfs-tools/conf.d/resume
+	fi
 cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
 RESUME=UUID=$UUIDSWAP
 FOO
+fi
 
 echo "UUIDs & FSTAB" >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -1524,10 +937,6 @@ fi
 if [ -f /TARGET/etc/skel/Desktop/calamares.desktop ]; then
 	rm -f /TARGET/etc/skel/Desktop/calamares.desktop
 fi
-
-#if [ -f /TARGET/usr/share/applications/calamares.desktop ]; then
-#	rm -f /TARGET/usr/share/applications/calamares.desktop
-#fi
 
 # remove diverted update-initramfs as live-initramfs makes it a dummy file when booting the livecd
 if [ -f /TARGET/usr/sbin/update-initramfs.debian ]; then
@@ -1618,15 +1027,6 @@ if [ "$TARGETUSER" != "" ]; then
 	fi
 fi
 
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
-
-# setting up new user
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL117 ... $LOCAL92 ...\n" &
-#fi
-
 echo "$LOCAL117 ... $LOCAL92 ..."
 
 if [ "$TARGETUSER" != "" ]; then
@@ -1669,13 +1069,8 @@ chmod 755 /TARGET/bin/newuserscript
 chroot /TARGET /bin/newuserscript
 rm /TARGET/bin/newuserscript
 
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
-
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
-	#if [ "$GUI" = "" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
 	if [ $? = 0 ]; then
 		DESKTOPCHOOSE="yes"
@@ -1683,15 +1078,6 @@ if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 		apt-get install sparky-backup-desktop sparky-desktop-data -y
 		/usr/bin/sparkylinux-desktop-installer
 	fi
-	#else
-	#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108"
-	#	if [ $? = 0 ]; then
-	#		DESKTOPCHOOSE="yes"
-	#		$SPARKYXTERM "apt-get update"
-	#		$SPARKYXTERM "apt-get install sparky-backup-desktop sparky-desktop-data -y"
-	#		/usr/bin/sparkylinux-desktop-installer gui
-	#	fi
-	#fi
 fi
 
 if [ "$DESKTOPCHOOSE" = "yes" ]; then
@@ -1768,9 +1154,6 @@ if [ "$SETDELAY" != "" ]; then
 fi
 
 # remove live packages
-#if [ "$GUI" != "" ]; then
-#	progressbar "$LOCAL109 ... $LOCAL92 ...\n" &
-#fi
 
 echo "$LOCAL109 ... $LOCAL92 ..."
 
@@ -1787,9 +1170,7 @@ if [ -d /etc/skel ]; then
 fi
 apt-get purge --yes sparky-backup-*
 apt-get purge --yes live-*
-#apt-get purge --yes gparted
 apt-get purge --yes calamares
-#apt-get purge --yes mc
 apt-get purge --yes lvm2
 apt-get purge --yes cryptsetup
 apt-get autoremove --yes
@@ -1802,10 +1183,6 @@ FOO
 chmod 755 /TARGET/bin/tempinstallerscript
 chroot /TARGET /bin/tempinstallerscript
 rm /TARGET/bin/tempinstallerscript
-
-#if [ "$GUI" != "" ]; then
-#	killall -KILL tail
-#fi
 
 # restore resolveconf
 if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
@@ -1826,19 +1203,12 @@ chroot /TARGET update-grub
 exit 0
 FOO
 
-chmod +x /tmp/Grub-Update
+	chmod +x /tmp/Grub-Update
 
-	#if [ "$GUI" != "" ]; then
-	#	progressbar "$LOCAL110 ... $LOCAL92 ...\n" &
-	#	$SPARKYXTERM /tmp/Grub-Update
-	#	sleep 1
-	#	rm -rf /tmp/Grub-Update
-	#else
-		echo "$LOCAL110 ... $LOCAL92 ..."
-		/tmp/Grub-Update
-		sleep 1
-		rm -rf /tmp/Grub-Update
-	#fi
+	echo "$LOCAL110 ... $LOCAL92 ..."
+	/tmp/Grub-Update
+	sleep 1
+	rm -rf /tmp/Grub-Update
 	
 	echo "$LOCAL111"
 	echo "$LOCAL112"
@@ -1846,11 +1216,8 @@ chmod +x /tmp/Grub-Update
 	umount -R /TARGET
 	sleep 1
 
-	#if [ "$GUI" != "" ]; then
-	#	killall -KILL tail
-	#fi
-
 else
+
 cat > /tmp/Grub-Install << FOO
 #!/bin/bash
 chroot /TARGET grub-install --force --no-floppy "$GRUBLOC"
@@ -1858,19 +1225,12 @@ chroot /TARGET update-grub
 exit 0
 FOO
 
-chmod +x /tmp/Grub-Install
+	chmod +x /tmp/Grub-Install
 
-	#if [ "$GUI" != "" ]; then
-	#	progressbar "$LOCAL110 ... $LOCAL92 ...\n" &
-	#	$SPARKYXTERM /tmp/Grub-Install
-	#	sleep 1
-	#	rm -rf /tmp/Grub-Install
-	#else
-		echo "$LOCAL110 ... $LOCAL92 ..."
-		/tmp/Grub-Install
-		sleep 1
-		rm -rf /tmp/Grub-Install
-	#fi
+	echo "$LOCAL110 ... $LOCAL92 ..."
+	/tmp/Grub-Install
+	sleep 1
+	rm -rf /tmp/Grub-Install
 
 	echo "$LOCAL111"
 	echo "$LOCAL112"
@@ -1886,10 +1246,6 @@ chmod +x /tmp/Grub-Install
 		umount -R /src
 	fi
 	sleep 1
-
-	#if [ "$GUI" != "" ]; then
-	#	killall -KILL tail
-	#fi
 
 fi
 

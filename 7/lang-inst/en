@@ -1,7 +1,7 @@
 # English localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2019/09/14 by pavroo
+# Last update 2021/10/07 by pavroo
 LOCAL1="The Advanced Installer lets you install the live system to your hard drive."
 LOCAL2="The Advanced Installer lets you install the live system to your hard drive as it is."
 LOCAL3="It also lets you install your favorite desktop with"
@@ -10,9 +10,9 @@ LOCAL5="It will be possible if the network connection is on."
 LOCAL6="It is highly suggested to quit the installer and check for a newer version, using commands:"
 LOCAL7="Ignore this message if you already done it."
 LOCAL8="Choose YES to continue installation or NO to quit the installer."
-LOCAL9="We need to prepare a swap and target system partition now."
+LOCAL9="We need to prepare target system partitions now."
 LOCAL10="will allow you to create the new partitions."
-LOCAL11="You must create or have 1 system partition and 1 swap partition."
+LOCAL11="You must create or have 1 system partition and optionally 1 swap and 1 home partition."
 LOCAL12="You also need 100 MB vfat formatted partition with 'boot' flag, type 'EFI System' if you are installing the system on a machine with UEFI motherboard."
 LOCAL13="If you already have partitions setup then just quit"
 LOCAL14="and installation will continue."
@@ -132,3 +132,4 @@ LOCAL127="Yes, enable autologin"
 LOCAL128="No, thank's"
 LOCAL129="It is the standard Sparky CLI Installer, but you can try out a development version of Sparky CLI (DEV) Installer with disk encryption and LVM (Logical Volume Manager) support (for advanced users only)."
 LOCAL130="Choose YES to use the present, standard installer or NO to launch the DEV installer."
+LOCAL131="I don't need SWAP partition"
