@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2021/10/07 by pavroo
+# Last update 2022/03/06 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -42,6 +42,12 @@ CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sp
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+fi
+
+if [ "$CHECKMINICLI" != "" ]; then
+	if [ -f /usr/bin/sparky-firstrun-fix ]; then
+		sudo sparky-firstrun-fix
+	fi
 fi
 
 TESTEFI0=`lsmod | grep efi`
@@ -1173,6 +1179,7 @@ apt-get purge --yes live-*
 apt-get purge --yes calamares
 apt-get purge --yes lvm2
 apt-get purge --yes cryptsetup
+apt-get purge --yes sparky-firstrun-fix
 apt-get autoremove --yes
 #update-initramfs -t -c -k $(/bin/uname -r)
 update-initramfs -t -c -k all

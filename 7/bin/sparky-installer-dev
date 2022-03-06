@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2021/09/14 by pavroo
+# Last update 2022/03/06 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -74,6 +74,12 @@ if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup
 	CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 	CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep server`
 	CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+fi
+
+if [ "$CHECKMINICLI" != "" ]; then
+	if [ -f /usr/bin/sparky-firstrun-fix ]; then
+		sudo sparky-firstrun-fix
+	fi
 fi
 
 TESTEFI0=`lsmod | grep efi`
@@ -2163,6 +2169,7 @@ apt-get purge --yes sparky-backup-*
 apt-get purge --yes live-*
 #apt-get purge --yes gparted
 apt-get purge --yes calamares
+apt-get purge --yes sparky-firstrun-fix
 #apt-get purge --yes mc
 if [ $LVM -eq 0 ] && [ $LVM_ACTIVE -eq 0 ]; then
 	apt-get purge --yes lvm2

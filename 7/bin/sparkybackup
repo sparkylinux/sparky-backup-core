@@ -10,7 +10,7 @@
 # Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2021/07/21 by pavroo
+# Last update 2022/03/06 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -199,7 +199,7 @@ case $1 in
 		echo "$LOCAL56"
 		echo ""
 		echo "$LOCAL57 $SPARKYBACKUPVERSION"
-		echo "$LOCAL58 https://sparkylinux.org/forum"
+		echo "$LOCAL58 https://forum.sparkylinux.org"
 		echo ""
 		exit_with_message " " 1
 		;;
@@ -588,6 +588,7 @@ function cdfs {
 	CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
 	CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep light`
 	CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
+	CHECKSUGARISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sugar`
 	CHECKSWAYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sway`
 	CHECKTRINITYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep trinity`
 	CHECKTDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep tde`
@@ -703,6 +704,9 @@ function cdfs {
 	elif [ "$CHECKSBSERVERISO" != "" ]
 	then
 		LIVEVERSION="Small Business Server"
+	elif [ "$CHECKSUGARISO" != "" ]
+	then
+		LIVEVERSION="Sugar"
 	elif [ "$CHECKSWAYISO" != "" ]
 	then
 		LIVEVERSION="Sway"
