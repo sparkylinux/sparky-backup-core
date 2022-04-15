@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2022/03/06 by pavroo
+# Last update 2022/04/14 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -44,11 +44,11 @@ CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/spa
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
-if [ "$CHECKMINICLI" != "" ]; then
-	if [ -f /usr/bin/sparky-firstrun-fix ]; then
-		sudo sparky-firstrun-fix
-	fi
-fi
+#if [ "$CHECKMINICLI" != "" ]; then
+#	if [ -f /usr/bin/sparky-firstrun-fix ]; then
+#		sudo sparky-firstrun-fix
+#	fi
+#fi
 
 TESTEFI0=`lsmod | grep efi`
 if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI0" != "" ]; then
@@ -981,9 +981,9 @@ if [ ! -d /TARGET/usr/share/doc/sparky-meta-server ]; then
 	echo "127.0.0.1 localhost" > /TARGET/etc/hosts
 	echo "127.0.0.1 $TARGETHOSTNAME" >> /TARGET/etc/hosts
 fi
-if [ ! -f /TARGET/etc/resolv.conf ]; then
-	touch /TARGET/etc/resolv.conf
-fi
+#if [ ! -f /TARGET/etc/resolv.conf ]; then
+#	touch /TARGET/etc/resolv.conf
+#fi
 
 #check if this is a backup livecd or a dist livecd
 if [ "$TARGETUSER" != "" ]; then

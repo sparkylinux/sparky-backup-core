@@ -10,7 +10,7 @@
 # Copyright 2013-2021 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2022/03/06 by pavroo
+# Last update 2022/04/14 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -408,6 +408,12 @@ function cdfs {
 	then
 		rm -f $WORKDIR/dummysys/etc/X11/xorg.conf
 		rm -f $WORKDIR/dummysys/etc/resolv.conf
+		# dirty fix resolv.conf
+		touch $WORKDIR/dummysys/etc/resolv.conf
+		echo "#dirty fix DNS by sparky-backup" >> $WORKDIR/dummysys/etc/resolv.conf
+		echo "nameserver 8.8.8.8" >> $WORKDIR/dummysys/etc/resolv.conf
+		echo "nameserver 8.8.4.4" >> $WORKDIR/dummysys/etc/resolv.conf
+		# end fixing resolv.conf
 		rm -f $WORKDIR/dummysys/etc/hosts
 		rm -f $WORKDIR/dummysys/etc/hostname
 	fi
