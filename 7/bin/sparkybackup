@@ -7,40 +7,16 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2021 under the GNU GPL2 License
+# Copyright 2013-2022 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2022/04/14 by pavroo
+# Last update 2022/07/04 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
 # get default's locale file
 DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
-if [ "`cat /etc/default/locale | grep LANG= | grep de`" != "" ]; then
-. $DEFLOCDIR/de
-elif [ "`cat /etc/default/locale | grep LANG= | grep el`" != "" ]; then
-. $DEFLOCDIR/el
-elif [ "`cat /etc/default/locale | grep LANG= | grep es`" != "" ]; then
-. $DEFLOCDIR/es
-elif [ "`cat /etc/default/locale | grep LANG= | grep fr`" != "" ]; then
-. $DEFLOCDIR/fr
-elif [ "`cat /etc/default/locale | grep LANG= | grep hu`" != "" ]; then
-. $DEFLOCDIR/hu
-elif [ "`cat /etc/default/locale | grep LANG= | grep id_ID`" != "" ]; then
-. $DEFLOCDIR/id_ID
-elif [ "`cat /etc/default/locale | grep LANG= | grep it`" != "" ]; then
-. $DEFLOCDIR/it
-elif [ "`cat /etc/default/locale | grep LANG= | grep pl`" != "" ]; then
-. $DEFLOCDIR/pl
-elif [ "`cat /etc/default/locale | grep LANG= | grep pt_BR`" != "" ]; then
-. $DEFLOCDIR/pt_BR
-elif [ "`cat /etc/default/locale | grep LANG= | grep pt_PT`" != "" ]; then
-. $DEFLOCDIR/pt_PT
-elif [ "`cat /etc/default/locale | grep LANG= | grep ru`" != "" ]; then
-. $DEFLOCDIR/ru
-else
 . $DEFLOCDIR/en
-fi
 
 # set options for dialog
 DIALOG="`which dialog`"

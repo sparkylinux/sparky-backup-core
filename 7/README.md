@@ -2,7 +2,7 @@ Sparky Backup Core
 
 This tool lets you create a hybrid ISO image from your SparkyLinux installation. The package contains the sparkybackup tool and a live installer, both work in a text mode only.
 
-Copyright (C) 2013-2021 Paweł Pijanowski and others, see copyright file.
+Copyright (C) 2013-2022 Paweł Pijanowski and others, see copyright file.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
