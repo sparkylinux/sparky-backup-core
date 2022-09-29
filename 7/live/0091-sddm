@@ -1,9 +1,9 @@
 #!/bin/sh
 
 ## fix sddm configurafion for SparkyLinux by pavroo <pavroo@onet.eu>
-## Last update 2021/01/31
+## Last update 2022/09/29
 
 echo "" >> /etc/sddm.conf
 echo "[Theme]" >> /etc/sddm.conf
-echo "Current=sparky" >> /etc/sddm.conf
+echo "Current=sparky2" >> /etc/sddm.conf
 echo "CursorTheme=Adwaita" >> /etc/sddm.conf
