@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2022/04/14 by pavroo
+# Last update 2022/11/17 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -861,8 +861,8 @@ fi
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
 	FSTABOPT="errors=remount-ro,$FSTABEXTRA"
 elif [ "$FSTYPE" = "btrfs" ]; then
-	FSTABOPT="subvol=@,noatime,space_cache,autodefrag,$FSTABEXTRA"
-	HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag"
+	FSTABOPT="subvol=@,noatime,space_cache=v2,autodefrag,$FSTABEXTRA"
+	HFSTABOPT="subvol=@home,defaults,noatime,space_cache=v2,autodefrag"
 elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="noatime,$FSTABEXTRA"
 fi
@@ -870,7 +870,7 @@ fi
 if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	HFSTABOPT="defaults,noatime,space_cache,autodefrag"
+	HFSTABOPT="defaults,noatime,space_cache=v2,autodefrag"
 elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi

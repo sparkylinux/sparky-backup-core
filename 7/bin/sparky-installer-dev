@@ -15,7 +15,7 @@
 # TODO: introduce language independent variables for text
 # 
 # This script requires dialog to run, as of 2020/05/18 the yad support is removed
-# Last update 2022/04/14 by pavroo
+# Last update 2022/11/17 by pavroo
 #
 # remove deps: yad, gparted, zenity
 # new deps: lvm2, cryptsetup
@@ -403,8 +403,8 @@ gather_part_data() {
 					FSTABOPT="noatime,defaults"
 					;;
 				"btrfs")
-					FSTABOPT="subvol=@,noatime,space_cache,autodefrag,defaults" #for direct storing in store_part
-					HFSTABOPT="subvol=@home,defaults,noatime,space_cache,autodefrag" # needed for subvolume fstab entry
+					FSTABOPT="subvol=@,noatime,space_cache=v2,autodefrag,defaults" #for direct storing in store_part
+					HFSTABOPT="subvol=@home,defaults,noatime,space_cache=v2,autodefrag" # needed for subvolume fstab entry
 					;;
 			esac
 			ENCRYPT_ROOT=0
@@ -480,8 +480,8 @@ gather_part_data() {
 					FSTABOPT="noatime,defaults"
 					;;
 				"btrfs")
-					FSTABOPT="defaults,noatime,space_cache,autodefrag" #for storing in store_part
-					HFSTABOPT="defaults,noatime,space_cache,autodefrag" #will overwrite HFSTAB from root FS entry; to be used only if btrfs and HOMEPART=Exit
+					FSTABOPT="defaults,noatime,space_cache=v2,autodefrag" #for storing in store_part
+					HFSTABOPT="defaults,noatime,space_cache=v2,autodefrag" #will overwrite HFSTAB from root FS entry; to be used only if btrfs and HOMEPART=Exit
 					;;
 			esac
 			ENCRYPT_HOME=0
