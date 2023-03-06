@@ -7,8 +7,8 @@
 #
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2021 Under the GNU GPL2 License
-# Last update 2022/11/17 by pavroo
+# Copyright 2013-2023 Under the GNU GPL2 License
+# Last update 2023/03/03 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -50,8 +50,8 @@ fi
 #	fi
 #fi
 
-TESTEFI0=`lsmod | grep efi`
-if [ -d /sys/firmware/efi/efivars ] || [ "$TESTEFI0" != "" ]; then
+# check efi
+if [ -d /sys/firmware/efi/efivars ]]; then
 	TESTEFI="EFI detected"
 else
 	TESTEFI=""
@@ -84,13 +84,13 @@ DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 . $DEFLOCDIR/en
 
 #ask for testing dev installer
-$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
-if [ $? = 0 ]; then
-	echo "using the standard installer"
-else
-	sparky-installer-dev
-	exit 0
-fi
+#$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
+#if [ $? = 0 ]; then
+#	echo "using the standard installer"
+#else
+#	sparky-installer-dev
+#	exit 0
+#fi
 	
 # the first dialog window
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
