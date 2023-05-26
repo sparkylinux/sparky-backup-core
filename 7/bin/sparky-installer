@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2023 Under the GNU GPL2 License
-# Last update 2023/03/07 by pavroo
+# Last update 2023/05/26 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -17,12 +17,7 @@ if [ "$testroot" != "root" ]; then
 	exit 1
 fi
 
-# remove stored language setting if any
-if [ -f /tmp/sparky-advanced-installer ]; then
-	rm -f /tmp/sparky-advanced-installer
-fi
-
-# set options depending on mode - text or gui
+# set options of text mode
 DIALOG="`which dialog`"
 HEIGHT="20"
 WIDTH="80"
@@ -36,6 +31,8 @@ MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
+
+# check iso image version
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
 CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
 CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
@@ -44,12 +41,6 @@ CHECKSERVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/spa
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
-#if [ "$CHECKMINICLI" != "" ]; then
-#	if [ -f /usr/bin/sparky-firstrun-fix ]; then
-#		sudo sparky-firstrun-fix
-#	fi
-#fi
-
 # check efi
 if [ -d /sys/firmware/efi/efivars ]; then
 	TESTEFI="EFI detected"
@@ -57,6 +48,7 @@ else
 	TESTEFI=""
 fi
 
+# no more gui
 if [ "$1" = "gui" -o "$2" = "gui" ]; then
 	echo "Yad GUI is not supported any more."
 	echo "Usage is: sudo sparky-installer"
@@ -70,20 +62,18 @@ if [ "$testmode" != "" ]; then
 	exit 1
 fi
 
-# if no dialog or yad installed just quit
+# if no dialog installed just quit
 if [ "$DIALOG" = "" ]; then
 	echo "Cannot find dialog. Exiting now..."
 	exit 1
 fi
 
-# pointless to use non English lang in text console :(
-DEFLANG="English"
-echo "$DEFLANG" > /tmp/sparky-advanced-installer
-# get default's locale file
+# get default's locale file (english only)
 DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 . $DEFLOCDIR/en
 
-#ask for testing dev installer
+### TODO
+#ask for testing dev installer 
 #$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
 #if [ $? = 0 ]; then
 #	echo "using the standard installer"
@@ -111,443 +101,469 @@ fi
 . /etc/sparkybackup/sparkybackup.conf
 . /etc/sparkybackup/sparkylinux-installer.conf
 
-GUILOG="cli"
+########## SETTINGS ##########
 
-##########TEXT MODE##########
+mainmenu () {
 
-	#inform them what this is and ask if they want to continue
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
-	if [ $? != 0 ]; then
-		exit 0
-	fi
+#inform them what this is and ask if they want to continue
+$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
+if [ $? != 0 ]; then
+	exit 0
+fi
 	
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18" $HEIGHT $WIDTH
-	if [ $? = 0 ]; then
+$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18" $HEIGHT $WIDTH
+if [ $? = 0 ]; then
+	dpkg-reconfigure locales
+	dpkg-reconfigure console-data
+	dpkg-reconfigure console-setup
+	dpkg-reconfigure keyboard-configuration
+fi
 
-		dpkg-reconfigure locales
-		dpkg-reconfigure console-data
-		dpkg-reconfigure console-setup
-		dpkg-reconfigure keyboard-configuration
+partitionmenu
 
-	fi
+}
 
-	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
-	#choose the drive to partition
-	DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
+partitionmenu () {
 
-	for i in $DRIVES; do
-		partdrive="$i"
-		partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-		partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
+$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
+#choose the drive to partition
+DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
+for i in $DRIVES; do
+	partdrive="$i"
+	partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+	partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
+done
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL19\n$LOCAL20" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partdrivemenu 2>/tmp/choice.$$
+if [ "$?" = "0" ]; then
+	PARTDRIVE=`cat /tmp/choice.$$`
+else
+	PARTDRIVE="Exit"
+fi
+rm /tmp/choice.$$
+
+if [ "$PARTDRIVE" = "Exit" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+	exit 1
+fi
+
+$PARTITIONPROG /dev/$PARTDRIVE
+
+# find a partiton for efi image
+if [ "$TESTEFI" != "" ]; then
+	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+	for i in $PARTEFI; do
+		efipart="$i"
+		efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+		efipartmenu="$efipartmenu $efipart $efipartsize"
 	done
-
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL19\n$LOCAL20" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partdrivemenu 2>/tmp/choice.$$
+		
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL23\n$LOCAL24" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $efipartmenu 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
-		PARTDRIVE=`cat /tmp/choice.$$`
+		TARGETEFI=`cat /tmp/choice.$$`
+		TARGETEFI="$TARGETEFI:"
 	else
-		PARTDRIVE="Exit"
+		TARGETEFI="Exit"
 	fi
 
 	rm /tmp/choice.$$
 
-	if [ "$PARTDRIVE" = "Exit" ]; then
+	if [ "$TARGETEFI" = "Exit" ]; then
 		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 		exit 1
 	fi
 
-	$PARTITIONPROG /dev/$PARTDRIVE
+	#format the efi partition?
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL25" $HEIGHT $WIDTH $MENUHEIGHT noformatefi "$LOCAL26" formatefi "$LOCAL27" 2>/tmp/choice.$$
 
-	# find a partiton for efi image
-	if [ "$TESTEFI" != "" ]; then
-	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
-		for i in $PARTEFI; do
-			efipart="$i"
-			efipartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-			efipartmenu="$efipartmenu $efipart $efipartsize"
-		done
-		
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL23\n$LOCAL24" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $efipartmenu 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		FORMATEFIPART=`cat /tmp/choice.$$`
+	else
+		FORMATEFIPART="formatefi"
+	fi
 
+	rm /tmp/choice.$$
+fi
+
+#find the swap partition
+if [ "$TARGETEFI" != "" ]; then
+	TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
+else
+	TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+fi
+for i in $TARGETSWAP; do
+	swappart="$i"
+	swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+	swappartmenu="$swappartmenu $swappart $swappartsize"
+done
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu NoSwap "$LOCAL131" 2>/tmp/choice.$$
+if [ "$?" = "0" ]; then
+	SWAP=`cat /tmp/choice.$$`
+	SWAP="$SWAP:"
+else
+	SWAP="Exit"
+fi
+
+rm /tmp/choice.$$
+
+if [ "$SWAP" = "Exit" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+	exit 1
+fi
+
+#choose the partition to install to
+if [ "$TARGETEFI" != "" ]; then
+	PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
+else
+	PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
+fi
+PARTINST=`echo $PARTITIONS`
+
+for i in $PARTITIONS; do
+	part="$i"
+	partsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+	partmenu="$partmenu $part $partsize"
+done
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL30\n$LOCAL31" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partmenu 2>/tmp/choice.$$
+
+if [ "$?" = "0" ]; then
+	TARGETPART=`cat /tmp/choice.$$`
+	TARGETPART="$TARGETPART:"
+else
+	TARGETPART="Exit"
+fi
+
+rm /tmp/choice.$$
+
+if [ "$TARGETPART" = "Exit" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+	exit 1
+fi
+
+#choose filesystem type
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+
+if [ "$?" = "0" ]; then
+	FSTYPE=`cat /tmp/choice.$$`
+else
+	FSTYPE="ext4"
+fi
+
+rm /tmp/choice.$$
+
+#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
+if [ "$TARGETEFI" != "" ]; then
+	HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+else
+	HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
+fi
+
+for i in $HOMEINST; do
+	homepart="$i"
+	homepartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+	homepartmenu="$homepartmenu $homepart $homepartsize"
+done
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL34\n$LOCAL35" $HEIGHT $WIDTH $MENUHEIGHT root "$LOCAL36" $homepartmenu 2>/tmp/choice.$$
+
+if [ "$?" = "0" ]; then
+	HOMEPART=`cat /tmp/choice.$$`
+else
+	HOMEPART="root"
+fi
+
+rm /tmp/choice.$$
+
+if [ "$HOMEPART" != "root" ]; then
+	#choose filesystem type
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		HFSTYPE=`cat /tmp/choice.$$`
+	else
+		HFSTYPE="ext4"
+	fi
+
+	rm /tmp/choice.$$
+
+fi
+
+# set partitions with no ":"
+if [ "$TESTEFI" != "" ]; then
+	TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
+fi
+
+if [ "$SWAP" != "NoSwap" ]; then
+	SWAP=`echo $SWAP | cut -f1 -d":"`
+	TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
+fi
+
+usermenu
+
+}
+
+usermenu () {
+#check mode and get new user info if it is a dist mode
+testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+
+if [ "$testmode" = "" ]; then
+
+	#root password entry section
+	TARGETROOTPASS="1"
+	TARGETROOTPASS2="2"
+
+	while [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; do
+
+	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL39" $HEIGHT $WIDTH 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		TARGETROOTPASS=`cat /tmp/choice.$$`
+	else
+		exit 1
+	fi
+
+	rm /tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL40" $HEIGHT $WIDTH 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		TARGETROOTPASS2=`cat /tmp/choice.$$`
+	else
+		exit 1
+	fi
+
+	rm /tmp/choice.$$
+
+	if [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL41" $HEIGHT $WIDTH
+	fi
+
+	done
+
+	rm /tmp/choice.$$
+
+	# do not set a regular user on server edition; text mode only
+	if [ "$CHECKSERVER" = "" ]; then
+
+		#username input secton
+		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL42" $HEIGHT $WIDTH 2>/tmp/choice.$$
 		if [ "$?" = "0" ]; then
-			TARGETEFI=`cat /tmp/choice.$$`
-			TARGETEFI="$TARGETEFI:"
+			TARGETUSERFULLNAME=`cat /tmp/choice.$$`
 		else
-			TARGETEFI="Exit"
-		fi
-
-		rm /tmp/choice.$$
-
-		if [ "$TARGETEFI" = "Exit" ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 			exit 1
 		fi
 
-		#format the efi partition?
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL25" $HEIGHT $WIDTH $MENUHEIGHT noformatefi "$LOCAL26" formatefi "$LOCAL27" 2>/tmp/choice.$$
-
-		if [ "$?" = "0" ]; then
-			FORMATEFIPART=`cat /tmp/choice.$$`
-		else
-			FORMATEFIPART="formatefi"
-		fi
-
 		rm /tmp/choice.$$
-	fi
 
-	#find the swap partition
-	if [ "$TARGETEFI" != "" ]; then
-		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
-	else
-		TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
-	fi
-	for i in $TARGETSWAP; do
-		swappart="$i"
-		swappartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-		swappartmenu="$swappartmenu $swappart $swappartsize"
-	done
-
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL28\n$LOCAL29" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $swappartmenu NoSwap "$LOCAL131" 2>/tmp/choice.$$
-	if [ "$?" = "0" ]; then
-		SWAP=`cat /tmp/choice.$$`
-		SWAP="$SWAP:"
-	else
-		SWAP="Exit"
-	fi
-
-	rm /tmp/choice.$$
-
-	if [ "$SWAP" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
-		exit 1
-	fi
-
-	#choose the partition to install to
-	if [ "$TARGETEFI" != "" ]; then
-		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
-	else
-		PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | cut -f1 -d":"`
-	fi
-	PARTINST=`echo $PARTITIONS`
-
-	for i in $PARTITIONS; do
-		part="$i"
-		partsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-		partmenu="$partmenu $part $partsize"
-	done
-
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL30\n$LOCAL31" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partmenu 2>/tmp/choice.$$
-
-	if [ "$?" = "0" ]; then
-		TARGETPART=`cat /tmp/choice.$$`
-		TARGETPART="$TARGETPART:"
-	else
-		TARGETPART="Exit"
-	fi
-
-	rm /tmp/choice.$$
-
-	if [ "$TARGETPART" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
-		exit 1
-	fi
-
-	#choose filesystem type
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-
-	if [ "$?" = "0" ]; then
-		FSTYPE=`cat /tmp/choice.$$`
-	else
-		FSTYPE="ext4"
-	fi
-
-	rm /tmp/choice.$$
-
-	#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
-	if [ "$TARGETEFI" != "" ]; then
-		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
-	else
-		HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
-	fi
-
-	for i in $HOMEINST; do
-		homepart="$i"
-		homepartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-		homepartmenu="$homepartmenu $homepart $homepartsize"
-	done
-
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL34\n$LOCAL35" $HEIGHT $WIDTH $MENUHEIGHT root "$LOCAL36" $homepartmenu 2>/tmp/choice.$$
-
-	if [ "$?" = "0" ]; then
-		HOMEPART=`cat /tmp/choice.$$`
-	else
-		HOMEPART="root"
-	fi
-
-	rm /tmp/choice.$$
-
-	if [ "$HOMEPART" != "root" ]; then
-		#choose filesystem type
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-
+		$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL43\n$LOCAL44" $HEIGHT $WIDTH 2>/tmp/choice.$$
 		if [ "$?" = "0" ]; then
-			HFSTYPE=`cat /tmp/choice.$$`
+			TARGETUSER=`cat /tmp/choice.$$`
 		else
-			HFSTYPE="ext4"
+			exit 1
 		fi
 
 		rm /tmp/choice.$$
 
-	fi
+		#make sure its all lowercase just in case
+		TARGETUSER="`echo $TARGETUSER | awk '{print tolower ($0)}'`"
 
-	# set partitions with no ":"
-	if [ "$TESTEFI" != "" ]; then
-		TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
-	fi
-	if [ "$SWAP" != "NoSwap" ]; then
-		SWAP=`echo $SWAP | cut -f1 -d":"`
-		TARGETPART=`echo $TARGETPART | cut -f1 -d":"`
-	fi
+		#password entry section
 
-	#check mode and get new user info if it is a dist mode
-	testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+		TARGETPASS="1"
+		TARGETPASS2="2"
 
-	if [ "$testmode" = "" ]; then
+		while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
 
-		#root password entry section
-		TARGETROOTPASS="1"
-		TARGETROOTPASS2="2"
-
-		while [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; do
-
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL39" $HEIGHT $WIDTH 2>/tmp/choice.$$
+		$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
 			if [ "$?" = "0" ]; then
-				TARGETROOTPASS=`cat /tmp/choice.$$`
-			else
-				exit 1
-			fi
-
-			rm /tmp/choice.$$
-			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL40" $HEIGHT $WIDTH 2>/tmp/choice.$$
-			if [ "$?" = "0" ]; then
-				TARGETROOTPASS2=`cat /tmp/choice.$$`
+				TARGETPASS=`cat /tmp/choice.$$`
 			else
 				exit 1
 			fi
 
 			rm /tmp/choice.$$
 
-			if [ "$TARGETROOTPASS" != "$TARGETROOTPASS2" ]; then
-				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL41" $HEIGHT $WIDTH
+			$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
+			if [ "$?" = "0" ]; then
+				TARGETPASS2=`cat /tmp/choice.$$`
+			else
+				exit 1
+			fi
+
+			rm /tmp/choice.$$
+
+			if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
+				$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
 			fi
 
 		done
 
 		rm /tmp/choice.$$
 
-		# do not set a regular user on server edition; text mode only
-		if [ "$CHECKSERVER" = "" ]; then
-
-			#username input secton
-			$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL42" $HEIGHT $WIDTH 2>/tmp/choice.$$
-			if [ "$?" = "0" ]; then
-				TARGETUSERFULLNAME=`cat /tmp/choice.$$`
-			else
-				exit 1
-			fi
-
-			rm /tmp/choice.$$
-
-			$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL43\n$LOCAL44" $HEIGHT $WIDTH 2>/tmp/choice.$$
-			if [ "$?" = "0" ]; then
-				TARGETUSER=`cat /tmp/choice.$$`
-			else
-				exit 1
-			fi
-
-			rm /tmp/choice.$$
-
-			#make sure its all lowercase just in case
-			TARGETUSER="`echo $TARGETUSER | awk '{print tolower ($0)}'`"
-
-			#password entry section
-
-			TARGETPASS="1"
-			TARGETPASS2="2"
-
-			while [ "$TARGETPASS" != "$TARGETPASS2" ]; do
-
-				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER." $HEIGHT $WIDTH 2>/tmp/choice.$$
-				if [ "$?" = "0" ]; then
-					TARGETPASS=`cat /tmp/choice.$$`
-				else
-					exit 1
-				fi
-
-				rm /tmp/choice.$$
-
-				$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL45 $TARGETUSER $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
-				if [ "$?" = "0" ]; then
-					TARGETPASS2=`cat /tmp/choice.$$`
-				else
-					exit 1
-				fi
-
-				rm /tmp/choice.$$
-
-				if [ "$TARGETPASS" != "$TARGETPASS2" ]; then
-					$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
-				fi
-
-			done
-
-			rm /tmp/choice.$$
-
-		fi
-
-		# autologin section; do not work with pure cli
-		if [ "$CHECKMINICLI" = " " ] || [ "$CHECKSERVER" = " " ]; then
-			$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
-			if [ "$?" = "0" ]; then
-				AUTOLOGIN=`cat /tmp/choice.$$`
-			else
-				AUTOLOGIN="FALSE"
-			fi
-				rm /tmp/choice.$$
-		fi
-
 	fi
 
-	#hostname setup
-	$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL65\n$LOCAL66" $HEIGHT $WIDTH 2>/tmp/choice.$$
-	if [ "$?" = "0" ]; then
-		TARGETHOSTNAME=`cat /tmp/choice.$$`
-	else
-		exit 1
-	fi
-
-	rm /tmp/choice.$$
-
-	#grub location
-GrubSelectText () {
-
-	## Blank the array in case this function is being rerun
-	GrubMenu=()
-	Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
-
-	for i in $Drives; do
-		PartDrive="$i"
-
-		if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
-			GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
-		fi
-	done
-
-	GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70")
-
-	#grub location
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>/tmp/choice.$$
-
-	if [ "$?" = "0" ]; then
-		GRUBLOCTEST=`cat /tmp/choice.$$`
-	fi
-
-	rm /tmp/choice.$$
-
-	if [ "$GRUBLOCTEST" = "nogrub" ]; then
-		GRUBLOCTEXT="$LOCAL72"
-	elif [ "$GRUBLOCTEST" = "root" ]; then
-		GRUBLOCTEXT="$LOCAL73 $TARGETPART"
-		GRUBLOC="/dev/$TARGETPART"
-	elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
-		GRUBLOCTEXT="$LOCAL74 $TARGETPART"
-		GRUBLOC="/dev/$PARTDRIVE"
-	elif [ "$GRUBLOCTEST" = "" ]; then
-		GrubSelectText
-		exit 0
-	else
-		GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
-		GRUBLOC="/dev/$GRUBLOCTEST"
-	fi
-
-	# set grub delay
-	if [ "$GRUBLOCTEST" != "nogrub" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
-
+	# autologin section; do not work with pure cli
+	if [ "$CHECKMINICLI" = " " ] || [ "$CHECKSERVER" = " " ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
 		if [ "$?" = "0" ]; then
-			SETDELAY=`cat /tmp/choice.$$`
+			AUTOLOGIN=`cat /tmp/choice.$$`
 		else
-			SETDELAY="5"
+			AUTOLOGIN="FALSE"
 		fi
-		rm /tmp/choice.$$
+			rm /tmp/choice.$$
 	fi
+
+fi
+
+hostmenu
+
+}
+
+hostmenu () {
+	
+#hostname setup
+$DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL65\n$LOCAL66" $HEIGHT $WIDTH 2>/tmp/choice.$$
+if [ "$?" = "0" ]; then
+	TARGETHOSTNAME=`cat /tmp/choice.$$`
+else
+	exit 1
+fi
+
+rm /tmp/choice.$$
+
+grubtextmenu
+
+}
+
+grubtextmenu () {
+
+## Blank the array in case this function is being rerun
+GrubMenu=()
+Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
+
+for i in $Drives; do
+	PartDrive="$i"
+
+	if [ "$(echo "$PartDrive" | grep [0-9] )" = "" ]; then
+		GrubMenu=("${GrubMenu[@]}" "$PartDrive" "$LOCAL67")
+	fi
+done
+
+GrubMenu=( "${GrubMenu[@]}" "root" "$LOCAL68" "rootmbr" "$LOCAL69" "nogrub" "$LOCAL70")
+
+#grub location
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL71\n" $HEIGHT $WIDTH $MENUHEIGHT "${GrubMenu[@]}" 2>/tmp/choice.$$
+
+if [ "$?" = "0" ]; then
+	GRUBLOCTEST=`cat /tmp/choice.$$`
+fi
+
+rm /tmp/choice.$$
+
+if [ "$GRUBLOCTEST" = "nogrub" ]; then
+	GRUBLOCTEXT="$LOCAL72"
+elif [ "$GRUBLOCTEST" = "root" ]; then
+	GRUBLOCTEXT="$LOCAL73 $TARGETPART"
+	GRUBLOC="/dev/$TARGETPART"
+elif [ "$GRUBLOCTEST" = "rootmbr" ]; then
+	GRUBLOCTEXT="$LOCAL74 $TARGETPART"
+	GRUBLOC="/dev/$PARTDRIVE"
+elif [ "$GRUBLOCTEST" = "" ]; then
+	grubmenu
+	exit 0
+else
+	GRUBLOCTEXT="$LOCAL75 $GRUBLOCTEST"
+	GRUBLOC="/dev/$GRUBLOCTEST"
+fi
+
+# set grub delay
+if [ "$GRUBLOCTEST" != "nogrub" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL123\n" $HEIGHT $WIDTH $MENUHEIGHT 5 "5 sec $LOCAL124" 10 "10 sec" 20 "20 sec" 30 "30 sec" No "0 sec $LOCAL125" 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		SETDELAY=`cat /tmp/choice.$$`
+	else
+		SETDELAY="5"
+	fi
+	rm /tmp/choice.$$
+fi
+
+setmenu
+
 }
 	
-GrubSelectText
+setmenu () {
 
-	#dpkg-reconfigure tzdata
-	#Timezone setting
-	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77" $HEIGHT $WIDTH
-	if [ $? = 0 ]; then
-		if [ "$(grep "UTC" /etc/adjtime)" != "" ]; then
-			sed -i -e "s|UTC|LOCALTIME|g" /etc/adjtime
-		fi
-	else
-		if [ "$(grep "LOCALTIME" /etc/adjtime)" != "" ]; then
-			sed -i -e "s|LOCALTIME|UTC|g" /etc/adjtime
-		fi
+#Timezone setting
+$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL76\n\n$LOCAL77" $HEIGHT $WIDTH
+if [ $? = 0 ]; then
+	if [ "$(grep "UTC" /etc/adjtime)" != "" ]; then
+		sed -i -e "s|UTC|LOCALTIME|g" /etc/adjtime
 	fi
-
-	cat /usr/share/zoneinfo/zone.tab | awk '{print $3}' | grep "/" | sort > /tmp/sparkylinux-installer.zoneinfo
-	for i in `cat /tmp/sparkylinux-installer.zoneinfo`; do
-		ZONES="$ZONES $i Timezone"
-	done
-
-	rm /tmp/sparkylinux-installer.zoneinfo
-
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL78" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $ZONES 2>/tmp/choice.$$
-	if [ "$?" = "0" ]; then
-		ZONESINFO=`cat /tmp/choice.$$`
-	else
-		ZONESINFO="Exit"
+else
+	if [ "$(grep "LOCALTIME" /etc/adjtime)" != "" ]; then
+		sed -i -e "s|LOCALTIME|UTC|g" /etc/adjtime
 	fi
+fi
 
-	rm /tmp/choice.$$
+cat /usr/share/zoneinfo/zone.tab | awk '{print $3}' | grep "/" | sort > /tmp/sparkylinux-installer.zoneinfo
+for i in `cat /tmp/sparkylinux-installer.zoneinfo`; do
+	ZONES="$ZONES $i Timezone"
+done
 
-	if [ "$ZONESINFO" = "Exit" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
-		exit 1
+rm /tmp/sparkylinux-installer.zoneinfo
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL78" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $ZONES 2>/tmp/choice.$$
+if [ "$?" = "0" ]; then
+	ZONESINFO=`cat /tmp/choice.$$`
+else
+	ZONESINFO="Exit"
+fi
+
+rm /tmp/choice.$$
+
+if [ "$ZONESINFO" = "Exit" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+	exit 1
+fi
+echo "$ZONESINFO" > /etc/timezone
+cp /usr/share/zoneinfo/$ZONESINFO /etc/localtime
+
+fixmenu
+
+}
+
+fixmenu () {
+
+if [ "$HOMEPART" != "root" ]; then
+	HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
+fi
+
+if [ "$HFSTYPE" = "noformat" ]; then
+	HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
+fi
+
+if [ "$testmode" = "" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
+	if [ $? != 0 ]; then
+		exit 0
 	fi
-	echo "$ZONESINFO" > /etc/timezone
-	cp /usr/share/zoneinfo/$ZONESINFO /etc/localtime
-
-	#$SETLOCALE
-	#$SETCONSOLEDATA
-	#$SETXSERVER
-
-	if [ "$HOMEPART" != "root" ]; then
-		HOMETEXT=", $HOMEPART $LOCAL79 $HFSTYPE $LOCAL80 /home "
+else
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
+	if [ $? != 0 ]; then
+		exit 0
 	fi
+fi
 
-	if [ "$HFSTYPE" = "noformat" ]; then
-		HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
-	fi
+installmenu
 
-	if [ "$testmode" = "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
-		if [ $? != 0 ]; then
-			exit 0
-		fi
-	else
-		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
-		if [ $? != 0 ]; then
-			exit 0
-		fi
-	fi
+}
 
-##########END TEXT MODE##########
+########## END SETTINGS ##########
 
-##########install_to_hd section##########
+########## install to hd section ##########
+
+installmenu () {
 
 # preper swap
 if [ "$SWAP" = "NoSwap" ]; then
@@ -702,7 +718,6 @@ LIVEISOIMAGE=$CHECKISOVER
 TARGETUSERGROUPS=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`
 TARGETGRUBOPT=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep NewGrubDefLine`
 LIVEMODE=$LIVEMODE
-GUI=$GUILOG
 TARGETUSER=$TARGETUSER
 TARGETHOSTNAME=$TARGETHOSTNAME
 SWAP=$SWAP
@@ -1075,6 +1090,12 @@ chmod 755 /TARGET/bin/newuserscript
 chroot /TARGET /bin/newuserscript
 rm /TARGET/bin/newuserscript
 
+desktopmenu
+
+}
+
+desktopmenu () {
+
 # install your favorite desktop of your choice
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
@@ -1083,8 +1104,16 @@ if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 		apt-get update 
 		apt-get install sparky-backup-desktop sparky-desktop-data -y
 		/usr/bin/sparkylinux-desktop-installer
+	else
+		finishmenu
 	fi
 fi
+
+finishmenu
+
+}
+
+finishmenu () {
 
 if [ "$DESKTOPCHOOSE" = "yes" ]; then
 	echo "NEW DESKTOP INSTALLATION CHOSEN=yes" >> /var/log/sparkylinux-installer.log
@@ -1275,4 +1304,6 @@ else
 	reboot
 fi
 
-exit 0
+}
+
+mainmenu
