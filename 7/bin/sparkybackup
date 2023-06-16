@@ -10,7 +10,7 @@
 # Copyright 2013-2022 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2022/10/05 by pavroo
+# Last update 2023/06/12 21.05 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -744,7 +744,9 @@ function cdfs {
 	then
 		rsync -a /usr/lib/sparkybackup/boot $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/EFI $WORKDIR/ISOTMP/
-		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
+		#rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
+		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/
+			
 		if [ "$TESTXORRISO" = "" ]
 		then
 			EFI_PARAMS="-eltorito-alt-boot -eltorito-boot boot/grub/efi.img -no-emul-boot"
@@ -793,26 +795,26 @@ function cdfs {
 		fi
 	fi
 	
-	# change sparky.cfg if CLI image
+	# change grub.cfg if CLI image
 	CHECKMINIMALCLIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 	if [ "$CHECKMINIMALCLIISO" != "" ]
 	then
-		rm -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-		mv $WORKDIR/ISOTMP/boot/grub/sparky-cli.cfg $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub.cfg
+		mv $WORKDIR/ISOTMP/boot/grub/grub-cli.cfg $WORKDIR/ISOTMP/boot/grub/grub.cfg
 	fi
 
-	if [ -f $WORKDIR/ISOTMP/boot/grub/sparky.cfg ]
-	then
-		sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-	fi
+	#if [ -f $WORKDIR/ISOTMP/boot/grub/grub.cfg ]
+	#then
+	#	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+	#fi
 
-	if [ ! -d /etc/plymouth ]
-	then
-		sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-		sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
-		sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-	fi
+	#if [ ! -d /etc/plymouth ]
+	#then
+	#	sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	sed -i -e 's/ splash//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+	#	sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/isolinux/isolinux.cfg
+	#	sed -i -e 's/ quiet//g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
+	#fi
 
 	# add minimal file to the iso to let the netinstall installer detect it
 	# and run the advanced installtion in live environment
@@ -895,8 +897,10 @@ FOO
 	cp /boot/vmlinuz-$(uname -r) $WORKDIR/ISOTMP/live/vmlinuz
 	cp /boot/initrd.img-$(uname -r) $WORKDIR/ISOTMP/live/initrd.img
 	# configure it if you want to enable 2nd kernel in live session (example)
-	#cp /boot/vmlinuz-4.19.0-* $WORKDIR/ISOTMP/live/vmlinuz419
-	#cp /boot/initrd.img-4.19.0-* $WORKDIR/ISOTMP/live/initrd419.img
+	#cp /usr/lib/sparkybackup/live/initrd.img $WORKDIR/ISOTMP/live
+	#cp /usr/lib/sparkybackup/live/vmlinuz $WORKDIR/ISOTMP/live
+	mkdir -p $WORKDIR/ISOTMP/.disk 
+	cp /usr/lib/sparkybackup/.disk/* $WORKDIR/ISOTMP/.disk
 
 	# fix sddm conf
 	if [ -f /lib/live/config/0085-sddm ]
