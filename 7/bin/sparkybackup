@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2022 under the GNU GPL2 License
+# Copyright 2013-2023 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2023/06/12 21.05 by pavroo
+# Last update 2023/09/09 21.05 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -397,7 +397,9 @@ function cdfs {
 	rm -f $WORKDIR/dummysys/etc/mtab
 	rm -f $WORKDIR/dummysys/etc/fstab
 	rm -f $WORKDIR/dummysys/etc/udev/rules.d/70-persistent*
-	rm -f $WORKDIR/dummysys/etc/initramfs-tools/conf.d/resume
+	if [ -f $WORKDIR/dummysys/etc/initramfs-tools/conf.d/resume ]; then
+		rm -f $WORKDIR/dummysys/etc/initramfs-tools/conf.d/resume
+	fi
 	ls $WORKDIR/dummysys/var/lib/apt/lists | grep -v ".gpg" | grep -v "lock" | grep -v "partial" | xargs -i rm $WORKDIR/dummysys/var/lib/apt/lists/{} ; 
 
 	if [ "$1" = "dist" ]

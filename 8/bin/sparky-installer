@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2023 Under the GNU GPL2 License
-# Last update 2023/05/26 by pavroo
+# Last update 2023/09/09 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -925,22 +925,22 @@ else
 fi
 
 # add swap uuid to resume
-if [ "$SWAP" != "NoSwap" ]; then
-	if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
-		mkdir -p /TARGET/etc/initramfs-tools/conf.d
-	fi
-	if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
-		rm -f /TARGET/etc/initramfs-tools/conf.d/resume
-	fi
-cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
-RESUME=UUID=$UUIDSWAP
-FOO
-fi
+#if [ "$SWAP" != "NoSwap" ]; then
+#	if [ ! -d /TARGET/etc/initramfs-tools/conf.d ]; then
+#		mkdir -p /TARGET/etc/initramfs-tools/conf.d
+#	fi
+#	if [ -f /TARGET/etc/initramfs-tools/conf.d/resume ]; then
+#		rm -f /TARGET/etc/initramfs-tools/conf.d/resume
+#	fi
+#cat > /TARGET/etc/initramfs-tools/conf.d/resume <<FOO
+#RESUME=UUID=$UUIDSWAP
+#FOO
+#fi
 
 echo "UUIDs & FSTAB" >> /var/log/sparkylinux-installer.log
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
-echo "INITRAMFS-RESUME:" >> /var/log/sparkylinux-installer.log
-cat /TARGET/etc/initramfs-tools/conf.d/resume >> /var/log/sparkylinux-installer.log
+#echo "INITRAMFS-RESUME:" >> /var/log/sparkylinux-installer.log
+#cat /TARGET/etc/initramfs-tools/conf.d/resume >> /var/log/sparkylinux-installer.log
 echo "GENERATED FSTAB:" >> /var/log/sparkylinux-installer.log
 cat /TARGET/etc/fstab >> /var/log/sparkylinux-installer.log
 echo "" >> /var/log/sparkylinux-installer.log
