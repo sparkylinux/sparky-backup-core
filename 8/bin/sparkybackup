@@ -10,7 +10,7 @@
 # Copyright 2013-2023 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2023/09/09 by pavroo
+# Last update 2023/10/10 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -474,7 +474,7 @@ function cdfs {
 		# remove the non system users on the passwd and group files and copy them to dummysys
 		# see if any temp users left over from previous versions of sparkybackup as the process has now changed
 
-		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print "/usr/sbin/userdel -f",$1}'> $WORKDIR/cleantmpusers
+		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print "/usr/sbin/userdel -f",$1}' | grep -v polkitd > $WORKDIR/cleantmpusers
 		. $WORKDIR/cleantmpusers
 
 		grep '^[^:]*:[^:]*:[0-9]:' /etc/passwd >> $WORKDIR/dummysys/etc/passwd
@@ -487,9 +487,9 @@ function cdfs {
 		grep '^[^:]*:[^:]*:[0-9][0-9][0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
 		grep '^[^:]*:[^:]*:[3-9][0-9][0-9][0-9][0-9]:' /etc/group >> $WORKDIR/dummysys/etc/group
 
-		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers1
-		grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers2
-		grep '^[^:]*:[^:]*:[1-2][0-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}'> $WORKDIR/tmpusers3
+		grep '^[^:]*:[^:]*:[5-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}' | grep -v polkitd > $WORKDIR/tmpusers1
+		grep '^[^:]*:[^:]*:[1-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}' | grep -v polkitd > $WORKDIR/tmpusers2
+		grep '^[^:]*:[^:]*:[1-2][0-9][0-9][0-9][0-9]:' /etc/passwd | awk -F ":" '{print $1}' | grep -v polkitd > $WORKDIR/tmpusers3
 
 		cat $WORKDIR/tmpusers1 $WORKDIR/tmpusers2 $WORKDIR/tmpusers3 > $WORKDIR/tmpusers
 		cat $WORKDIR/tmpusers | while read LINE;
