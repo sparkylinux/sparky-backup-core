@@ -7,8 +7,8 @@
 #
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2023 Under the GNU GPL2 License
-# Last update 2023/09/09 by pavroo
+# Copyright 2013-2024 Under the GNU GPL2 License
+# Last update 2024/01/08 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -712,7 +712,7 @@ RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
 TESTEFI=$TESTEFI
 LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
-TARGETLOCALE=`cat /tmp/sparky-advanced-installer`
+TARGETLOCALE=`en`
 SCRIPTVERSION=`cat /etc/sparkybackup/sparkybackup.version`
 LIVEISOIMAGE=$CHECKISOVER
 TARGETUSERGROUPS=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`
@@ -748,9 +748,9 @@ echo "==============================================================" >> /var/lo
 echo "$LOCAL101 ... $LOCAL92 ..."
 
 if [ "$HFSTYPE" = "noformat" ]; then
-	rsync -a / /TARGET --ignore-existing --exclude=/{TARGET,home,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
+	rsync -a -h --info=progress2 --no-inc-recursive / /TARGET --ignore-existing --exclude=/{TARGET,home,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
 else
-	rsync -a / /TARGET --ignore-existing --exclude=/{TARGET,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
+	rsync -a -h --info=progress2 --no-inc-recursive / /TARGET --ignore-existing --exclude=/{TARGET,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
 fi
 
 mkdir -p /TARGET/{proc,mnt,run,sys,media/cdrom}
