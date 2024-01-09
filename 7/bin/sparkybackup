@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2023 under the GNU GPL2 License
+# Copyright 2013-2024 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2023/09/09 21.05 by pavroo
+# Last update 2024/01/09 21.05 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -984,11 +984,21 @@ FOO
 		log_info "TESTEFI=EFI NOT detected" >> $WORKDIR/sparkybackup.log
 	fi
 
+	log_debug "------------------------------------------------------"
+	log_debug "Check do efi debs exist at offline dir"
 	if [ -d /home/offline ]
 	then
-		log_debug "------------------------------------------------------"
-		log_debug "Check do efi debs exist at offline dir"
 		ls /home/offline >> $WORKDIR/sparkybackup.log
+	else
+		log_info "/home/offline dir does not exist" >> $WORKDIR/sparkybackup.log
+	fi
+	log_debug "------------------------------------------------------"
+	log_debug "Check do efi signed debs exist at offlinesigned dir"
+	if [ -d /home/offlinesigned ]
+	then
+		ls /home/offlinesigned >> $WORKDIR/sparkybackup.log
+	else
+		log_info "/home/offlinesigned dir does not exist" >> $WORKDIR/sparkybackup.log
 	fi
 
 	log_debug "------------------------------------------------------"
