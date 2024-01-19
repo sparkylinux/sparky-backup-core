@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/01/08 by pavroo
+# Last update 2024/01/17.1 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -213,7 +213,7 @@ if [ "$SWAP" = "Exit" ]; then
 	exit 1
 fi
 
-#choose the partition to install to
+#choose the root partition to install to
 if [ "$TARGETEFI" != "" ]; then
 	PARTITIONS=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | cut -f1 -d":"`
 else
@@ -243,8 +243,13 @@ if [ "$TARGETPART" = "Exit" ]; then
 	exit 1
 fi
 
-#choose filesystem type
-$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+#choose filesystem type to root partition
+# installation sparky on ext4 and btrfs on efi; on ext4 on bios only
+if [ "$TARGETEFI" != "" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+else
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+fi
 
 if [ "$?" = "0" ]; then
 	FSTYPE=`cat /tmp/choice.$$`
@@ -254,6 +259,7 @@ fi
 
 rm /tmp/choice.$$
 
+# choose home partition
 #HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
 if [ "$TARGETEFI" != "" ]; then
 	HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
@@ -277,9 +283,14 @@ fi
 
 rm /tmp/choice.$$
 
+# choose file system to home partition
+# installation sparky on ext4 and btrfs on efi; on ext4 on bios only
 if [ "$HOMEPART" != "root" ]; then
-	#choose filesystem type
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext2 "Ext2 $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+	if [ "$TARGETEFI" != "" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+	else
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
+	fi
 
 	if [ "$?" = "0" ]; then
 		HFSTYPE=`cat /tmp/choice.$$`
@@ -712,7 +723,7 @@ RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
 TESTEFI=$TESTEFI
 LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
-TARGETLOCALE=`en`
+TARGETLOCALE=en
 SCRIPTVERSION=`cat /etc/sparkybackup/sparkybackup.version`
 LIVEISOIMAGE=$CHECKISOVER
 TARGETUSERGROUPS=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`
@@ -873,11 +884,12 @@ else
 	FSTABEXTRA="defaults"
 fi
 
+# removed btrfs opts: noatime,space_cache=v2,autodefrag,
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
 	FSTABOPT="errors=remount-ro,$FSTABEXTRA"
 elif [ "$FSTYPE" = "btrfs" ]; then
-	FSTABOPT="subvol=@,noatime,space_cache=v2,autodefrag,$FSTABEXTRA"
-	HFSTABOPT="subvol=@home,defaults,noatime,space_cache=v2,autodefrag"
+	FSTABOPT="subvol=/@,$FSTABEXTRA,compress=zstd:1"
+	HFSTABOPT="subvol=/@home,defaults,compress=zstd:1"
 elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="noatime,$FSTABEXTRA"
 fi
@@ -885,7 +897,7 @@ fi
 if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	HFSTABOPT="defaults,noatime,space_cache=v2,autodefrag"
+	HFSTABOPT="defaults,compress=zstd:1"
 elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
