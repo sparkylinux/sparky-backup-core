@@ -712,7 +712,7 @@ RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
 TESTEFI=$TESTEFI
 LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
-TARGETLOCALE=`en`
+TARGETLOCALE=en
 SCRIPTVERSION=`cat /etc/sparkybackup/sparkybackup.version`
 LIVEISOIMAGE=$CHECKISOVER
 TARGETUSERGROUPS=`cat /etc/sparkybackup/sparkylinux-installer.conf | grep DEFAULTGROUPS`

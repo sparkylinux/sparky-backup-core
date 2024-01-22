@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/01/17.1 by pavroo
+# Last update 2024/01/22 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -92,9 +92,9 @@ else
 fi
 
 if [ "$TESTEFI" != "" ]; then
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL133\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 else
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL133\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 fi
 
 . /etc/live/config.conf
@@ -245,11 +245,11 @@ fi
 
 #choose filesystem type to root partition
 # installation sparky on ext4 and btrfs on efi; on ext4 on bios only
-if [ "$TARGETEFI" != "" ]; then
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
-else
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
-fi
+#if [ "$TARGETEFI" != "" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+#else
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+#fi
 
 if [ "$?" = "0" ]; then
 	FSTYPE=`cat /tmp/choice.$$`
@@ -286,11 +286,11 @@ rm /tmp/choice.$$
 # choose file system to home partition
 # installation sparky on ext4 and btrfs on efi; on ext4 on bios only
 if [ "$HOMEPART" != "root" ]; then
-	if [ "$TARGETEFI" != "" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
-	else
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" 2>/tmp/choice.$$
-	fi
+	#if [ "$TARGETEFI" != "" ]; then
+	#	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+	#else
+		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+	#fi
 
 	if [ "$?" = "0" ]; then
 		HFSTYPE=`cat /tmp/choice.$$`
@@ -301,6 +301,30 @@ if [ "$HOMEPART" != "root" ]; then
 	rm /tmp/choice.$$
 
 fi
+
+# choose boot partition
+if [ "$TARGETEFI" != "" ]; then
+	BOOTINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | grep-v "$HOMEPART" | cut -f1 -d":"`
+else
+	BOOTINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | grep -v "$HOMEPART" | cut -f1 -d":"`
+fi
+
+for i in $BOOTINST; do
+	bootpart="$i"
+	bootpartsize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+	bootpartmenu="$bootpartmenu $bootpart $bootpartsize"
+done
+
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL132" $HEIGHT $WIDTH $MENUHEIGHT NoBoot "$LOCAL134" $bootpartmenu 2>/tmp/choice.$$
+
+if [ "$?" = "0" ]; then
+	BOOTPART=`cat /tmp/choice.$$`
+	BOOTFSTYPE="ext4"
+else
+	BOOTPART="NoBoot"
+fi
+
+rm /tmp/choice.$$
 
 # set partitions with no ":"
 if [ "$TESTEFI" != "" ]; then
@@ -679,6 +703,20 @@ if [ "$HOMEPART" != "root" ]; then
 	fi
 fi
 
+# make /boot partition if separated
+if [ "$BOOTPART" != "NoBoot" ]; then
+	if [ "`mount | grep $BOOTPART`" ]; then
+		echo "$LOCAL94"
+		umount /dev/$BOOTPART
+	fi
+	mke2fs -t ext4 -F /dev/$BOOTPART
+	echo "$LOCAL135"
+	mkdir -p /TARGET/boot
+	mount /dev/$BOOTPART /TARGET/boot -o rw
+	rm -rf "/TARGET/boot/lost+found"
+	sleep 1
+fi
+
 #format and mount efi part
 if [ "$TESTEFI" != "" ]; then
 	if [ "$FORMATEFIPART" = "formatefi" ]; then
@@ -739,6 +777,8 @@ TARGETEFI=$TARGETEFI
 FORMATEFIPART=$FORMATEFIPART
 HFSTYPE=$HFSTYPE
 GRUBLOC=$GRUBLOC
+BOOTPART=$BOOTPART
+BOOTFSTYOE=$BOOTFSTYPE
 FOO
 
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -934,6 +974,13 @@ if [ "$HOMEPART" = "root" ]; then
 else
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
 	echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+fi
+
+# add boot part
+if [ "$BOOTPART" != "NoBoot" ]; then
+	UUIDBOOTPART=`blkid | grep $BOOTPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
+	echo "# boot /dev/$BOOTPART" >> /TARGET/etc/fstab
+	echo "UUID=$UUIDBOOTPART	/boot	ext4	defaults	0	2" >> /TARGET/etc/fstab
 fi
 
 # add swap uuid to resume
