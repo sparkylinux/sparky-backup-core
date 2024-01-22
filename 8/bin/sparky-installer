@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/01/22 by pavroo
+# Last update 2024/01/22.1 by pavroo
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -71,16 +71,6 @@ fi
 # get default's locale file (english only)
 DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 . $DEFLOCDIR/en
-
-### TODO
-#ask for testing dev installer 
-#$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL129\n\n$LOCAL130" $HEIGHT $WIDTH
-#if [ $? = 0 ]; then
-#	echo "using the standard installer"
-#else
-#	sparky-installer-dev
-#	exit 0
-#fi
 	
 # the first dialog window
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
@@ -244,12 +234,7 @@ if [ "$TARGETPART" = "Exit" ]; then
 fi
 
 #choose filesystem type to root partition
-# installation sparky on ext4 and btrfs on efi; on ext4 on bios only
-#if [ "$TARGETEFI" != "" ]; then
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-#else
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-#fi
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 if [ "$?" = "0" ]; then
 	FSTYPE=`cat /tmp/choice.$$`
@@ -260,7 +245,6 @@ fi
 rm /tmp/choice.$$
 
 # choose home partition
-#HOMEINST=`echo $PARTINST | sed -r "s/$TARGETPART://"`
 if [ "$TARGETEFI" != "" ]; then
 	HOMEINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | cut -f1 -d":"`
 else
@@ -284,13 +268,8 @@ fi
 rm /tmp/choice.$$
 
 # choose file system to home partition
-# installation sparky on ext4 and btrfs on efi; on ext4 on bios only
 if [ "$HOMEPART" != "root" ]; then
-	#if [ "$TARGETEFI" != "" ]; then
-	#	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-	#else
-		$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
-	#fi
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		HFSTYPE=`cat /tmp/choice.$$`
@@ -304,7 +283,7 @@ fi
 
 # choose boot partition
 if [ "$TARGETEFI" != "" ]; then
-	BOOTINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | grep-v "$HOMEPART" | cut -f1 -d":"`
+	BOOTINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | grep -v "$SWAP" | grep -v "$TARGETPART" | grep -v "$HOMEPART" | cut -f1 -d":"`
 else
 	BOOTINST=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$SWAP" | grep -v "$TARGETPART" | grep -v "$HOMEPART" | cut -f1 -d":"`
 fi
