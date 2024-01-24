@@ -10,7 +10,7 @@
 # Copyright 2013-2024 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2024/01/09 by pavroo
+# Last update 2024/01/23 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -179,7 +179,6 @@ case $1 in
 		echo ""
 		exit_with_message " " 1
 		;;
-
 	efi)
 		echo "$LOCAL60"
 		echo "$LOCAL61"
@@ -196,14 +195,12 @@ case $1 in
 		echo ""
 		exit_with_message " " 1
 		;;
-
 	clean)
 		echo "$LOCAL17"
 		log_info "Removing the build directory now..."
 		rm -rf $BASEWORKDIR
 		exit_with_message "$LOCAL18 $LOCAL14" 1
 		;;
-
 	skel)
 		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL75 \n$LOCAL76 \n\n$LOCAL77 \n$LOCAL78 \n$LOCAL79 \n$LOCAL80 \n\n$LOCAL81 \n$LOCAL82" $HEIGHT $WIDTH
 		if [ "$?" != "0" ]
@@ -257,17 +254,14 @@ case $1 in
 			exit_with_message " " 1
 		fi
 		;;
-
 	dist)
 		echo "$LOCAL19"
 		log_info "Distribution Mode Selected"
 		;;
-
 	edit)
 		nano /etc/sparkybackup/sparkybackup.conf
 		exit_with_message " " 1
 		;;
-
 	installer)
 		nano /etc/sparkybackup/sparkylinux-installer.conf
 		exit_with_message " " 1
@@ -283,7 +277,6 @@ case $1 in
 		fi
 		exit_with_message " " 1
 		;;
-	
 	log)
 		if [ -f "$WORKDIR/sparkybackup.log" ]
 		then
@@ -293,7 +286,6 @@ case $1 in
 		fi
 		exit_with_message " " 1
 		;;
-
 	*)
 		output_usage
 		;;
@@ -380,8 +372,8 @@ function cdfs {
 	rsync $VAREXCLUDES-a /var/. $WORKDIR/dummysys/var/.
 	rsync -a /etc/. $WORKDIR/dummysys/etc/.
 
-	if [ "$1" = "dist" ]
-	then
+	#if [ "$1" = "dist" ]
+	#then
 		rm -f $WORKDIR/dummysys/etc/X11/xorg.conf
 		rm -f $WORKDIR/dummysys/etc/resolv.conf
 		# dirty fix resolv.conf
@@ -392,7 +384,7 @@ function cdfs {
 		# end fixing resolv.conf
 		rm -f $WORKDIR/dummysys/etc/hosts
 		rm -f $WORKDIR/dummysys/etc/hostname
-	fi
+	#fi
 
 	rm -f $WORKDIR/dummysys/etc/mtab
 	rm -f $WORKDIR/dummysys/etc/fstab
@@ -402,8 +394,8 @@ function cdfs {
 	fi
 	ls $WORKDIR/dummysys/var/lib/apt/lists | grep -v ".gpg" | grep -v "lock" | grep -v "partial" | xargs -i rm $WORKDIR/dummysys/var/lib/apt/lists/{} ; 
 
-	if [ "$1" = "dist" ]
-	then
+	#if [ "$1" = "dist" ]
+	#then
 		if [ -f $WORKDIR/dummysys/etc/gdm3/daemon.conf ]
 		then
 			sed -i -e '/AutomaticLoginEnable/d' $WORKDIR/dummysys/etc/gdm3/daemon.conf
@@ -509,7 +501,7 @@ function cdfs {
 		chown root:root $WORKDIR/dummysys/etc/passwd
 		chmod 640 $WORKDIR/dummysys/etc/shadow
 		chown root:shadow $WORKDIR/dummysys/etc/shadow
-	fi
+	#fi
 
 	# copy isolinux files
 	mkdir -p $WORKDIR/ISOTMP/isolinux
@@ -563,6 +555,7 @@ function cdfs {
 	CHECKMATEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep mate`
 	CHECKMINIMALCLIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalcli`
 	CHECKMINIMALGUIISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimalgui`
+	CHECKMLVWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep mlvwm`
 	CHECKMULTIMEDIAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep multimedia`
 	CHECKOPENBOXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep openbox`
 	CHECKOPENBOXNOIRISO=`cat /etc/sparkybackup/sparkybackup.conf | grep openbox | grep noir`
@@ -571,7 +564,7 @@ function cdfs {
 	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
 	CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
 	CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep light`
-	CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
+	#CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
 	CHECKSUGARISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sugar`
 	CHECKSWAYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sway`
 	CHECKTRINITYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep trinity`
@@ -661,6 +654,9 @@ function cdfs {
 	elif [ "$CHECKMINIMALGUIISO" != "" ]
 	then
 		LIVEVERSION="MinimalGUI"
+	elif [ "$CHECKMLVWMISO" != "" ]
+	then
+		LIVEVERSION="Mlvwm"
 	elif [ "$CHECKMULTIMEDIAISO" != "" ]
 	then
 		LIVEVERSION="Multimedia"
@@ -685,9 +681,9 @@ function cdfs {
 	elif [ "$CHECKSBCLIENTLIGHTISO" != "" ]
 	then
 		LIVEVERSION="Small Business Client Light"
-	elif [ "$CHECKSBSERVERISO" != "" ]
-	then
-		LIVEVERSION="Small Business Server"
+	#elif [ "$CHECKSBSERVERISO" != "" ]
+	#then
+	#	LIVEVERSION="Small Business Server"
 	elif [ "$CHECKSUGARISO" != "" ]
 	then
 		LIVEVERSION="Sugar"
@@ -874,7 +870,8 @@ FOO
 	#echo "export LIVE_USER_DEFAULT_GROUPS=\"$LIVEUSER,cdrom,floppy,audio,dip,video,plugdev,scanner,netdev,bluetooth,autologin\"" >> /etc/live/config.conf
 
 	#fix for a bug in the debian live boot scripts that starts a second X server
-	if [ "$1" = "dist" ] && [ -f /etc/X11/default-display-manager ]
+	#if [ "$1" = "dist" ] && [ -f /etc/X11/default-display-manager ]
+	if [ -f /etc/X11/default-display-manager ]
 	then
 		echo "export LIVE_NOCONFIGS=\"xinit\"" >> /etc/live/config.conf
 	fi

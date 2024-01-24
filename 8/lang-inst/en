@@ -1,7 +1,7 @@
 # English localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2024/01/22 by pavroo
+# Last update 2024/01/23 by pavroo
 LOCAL1="The Advanced Installer lets you install the live system to your hard drive."
 LOCAL2="The Advanced Installer lets you install the live system to your hard drive as it is."
 LOCAL3="It also lets you install your favorite desktop with"
@@ -137,3 +137,6 @@ LOCAL132="Please select a partition to /boot with ext4 file system only"
 LOCAL133="If you install on other file system than ext3/4, you need ~500MB partition for /boot because you won't be able to boot Sparky."
 LOCAL134="I don't need boot partition"
 LOCAL135="Mounting the TARGET boot partition now"
+LOCAL136="Do you want to set separated root password?"
+LOCAL137="Yes, I need separated root password"
+LOCAL138="No, I will use user password instead"
