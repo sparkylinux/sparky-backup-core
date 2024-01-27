@@ -10,7 +10,7 @@
 # Copyright 2013-2024 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2024/01/23 by pavroo
+# Last update 2024/01/27 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -192,6 +192,9 @@ case $1 in
 		echo ""
 		echo "$LOCAL67"
 		echo "$LOCAL68"
+		echo ""
+		echo "$LOCAL91"
+		echo "$LOCAL92"
 		echo ""
 		exit_with_message " " 1
 		;;
@@ -738,11 +741,11 @@ function cdfs {
 	# but the stuff is required for building sparky rescue edition anyway
 	TESTXORRISO="`which xorriso`"
 	EFI_PARAMS=
-	if [ -f /home/offline/efibootmgr* ] || [ -f /usr/bin/sparky-chrooter ]
-	then
+	# Starting from Sparky Backup 20240126 make EFI compatible ISO anyway
+	#if [ -f /home/offline/efibootmgr* ] || [ -f /usr/bin/sparky-chrooter ]
+	#then
 		rsync -a /usr/lib/sparkybackup/boot $WORKDIR/ISOTMP/
 		rsync -a /usr/lib/sparkybackup/EFI $WORKDIR/ISOTMP/
-		#rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/boot/grub/efi.img
 		rsync -a /usr/lib/sparkybackup/efi.img $WORKDIR/ISOTMP/
 			
 		if [ "$TESTXORRISO" = "" ]
@@ -751,7 +754,7 @@ function cdfs {
 		else
 			EFI_PARAMS="-eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot"
 		fi
-	fi
+	#fi
 	
 	# mv $WORKDIR/ISOTMP/boot/grub/grub.png $WORKDIR/ISOTMP/boot/grub/grub.png
 	# mv $WORKDIR/ISOTMP/isolinux/background.png $WORKDIR/ISOTMP/isolinux/background.png
@@ -800,11 +803,11 @@ function cdfs {
 		rm -f $WORKDIR/ISOTMP/boot/grub/grub.cfg
 		mv $WORKDIR/ISOTMP/boot/grub/grub-cli.cfg $WORKDIR/ISOTMP/boot/grub/grub.cfg
 	fi
-
-	#if [ -f $WORKDIR/ISOTMP/boot/grub/grub.cfg ]
-	#then
-	#	sed -i -e 's/__LIVECDLABEL__/'"$LIVECDLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/sparky.cfg
-	#fi
+	# make grub label
+	if [ -f $WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt ]
+	then
+		sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt
+	fi
 
 	#if [ ! -d /etc/plymouth ]
 	#then
