@@ -1,4 +1,12 @@
 -------------------------------------------------------------------------------
+  Version 20240205.3~sparky8~0 (2024-02-05)
+-------------------------------------------------------------------------------
+  * Updated pci.ide, memtest86 and syslinux files
+  * Added Memtest86 efi
+  * Added eEFI firmware setup to live grub menu
+  * Added Sparky version to live grub main menu
+
+-------------------------------------------------------------------------------
   Version 20240126~sparky8~0 (2024-01-26)
 -------------------------------------------------------------------------------
   * Create EFI compatible iso even no grub-efi debs located in home dir

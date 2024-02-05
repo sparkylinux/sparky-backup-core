@@ -10,7 +10,7 @@
 # Copyright 2013-2024 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2024/01/27 by pavroo
+# Last update 2024/02/05.3 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -565,8 +565,8 @@ function cdfs {
 	CHECKPANTHEONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pantheon`
 	CHECKPEKWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep pekwm`
 	CHECKRESCUEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
-	CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
-	CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep light`
+	#CHECKSBCLIENTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep -v light`
+	#CHECKSBCLIENTLIGHTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep client | grep light`
 	#CHECKSBSERVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep server`
 	CHECKSUGARISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sugar`
 	CHECKSWAYISO=`cat /etc/sparkybackup/sparkybackup.conf | grep sway`
@@ -678,12 +678,12 @@ function cdfs {
 	elif [ "$CHECKRESCUEISO" != "" ]
 	then
 		LIVEVERSION="Rescue"
-	elif [ "$CHECKSBCLIENTISO" != "" ]
-	then
-		LIVEVERSION="Small Business Client"
-	elif [ "$CHECKSBCLIENTLIGHTISO" != "" ]
-	then
-		LIVEVERSION="Small Business Client Light"
+	#elif [ "$CHECKSBCLIENTISO" != "" ]
+	#then
+	#	LIVEVERSION="Small Business Client"
+	#elif [ "$CHECKSBCLIENTLIGHTISO" != "" ]
+	#then
+	#	LIVEVERSION="Small Business Client Light"
 	#elif [ "$CHECKSBSERVERISO" != "" ]
 	#then
 	#	LIVEVERSION="Small Business Server"
@@ -802,12 +802,14 @@ function cdfs {
 	then
 		rm -f $WORKDIR/ISOTMP/boot/grub/grub.cfg
 		mv $WORKDIR/ISOTMP/boot/grub/grub-cli.cfg $WORKDIR/ISOTMP/boot/grub/grub.cfg
+	else
+		rm -f $WORKDIR/ISOTMP/boot/grub/grub-cli.cfg
 	fi
 	# make grub label
-	if [ -f $WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt ]
-	then
-		sed -i -e 's/__LIVECDLABEL__/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt
-	fi
+	#if [ -f "$WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt" ]
+	#then
+		sed -i -e 's/GRUBLIVECDLABEL/'"$ISOLABEL"'/g' $WORKDIR/ISOTMP/boot/grub/live-theme/theme.txt
+	#fi
 
 	#if [ ! -d /etc/plymouth ]
 	#then
