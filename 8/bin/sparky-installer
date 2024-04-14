@@ -8,7 +8,10 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/01/27 by pavroo
+# Last update 2024/04/14 by pavroo
+
+# auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
+# manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
 
 # checking to make sure script is running with root privileges
 testroot="`whoami`"
@@ -31,6 +34,7 @@ MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
 TITLETEXT="Sparky (Advanced) Installer"
+# AUTO_DISK_SIZE="16106127360"   #kb: 1024x1024x1024x15 = 15GB (minimum)
 
 # check iso image version
 if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
@@ -46,13 +50,6 @@ if [ -d /sys/firmware/efi/efivars ]; then
 else
 	TESTEFI=""
 fi
-
-# no more gui
-#if [ "$1" = "gui" -o "$2" = "gui" ]; then
-#	echo "Yad GUI is not supported any more."
-#	echo "Usage is: sudo sparky-installer"
-#	exit 1
-#fi
 
 # if NOT Live system just quit, do nothing
 testmode=`grep "1000" /etc/passwd | grep -v "Live"`
@@ -81,14 +78,14 @@ if [ "$TESTEFI" != "" ]; then
 	fi
 fi
 
-# the first dialog window
+# the first dialog window text
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
 	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 fi
 
-# inform about partitioning
+# inform about partitioning text
 if [ "$TESTEFI" != "" ]; then
 	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL133\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
 else
@@ -103,10 +100,21 @@ fi
 
 mainmenu () {
 
-# inform them what this is and ask if they want to continue
-$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH
-if [ $? != 0 ]; then
-	exit 0
+# the first window, inform users what this is and ask if they want to continue
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$INSTALLTEXT1" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" Manual "$LOCAL142" Auto "$LOCAL141" 2>/tmp/choice.$$
+#if [ $? != 0 ]; then $YESNO
+#	exit 0
+#fi
+if [ "$?" = "0" ]; then
+	PARTWAY=`cat /tmp/choice.$$`
+else
+	PARTWAY="Exit"
+fi
+rm /tmp/choice.$$
+
+if [ "$PARTWAY" = "Exit" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
+	exit 1
 fi
 	
 $DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL16\n\n$LOCAL17\n\n$LOCAL18" $HEIGHT $WIDTH
@@ -123,7 +131,12 @@ diskmenu
 
 diskmenu () {
 
-$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
+if [ "$PARTWAY" = "Auto" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL9\n\n$LOCAL144\n\n$LOCAL15" $HEIGHT $WIDTH
+else
+	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$PARTITIONTEXT" $HEIGHT $WIDTH
+fi
+
 # choose the drive to partition
 DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
 for i in $DRIVES; do
@@ -144,6 +157,74 @@ if [ "$PARTDRIVE" = "Exit" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 	exit 1
 fi
+
+if [ "$PARTWAY" = "Auto" ]; then
+	autopartmenu
+else
+	manualpartmenu
+fi
+
+}
+
+autopartmenu () {
+#DISKSIZE=`grep -m 1 $PARTDRIVE /proc/partitions | awk '{print $3}'`
+#if [ "$DISKSIZE" -lt "$AUTO_DISK_SIZE" ]; then 
+#	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL143" $HEIGHT $WIDTH
+#	exit 1
+#fi
+
+# wipe target disk
+wipefs -a /dev/$PARTDRIVE
+# create new part table on targer disk
+parted /dev/$PARTDRIVE mklabel gpt
+# create partitions on efi machines
+if [ "$TESTEFI" != "" ]; then
+	# efi part 300MB
+	parted /dev/$PARTDRIVE mkpart P1 fat32 1MB 316MB
+	PARTEFINUM="P1"
+	# swap part 1GB
+	parted /dev/$PARTDRIVE mkpart P2 linux-swap 317MB 1341MB
+	PARTSWAPNUM="P2"
+	# root part all the rest
+	parted /dev/$PARTDRIVE mkpart P3 ext4 1342MB 100%
+	PARTROOTNUM="P3"
+	# set boot on part 1
+	parted /dev/$PARTDRIVE set 1 esp on
+else
+# create partitions on non-efi machines
+	# swap part 1GB
+	parted /dev/$PARTDRIVE mkpart P1 linux-swap 1MB 1030MB
+	PARTSWAPNUM="P1"
+	# root part all the rest
+	parted /dev/$PARTDRIVE mkpart P2 ext4 1031MB 100%
+	PARTROOTNUM="P2"
+	# set boot on part 2
+	#parted /dev/$PARTDRIVE set 2 boot on
+fi
+
+# set efi part
+if [ "$TESTEFI" != "" ]; then
+	TARGETEFI=`blkid | grep $PARTDRIVE | grep -v "loop" | grep -v "sr0" | grep $PARTEFINUM | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+	TARGETEFI="$TARGETEFI:"
+	FORMATEFIPART="formatefi"
+fi
+
+# set swap part
+TARGETSWAP=`blkid | grep $PARTDRIVE | grep -v "loop" | grep -v "sr0" | grep $PARTSWAPNUM | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+SWAP="$TARGETSWAP:"
+
+# set root part
+TARGETPART=`blkid | grep $PARTDRIVE | grep -v "loop" | grep -v "sr0" | grep $PARTROOTNUM | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
+TARGETPART="$TARGETPART:"
+FSTYPE="ext4"
+HOMEPART="root"
+BOOTPART="NoBoot"
+
+fixsetmenu
+
+}
+
+manualpartmenu () {
 
 $PARTITIONPROG /dev/$PARTDRIVE
 
@@ -319,6 +400,12 @@ fi
 
 rm /tmp/choice.$$
 
+fixsetmenu
+
+}
+
+fixsetmenu () {
+
 # set partitions with no ":"
 if [ "$TESTEFI" != "" ]; then
 	TARGETEFI=`echo $TARGETEFI | cut -f1 -d":"`
@@ -388,13 +475,16 @@ done
 
 rm /tmp/choice.$$
 
-#fi
-
 rootpassmenu
 
 }
 
 rootpassmenu () {
+
+if [ "$PARTWAY" = "Auto" ]; then
+	TARGETROOTPASS=$TARGETPASS
+	hostmenu
+fi
 
 # ask for root password: separated or use the user one
 $DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL136" $HEIGHT $WIDTH $MENUHEIGHT YesRoot "$LOCAL137" NoRoot "$LOCAL138" 2>/tmp/choice.$$
@@ -447,7 +537,12 @@ hostmenu
 }
 
 hostmenu () {
-	
+
+if [ "$PARTWAY" = "Auto" ]; then
+	TARGETHOSTNAME="sparky"
+	grubmenu
+fi
+
 # hostname setup
 $DIALOG $TITLE"$TITLETEXT" $ENTRY $TEXT"$LOCAL65\n$LOCAL66" $HEIGHT $WIDTH 2>/tmp/choice.$$
 if [ "$?" = "0" ]; then
@@ -463,6 +558,12 @@ grubmenu
 }
 
 grubmenu () {
+
+if [ "$PARTWAY" = "Auto" ]; then
+	GRUBLOCTEXT="$LOCAL74 $TARGETPART"
+	GRUBLOC="/dev/$PARTDRIVE"
+	setmenu
+fi
 
 # Blank the array in case this function is being rerun
 GrubMenu=()
@@ -570,19 +671,12 @@ if [ "$HFSTYPE" = "noformat" ]; then
 	HOMETEXT=", $HOMEPART $LOCAL81 \n/home "
 fi
 
-#if [ "$testmode" = "" ]; then
 $DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n\n$LOCAL83 $TARGETUSER $LOCAL84 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
 if [ $? != 0 ]; then
 	exit 0
 fi
-#else
-#	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL82\n$LOCAL88 $FSTYPE $LOCAL85 $TARGETPART $LOCAL86 $HOMETEXT $LOCAL87 $GRUBLOCTEXT.\n\n$LOCAL89" $HEIGHT $WIDTH
-#	if [ $? != 0 ]; then
-#		exit 0
-#	fi
-#fi
 
-makepartmenu
+swappartmenu
 
 }
 
@@ -590,11 +684,18 @@ makepartmenu
 
 ########## install to hd section ##########
 
-makepartmenu () {
+swappartmenu () {
 
 # preper swap
+if [ "$PARTWAY" = "Auto" ]; then
+	mkswap /dev/$SWAP
+	swapon /dev/$SWAP
+	rootpartmenu
+fi
+
 if [ "$SWAP" = "NoSwap" ]; then
 	echo "No SWAP choosen"
+	rootpartmenu
 elif [ "$SWAP" != "NoSwap" ]; then
 	sleep 1
 	echo "$LOCAL90 $LOCAL91 ... $LOCAL92 ..."
@@ -609,9 +710,14 @@ elif [ "$SWAP" != "NoSwap" ]; then
 		mkswap /dev/$SWAP
 		swapon /dev/$SWAP
 	fi
+	rootpartmenu
 fi
 
-# preper partitions
+}
+
+rootpartmenu () {
+
+# preper root partition
 echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
 # make the filesystem and mount the partition on /TARGET
@@ -620,6 +726,21 @@ if [ "`mount | grep $TARGETPART`" ]; then
 	umount /dev/$TARGETPART
 fi
 
+# root auto partitioning
+if [ "$PARTWAY" = "Auto" ]; then
+	mke2fs -t $FSTYPE -F /dev/$TARGETPART
+	mkdir -p /TARGET
+	sleep 2
+	echo "$LOCAL95"
+	mount /dev/$TARGETPART /TARGET -o rw
+	sleep 2
+	echo "$LOCAL96"
+	tune2fs -c 0 -i 0 /dev/$TARGETPART 
+	rm -rf "/TARGET/lost+found"
+	efipartmenu
+fi
+
+# root manual partitioning
 if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
 	mke2fs -t $FSTYPE -F /dev/$TARGETPART
 	mkdir -p /TARGET
@@ -630,6 +751,7 @@ if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; t
 	echo "$LOCAL96"
 	tune2fs -c 0 -i 0 /dev/$TARGETPART 
 	rm -rf "/TARGET/lost+found"
+	homepartmenu
 elif [ "$FSTYPE" = "btrfs" ]; then
 	mkfs.btrfs -f /dev/$TARGETPART
 	sleep 2
@@ -647,6 +769,7 @@ elif [ "$FSTYPE" = "btrfs" ]; then
 		mount -t btrfs -o subvol=@home,defaults,nodatacow /dev/$TARGETPART /TARGET/home
 	fi
 	rm -rf "/TARGET/lost+found"
+	homepartmenu
 elif [ "$FSTYPE" = "xfs" ]; then
 	mkfs.xfs -f /dev/$TARGETPART
 	mkdir -p /TARGET
@@ -654,7 +777,12 @@ elif [ "$FSTYPE" = "xfs" ]; then
 	echo "$LOCAL95"
 	mount /dev/$TARGETPART /TARGET -o rw
 	rm -rf "/TARGET/lost+found"
+	homepartmenu
 fi
+
+}
+
+homepartmenu () {
 
 # make /home partition
 if [ "$HOMEPART" != "root" ]; then
@@ -696,6 +824,12 @@ if [ "$HOMEPART" != "root" ]; then
 	fi
 fi
 
+bootpartmenu
+
+}
+
+bootpartmenu () {
+
 # make /boot partition if separated
 if [ "$BOOTPART" != "NoBoot" ]; then
 	if [ "`mount | grep $BOOTPART`" ]; then
@@ -710,7 +844,12 @@ if [ "$BOOTPART" != "NoBoot" ]; then
 	sleep 1
 fi
 
-# format and mount efi partition
+efipartmenu
+
+}
+
+efipartmenu () {
+
 if [ "$TESTEFI" != "" ]; then
 	if [ "$FORMATEFIPART" = "formatefi" ]; then
 		if [ "`mount | grep $TARGETEFI`" ]; then
@@ -731,10 +870,15 @@ if [ "$TESTEFI" != "" ]; then
 
 fi
 
-# get the cdrom device for fstab
-TARGETCDROM="/dev/cdrom"
+logmenu
 
+}
+
+# get the cdrom device for fstab, I dont think its required any more???
+TARGETCDROM="/dev/cdrom"
 sleep 1
+
+logmenu () {
 
 cat > /var/log/sparkylinux-installer.log <<FOO
 ==============================================================
@@ -744,6 +888,7 @@ DATE=`date '+%F'`
 KERNEL=`uname -r`
 RAMTOTAL=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
 SWAPTOTAL=`cat /proc/meminfo | grep SwapTotal | awk '{print $2}'`
+AUTODISKSIZE=$DISKSIZE
 TESTEFI=$TESTEFI
 LIVELOCALE=`locale | grep 'LANG=' | cut -d= -f2`
 TARGETLOCALE=en
@@ -1077,8 +1222,6 @@ fi
 
 echo "$LOCAL117 ... $LOCAL92 ..."
 
-if [ "$TARGETUSER" != "" ]; then
-
 cat > /TARGET/bin/newuserscript <<FOO
 #!/bin/bash
 echo -e "$TARGETROOTPASS\n$TARGETROOTPASS\n" | passwd root
@@ -1088,23 +1231,6 @@ groupadd -g 1000 $TARGETUSER
 useradd -u 1000 -g 1000 -c "$TARGETUSERFULLNAME,,," -G $DEFAULTGROUPS -s /bin/bash -m $TARGETUSER
 echo -e "$TARGETPASS\n$TARGETPASS\n" | passwd $TARGETUSER
 FOO
-
-else
-
-cat > /TARGET/bin/newuserscript <<FOO
-#!/bin/bash
-echo -e "$TARGETROOTPASS\n$TARGETROOTPASS\n" | passwd root
-userdel -f -r $LIVE_USERNAME
-sed -i '/$LIVE_USERNAME/d' /etc/sudoers
-for i in `ls -d /home/*`; do
-if [ /$i/.config/Thunar/volmanrc ]; then
-  sed -i -e 's/FALSE/TRUE/g' /$i/.config/Thunar/volmanrc
-  cp -f /$i/.config/volmanrc /root/.config/Thunar/volmanrc
-fi
-done
-FOO
-
-fi
 
 chmod 755 /TARGET/bin/newuserscript
 chroot /TARGET /bin/newuserscript
@@ -1138,6 +1264,10 @@ autologinmenu () {
 # autologin section; check is any sparky desktop installed
 CHECKDES=`ls /TARGET/usr/share/doc | grep sparky-desktop | grep -v sparky-desktop-data`
 if [ "$CHECKDES" != "" ]; then
+	if [ "$PARTWAY" = "Auto" ]; then
+		AUTOLOGIN="TRUE"
+		finishmenu
+	fi
 	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL126" $HEIGHT $WIDTH $MENUHEIGHT FALSE "$LOCAL128" TRUE "$LOCAL127" 2>/tmp/choice.$$
 	if [ "$?" = "0" ]; then
 		AUTOLOGIN=`cat /tmp/choice.$$`

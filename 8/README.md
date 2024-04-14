@@ -39,6 +39,7 @@ locales
 mount
 nano
 os-prober
+parted
 passwd
 rsync
 sed
