@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/05/12 by pavroo
+# Last update 2024/07/14.1 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -64,10 +64,13 @@ if [ "$DIALOG" = "" ]; then
 	exit 1
 fi
 
+# make /TARGET dir
+mkdir -p /TARGET
+
 # get default's locale file (english only)
 DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 . $DEFLOCDIR/en
-	
+
 # inform about missing efi debs in offline dir on the live iso, so internet connection is required, unless you CAN NOT boot Sparky after installation
 if [ "$TESTEFI" != "" ]; then
 	if [ ! -d /lib/live/mount/medium/offline ] || [ ! -d /run/live/medium/offline ]; then
@@ -80,16 +83,16 @@ fi
 
 # the first dialog window text
 if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
-	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
+	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
-	INSTALLTEXT1="$LOCAL2\n\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
+	INSTALLTEXT1="$LOCAL2\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n$LOCAL7\n$LOCAL8"
 fi
 
 # inform about partitioning text
 if [ "$TESTEFI" != "" ]; then
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL12\n\n$LOCAL133\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n$LOCAL11\n$LOCAL12\n$LOCAL133\n$LOCAL13 $PARTITIONPROG $LOCAL14\n$LOCAL15"
 else
-	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n\n$LOCAL11\n\n$LOCAL133\n\n$LOCAL13 $PARTITIONPROG $LOCAL14\n\n$LOCAL15"
+	PARTITIONTEXT="$LOCAL9\n\n$PARTITIONPROG $LOCAL10\n$LOCAL11\n$LOCAL133\n$LOCAL13 $PARTITIONPROG $LOCAL14\n$LOCAL15"
 fi
 
 . /etc/live/config.conf
@@ -159,14 +162,15 @@ if [ "$PARTDRIVE" = "Exit" ]; then
 fi
 
 if [ "$PARTWAY" = "Auto" ]; then
-	autopartmenu
+	autopartitionmenu
 else
-	manualpartmenu
+	manualpartitionmenu
 fi
 
 }
 
-autopartmenu () {
+autopartitionmenu () {
+
 #DISKSIZE=`grep -m 1 $PARTDRIVE /proc/partitions | awk '{print $3}'`
 #if [ "$DISKSIZE" -lt "$AUTO_DISK_SIZE" ]; then 
 #	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL143" $HEIGHT $WIDTH
@@ -224,17 +228,22 @@ fixsetmenu
 
 }
 
-manualpartmenu () {
+manualpartitionmenu () {
 
 $PARTITIONPROG /dev/$PARTDRIVE
 
-partitionmenu
+efipartitionmenu
 
 }
 
-partitionmenu () {
+efipartitionmenu () {
 
 # find a partiton for efi image
+
+if [ "$TESTEFI" = "" ]; then
+swappartitionmenu
+fi
+
 if [ "$TESTEFI" != "" ]; then
 	PARTEFI=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | cut -f1 -d":"`
 	for i in $PARTEFI; do
@@ -271,6 +280,12 @@ if [ "$TESTEFI" != "" ]; then
 	rm /tmp/choice.$$
 fi
 
+swappartitionmenu
+
+}
+
+swappartitionmenu () {
+
 # find the swap partition
 if [ "$TARGETEFI" != "" ]; then
 	TARGETSWAP=`blkid | grep -v "loop" | grep -v "sr0" | awk '{print $1}' | cut -f3 -d"/" | grep "[0-9]" | grep -v "$TARGETEFI" | cut -f1 -d":"`
@@ -297,6 +312,12 @@ if [ "$SWAP" = "Exit" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL22" $HEIGHT $WIDTH
 	exit 1
 fi
+
+rootpartitionmenu
+
+}
+
+rootpartitionmenu () {
 
 # choose the root partition to install to
 if [ "$TARGETEFI" != "" ]; then
@@ -329,7 +350,7 @@ if [ "$TARGETPART" = "Exit" ]; then
 fi
 
 # choose filesystem type to root partition
-$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL32" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 if [ "$?" = "0" ]; then
 	FSTYPE=`cat /tmp/choice.$$`
@@ -338,6 +359,12 @@ else
 fi
 
 rm /tmp/choice.$$
+
+homepartitionmenu
+
+}
+
+homepartitionmenu () {
 
 # choose home partition
 if [ "$TARGETEFI" != "" ]; then
@@ -362,9 +389,75 @@ fi
 
 rm /tmp/choice.$$
 
+askencryptmenu 
+
+}
+
+askencryptmenu () {
+
+# ask for home part encrypting
+if [ "$HOMEPART" != "root" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL145" $HEIGHT $WIDTH
+	if [ $? != 0 ]; then
+		ENCRYPTASK="NO"
+		echo "ENCRYPT ASK = NO"
+		#mkdir -p /tmp
+		touch /tmp/sparky-noencrypt
+		filehomepartitionmenu
+	else
+		ENCRYPTASK="YES"
+		echo "ENCRYPT ASK = YES"
+		encryptpassmenu
+	fi
+fi
+
+encryptpassmenu
+
+}
+
+encryptpassmenu () {
+
+# encrypt password entry section
+ENCRYPTPASS="1"
+ENCRYPTPASS2="2"
+
+while [ "$ENCRYPTPASS" != "$ENCRYPTPASS2" ]; do
+
+	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL146." $HEIGHT $WIDTH 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		ENCRYPTPASS=`cat /tmp/choice.$$`
+		#ENCRYPTKEYFILE="$ENCRYPTPASS"
+	else
+		exit 1
+	fi
+
+	rm /tmp/choice.$$
+
+	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL146 $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
+	if [ "$?" = "0" ]; then
+		ENCRYPTPASS2=`cat /tmp/choice.$$`
+	else
+		exit 1
+	fi
+
+	rm /tmp/choice.$$
+	if [ "$ENCRYPTPASS" != "$ENCRYPTPASS2" ]; then
+		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
+	fi
+
+done
+
+rm /tmp/choice.$$
+
+nofilehomepartitionmenu
+
+}
+
+nofilehomepartitionmenu () {
+
 # choose file system to home partition
 if [ "$HOMEPART" != "root" ]; then
-	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext3 "Ext3 $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT btrfs "Btrfs $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
 
 	if [ "$?" = "0" ]; then
 		HFSTYPE=`cat /tmp/choice.$$`
@@ -375,6 +468,32 @@ if [ "$HOMEPART" != "root" ]; then
 	rm /tmp/choice.$$
 
 fi
+
+bootpartitionmenu
+
+}
+
+filehomepartitionmenu () {
+
+# choose file system to home partition
+if [ "$HOMEPART" != "root" ]; then
+	$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL37" $HEIGHT $WIDTH $MENUHEIGHT noformat "$LOCAL38" btrfs "Btrfs $LOCAL33" ext4 "Ext4 $LOCAL33" xfs "Xfs $LOCAL33" 2>/tmp/choice.$$
+
+	if [ "$?" = "0" ]; then
+		HFSTYPE=`cat /tmp/choice.$$`
+	else
+		HFSTYPE="ext4"
+	fi
+
+	rm /tmp/choice.$$
+
+fi
+
+bootpartitionmenu
+
+}
+
+bootpartitionmenu () {
 
 # choose boot partition
 if [ "$TARGETEFI" != "" ]; then
@@ -728,8 +847,9 @@ fi
 
 # root auto partitioning
 if [ "$PARTWAY" = "Auto" ]; then
-	mke2fs -t $FSTYPE -F /dev/$TARGETPART
-	mkdir -p /TARGET
+	#mke2fs -t $FSTYPE -F /dev/$TARGETPART
+	mkfs.ext4 -m 0 -F /dev/$TARGETPART
+	#mkdir -p /TARGET
 	sleep 2
 	echo "$LOCAL95"
 	mount /dev/$TARGETPART /TARGET -o rw
@@ -741,9 +861,10 @@ if [ "$PARTWAY" = "Auto" ]; then
 fi
 
 # root manual partitioning
-if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
-	mke2fs -t $FSTYPE -F /dev/$TARGETPART
-	mkdir -p /TARGET
+if [ "$FSTYPE" = "ext4" ]; then
+	#mke2fs -t $FSTYPE -F /dev/$TARGETPART
+	mkfs.ext4 -m 0 -F /dev/$TARGETPART
+	#mkdir -p /TARGET
 	sleep 2
 	echo "$LOCAL95"
 	mount /dev/$TARGETPART /TARGET -o rw
@@ -761,7 +882,7 @@ elif [ "$FSTYPE" = "btrfs" ]; then
 	# Mount the subvolume
 	sleep 2
 	echo "$LOCAL95"
-	mkdir -p /TARGET
+	#mkdir -p /TARGET
 	mount -t btrfs -o subvol=@,defaults,nodatacow /dev/$TARGETPART /TARGET
 	if [ "$HOMEPART" = "root" ]; then
 		btrfs subvolume create /mnt/@home
@@ -772,7 +893,7 @@ elif [ "$FSTYPE" = "btrfs" ]; then
 	homepartmenu
 elif [ "$FSTYPE" = "xfs" ]; then
 	mkfs.xfs -f /dev/$TARGETPART
-	mkdir -p /TARGET
+	#mkdir -p /TARGET
 	sleep 2
 	echo "$LOCAL95"
 	mount /dev/$TARGETPART /TARGET -o rw
@@ -784,8 +905,76 @@ fi
 
 homepartmenu () {
 
+if [ "$ENCRYPTASK" = "YES" ]; then
+encrypthomepartmenu
+else
+nonencrypthomepartmenu
+fi
+
+}
+
+encrypthomepartmenu () {
+
+# home part encrypt luks2 formating
+if [ "`mount | grep $HOMEPART`" ]; then
+	echo "$LOCAL94"
+	umount /dev/$HOMEPART
+fi
+echo "formatting encrypted partition..."
+echo $ENCRYPTPASS | cryptsetup luksFormat --type luks2 -l ${#ENCRYPTPASS} -q -d - /dev/$HOMEPART
+# create keyfile
+# echo $ENCRYPTPASS | cryptsetup luksAddKey /dev/$HOMEPART /etc/keys/$ENCRYPTKEYFILE -l ${#ENCRYPTPASS} -q -d -
+# open it
+echo "opening encrypted partition..."
+echo $ENCRYPTPASS | cryptsetup luksOpen /dev/$HOMEPART sparky_home -l ${#ENCRYPTPASS} -d -
+# format it
+if [ "$HFSTYPE" = "ext4" ]; then
+	#mke2fs -t $HFSTYPE -F /dev/mapper/sparky_home
+	echo "formatting encrypted partition as ext4 file system..."
+	mkfs.ext4 -m 0 /dev/mapper/sparky_home
+elif [ "$HFSTYPE" = "btrfs" ]; then
+echo "formatting encrypted partition as btrfs file system..."
+	mkfs.btrfs -f /dev/mapper/sparky_home		
+elif [ "$HFSTYPE" = "xfs" ]; then
+	echo "formatting encrypted partition as xfs file system..."
+	mkfs.xfs -f /dev/mapper/sparky_home
+else
+	# if choosen noformat -> use ext4, can not be noformatted
+	HFSTYPE="ext4"
+	echo "formatting encrypted partition as ext4 file system..."
+	mkfs.ext4 -m 0 /dev/mapper/sparky_home
+fi
+# mount
+echo "$LOCAL97"
+mkdir -p /TARGET/home
+if [ "$HFSTYPE" = "ext4" ]; then
+	echo "mounting encrypted partition with ext4 file system..."
+	mount /dev/mapper/sparky_home /TARGET/home -o rw
+	#tune2fs -c 0 -i 0 /dev/mapper/sparky_home
+elif [ "$HFSTYPE" = "btrfs" ]; then
+	echo "mounting encrypted partition with btrfs file system..."
+	mount /dev/mapper/sparky_home /TARGET/home -o rw
+elif [ "$HFSTYPE" = "xfs" ]; then
+	echo "mounting encrypted partition with xfs file system..."
+	mount /dev/mapper/sparky_home /TARGET/home -o rw
+else
+	# if choosen noformat -> use ext4, can not be noformatted
+	echo "mounting encrypted partition with ext4 file system..."
+	mount /dev/mapper/sparky_home /TARGET/home -o rw
+	#tune2fs -c 0 -i 0 /dev/mapper/sparky_home
+fi
+rm -rf "/TARGET/home/lost+found"
+sleep 1
+		
+bootpartmenu
+
+}
+
+nonencrypthomepartmenu () {
+
 # make /home partition
 if [ "$HOMEPART" != "root" ]; then
+	# home part mount and format
 	if [ "$HFSTYPE" != "noformat" ]; then
 		echo "$LOCAL93 $HOMEPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
@@ -794,7 +983,7 @@ if [ "$HOMEPART" != "root" ]; then
 			umount /dev/$HOMEPART
 		fi
 
-		if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+		if [ "$HFSTYPE" = "ext4" ]; then
 			mke2fs -t $HFSTYPE -F /dev/$HOMEPART
 		elif [ "$HFSTYPE" = "btrfs" ]; then
 			mkfs.btrfs -f /dev/$HOMEPART			
@@ -807,7 +996,7 @@ if [ "$HOMEPART" != "root" ]; then
 
 	echo "$LOCAL97"
 	mkdir -p /TARGET/home
-	if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+	if [ "$HFSTYPE" = "ext4" ]; then
 		mount /dev/$HOMEPART /TARGET/home -o rw
 		tune2fs -c 0 -i 0 /dev/$HOMEPART
 	elif [ "$HFSTYPE" = "btrfs" ]; then
@@ -909,6 +1098,7 @@ HFSTYPE=$HFSTYPE
 GRUBLOC=$GRUBLOC
 BOOTPART=$BOOTPART
 BOOTFSTYOE=$BOOTFSTYPE
+ENCRYPTASK=$ENCRYPTASK
 FOO
 
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -1071,7 +1261,7 @@ fi
 UUIDTARGETEFI=`blkid | grep $TARGETEFI: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
 
 # removed btrfs opts: noatime,space_cache=v2,autodefrag,
-if [ "$FSTYPE" = "ext4" ] || [ "$FSTYPE" = "ext3" ] || [ "$FSTYPE" = "ext2" ]; then
+if [ "$FSTYPE" = "ext4" ]; then
 	FSTABOPT="errors=remount-ro,defaults"
 elif [ "$FSTYPE" = "btrfs" ]; then
 	FSTABOPT="subvol=/@,defaults,compress=zstd:1"
@@ -1080,7 +1270,7 @@ elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="noatime,defaults"
 fi
 
-if [ "$HFSTYPE" = "ext4" ] || [ "$HFSTYPE" = "ext3" ] || [ "$HFSTYPE" = "ext2" ]; then
+if [ "$HFSTYPE" = "ext4" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
 	HFSTABOPT="defaults,compress=zstd:1"
@@ -1096,7 +1286,7 @@ cat > /TARGET/etc/fstab <<FOO
 # root /dev/$TARGETPART
 UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
 # cdrom
-$TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
+# $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
 FOO
 
 # add swap part
@@ -1111,15 +1301,24 @@ if [ "$TESTEFI" != "" ]; then
 	echo "UUID=$UUIDTARGETEFI	/boot/efi	vfat	defaults	0	0" >> /TARGET/etc/fstab
 fi
 
-# add home part
+# add home part on root
 if [ "$HOMEPART" = "root" ]; then
 	if [ "$FSTYPE" = "btrfs" ]; then
 		echo "# home /dev/$TARGETPART" >> /TARGET/etc/fstab
 		echo "UUID=$UUIDTARGETPART	/home	$FSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 	fi
-else
+fi
+
+# add home part on separated partition
+if [ "$HOMEPART" != "root" ]; then
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
-	echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	if [ "$ENCRYPTASK" = "YES" ]; then
+		echo "/dev/mapper/sparky_home	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+		# add entry to crypttab too
+		echo "sparky_home	/dev/$HOMEPART	none	luks,timeout=30" >> /TARGET/etc/crypttab
+	else
+		echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
+	fi
 fi
 
 # add boot part
@@ -1334,8 +1533,13 @@ fi
 #NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
 if [ ! -d /TARGET/etc/plymouth ]; then
 	NewGrubDefLine=""
-else
-	NewGrubDefLine="$NewGrubDefLine"
+fi
+if [ -d /TARGET/etc/plymouth ]; then
+	if [ "$ENCRYPTASK" = "YES" ]; then
+		 NewGrubDefLine="quiet"
+	else
+		NewGrubDefLine="$NewGrubDefLine"
+	fi
 fi
 
 OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /TARGET/etc/default/grub)
@@ -1354,10 +1558,26 @@ if [ "$SETDELAY" != "" ]; then
 	fi
 fi
 
+# remove encrypt related debs if no needed
+if [ -f /tmp/sparky-noencrypt ]; then
+echo "removing encrypt related debs..."
+sleep 1
+cat > /TARGET/bin/removeencrypt <<FOO
+#!/bin/bash
+apt-get purge --yes lvm2
+apt-get purge --yes cryptsetup cryptsetup-*
+apt-get purge --yes systemd-cryptsetup
+FOO
+
+chmod 755 /TARGET/bin/removeencrypt
+chroot /TARGET /bin/removeencrypt
+rm /TARGET/bin/removeencrypt
+
+fi
+
 # remove live packages
-
 echo "$LOCAL109 ... $LOCAL92 ..."
-
+sleep 1
 cat > /TARGET/bin/tempinstallerscript <<FOO
 #!/bin/bash
 if [ -d /etc/skel ]; then
@@ -1371,8 +1591,6 @@ fi
 apt-get purge --yes sparky-backup-*
 apt-get purge --yes live-*
 apt-get purge --yes calamares
-apt-get purge --yes lvm2
-apt-get purge --yes cryptsetup
 apt-get purge --yes sparky-firstrun-fix
 apt-get autoremove --yes
 #update-initramfs -t -c -k $(/bin/uname -r)
@@ -1411,6 +1629,10 @@ FOO
 	echo "$LOCAL111"
 	echo "$LOCAL112"
 	sleep 1
+	if [ "$ENCRYPTASK" = "YES" ]; then
+		umount /dev/mapper/sparky_encrypt0
+		cryptsetup close sparky_encrypt0
+	fi
 	umount -R /TARGET
 	sleep 1
 
@@ -1433,6 +1655,10 @@ FOO
 	echo "$LOCAL111"
 	echo "$LOCAL112"
 	sleep 1
+	if [ "$ENCRYPTASK" = "YES" ]; then
+		umount /dev/mapper/sparky_encrypt0
+		cryptsetup close sparky_encrypt0
+	fi
 	umount -R /TARGET
 	if [ "$FSTYPE" = "btrfs" ]; then
 		umount -R /mnt/@home

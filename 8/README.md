@@ -54,8 +54,10 @@ x11-utils
 xfsprogs
 xorriso | genisoimage
 xz-utils
-lvm2
-cryptsetup
+
+Recommends
+-----------
+lvm2 cryptsetup cryptsetup-initramfs systemd-cryptsetup
 
 Conflicts:
 ------------
