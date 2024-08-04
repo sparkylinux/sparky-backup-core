@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/07/14.1 by pavroo
+# Last update 2024/08/04 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -1630,8 +1630,8 @@ FOO
 	echo "$LOCAL112"
 	sleep 1
 	if [ "$ENCRYPTASK" = "YES" ]; then
-		umount /dev/mapper/sparky_encrypt0
-		cryptsetup close sparky_encrypt0
+		umount /dev/mapper/sparky_home
+		cryptsetup close sparky_home
 	fi
 	umount -R /TARGET
 	sleep 1
@@ -1656,8 +1656,8 @@ FOO
 	echo "$LOCAL112"
 	sleep 1
 	if [ "$ENCRYPTASK" = "YES" ]; then
-		umount /dev/mapper/sparky_encrypt0
-		cryptsetup close sparky_encrypt0
+		umount /dev/mapper/sparky_home
+		cryptsetup close sparky_home
 	fi
 	umount -R /TARGET
 	if [ "$FSTYPE" = "btrfs" ]; then
