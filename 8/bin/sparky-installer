@@ -7,8 +7,8 @@
 #
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2024 Under the GNU GPL2 License
-# Last update 2024/11/24 by pavroo
+# Copyright 2013-2025 Under the GNU GPL2 License
+# Last update 2025/03/10 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -42,6 +42,11 @@ CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/spark
 CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
 CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
 CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+else
+CHECKMINI=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKMINICLI=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
+CHECKISOVER=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
+CHECKRESCUE=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
 fi
 
 # check efi
@@ -82,7 +87,7 @@ if [ "$TESTEFI" != "" ]; then
 fi
 
 # the first dialog window text
-if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
+if [ "$CHECKMINI" != "" ] || [ -f /run/live/medium/live/minimal ] ||  [ -f /lib/live/mount/medium/live/minimal ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
 	INSTALLTEXT1="$LOCAL2\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n$LOCAL7\n$LOCAL8"
@@ -224,7 +229,8 @@ FSTYPE="ext4"
 HOMEPART="root"
 BOOTPART="NoBoot"
 
-askrootencryptmenu
+fixsetmenu
+
 }
 
 manualpartitionmenu () {
@@ -359,73 +365,11 @@ fi
 
 rm /tmp/choice.$$
 
-askrootencryptmenu
-
-}
-
-askrootencryptmenu () {
-
-# ask for root part encrypting
-$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL147" $HEIGHT $WIDTH
-if [ $? != 0 ]; then
-	ROOTENCRYPTASK="NO"
-	echo "ROOTENCRYPT ASK = NO"
-	#mkdir -p /tmp
-	touch /tmp/sparky-norootencrypt
-	homepartitionmenu
-else
-	ROOTENCRYPTASK="YES"
-	echo "ROOTENCRYPT ASK = YES"
-	rootencryptpassmenu
-fi
-
-#rootencryptpassmenu
-
-}
-
-rootencryptpassmenu () {
-
-# root file system encrypt password entry section
-ENCRYPTPASS="1"
-ENCRYPTPASS2="2"
-
-while [ "$ENCRYPTPASS" != "$ENCRYPTPASS2" ]; do
-
-	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL146." $HEIGHT $WIDTH 2>/tmp/choice.$$
-	if [ "$?" = "0" ]; then
-		ENCRYPTPASS=`cat /tmp/choice.$$`
-		
-	else
-		exit 1
-	fi
-
-	rm /tmp/choice.$$
-
-	$DIALOG $TITLE"$TITLETEXT" $PASSWORD $TEXT"$LOCAL146 $LOCAL46" $HEIGHT $WIDTH 2>/tmp/choice.$$
-	if [ "$?" = "0" ]; then
-		ENCRYPTPASS2=`cat /tmp/choice.$$`
-	else
-		exit 1
-	fi
-
-	rm /tmp/choice.$$
-	if [ "$ENCRYPTPASS" != "$ENCRYPTPASS2" ]; then
-		$DIALOG $TITLE"$TITLETEXT" $MSGBOX $TEXT"$LOCAL47" $HEIGHT $WIDTH
-	fi
-
-done
-
-rm /tmp/choice.$$
-ENCRYPTPASSWORD="YES"
 homepartitionmenu
 
 }
 
 homepartitionmenu () {
-
-if [ "$PARTWAY" = "Auto" ]; then
-fixsetmenu
-fi
 
 # choose home partition
 if [ "$TARGETEFI" != "" ]; then
@@ -450,36 +394,33 @@ fi
 
 rm /tmp/choice.$$
 
-askhomeencryptmenu
+askencryptmenu 
 
 }
 
-askhomeencryptmenu () {
+askencryptmenu () {
 
 # ask for home part encrypting
 if [ "$HOMEPART" != "root" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL145" $HEIGHT $WIDTH
 	if [ $? != 0 ]; then
-		HOMEENCRYPTASK="NO"
-		echo "HOMEENCRYPT ASK = NO"
+		ENCRYPTASK="NO"
+		echo "ENCRYPT ASK = NO"
 		#mkdir -p /tmp
 		touch /tmp/sparky-noencrypt
 		filehomepartitionmenu
 	else
-		HOMEENCRYPTASK="YES"
-		echo "HOMEENCRYPT ASK = YES"
+		ENCRYPTASK="YES"
+		echo "ENCRYPT ASK = YES"
 		encryptpassmenu
 	fi
 fi
 
-#encryptpassmenu
+encryptpassmenu
 
 }
 
 encryptpassmenu () {
-if [ "$ENCRYPTPASSWORD" = "YES" ]; then
-nofilehomepartitionmenu
-fi
 
 # encrypt password entry section
 ENCRYPTPASS="1"
@@ -750,7 +691,7 @@ fi
 
 # Blank the array in case this function is being rerun
 GrubMenu=()
-Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live|sparky_" | awk '{print $1}')
+Drives=$(lsblk -l | egrep -v "NAME|loop|rom|live" | awk '{print $1}')
 
 for i in $Drives; do
 	PartDrive="$i"
@@ -900,68 +841,6 @@ fi
 
 rootpartmenu () {
 
-if [ "$ROOTENCRYPTASK" = "YES" ]; then
-encryptrootpartmenu
-else
-nonencryptrootpartmenu
-fi
-
-}
-
-encryptrootpartmenu () {
-
-# root part encrypt luks1 formating
-if [ "`mount | grep $TARGETPART`" ]; then
-	echo "$LOCAL94"
-	umount /dev/$TARGETPART
-fi
-echo "formatting root encrypted partition..."
-echo $ENCRYPTPASS | cryptsetup luksFormat --type luks1 -l ${#ENCRYPTPASS} -q -d - /dev/$TARGETPART
-# create keyfile
-# echo $ENCRYPTPASS | cryptsetup luksAddKey /dev/$ROOTPART /etc/keys/$ENCRYPTKEYFILE -l ${#ENCRYPTPASS} -q -d -
-# open it
-echo "opening root encrypted partition..."
-echo $ENCRYPTPASS | cryptsetup luksOpen /dev/$TARGETPART sparky_root -l ${#ENCRYPTPASS} -d -
-# format it
-if [ "$FSTYPE" = "ext4" ]; then
-	#mke2fs -t $FSTYPE -F /dev/mapper/sparky_root
-	echo "formatting root encrypted partition as ext4 file system..."
-	mkfs.ext4 -m 0 /dev/mapper/sparky_root
-elif [ "$FSTYPE" = "btrfs" ]; then
-	echo "formatting root encrypted partition as btrfs file system..."
-	mkfs.btrfs -f /dev/mapper/sparky_root	
-elif [ "$FSTYPE" = "xfs" ]; then
-	echo "formatting root encrypted partition as xfs file system..."
-	mkfs.xfs -f /dev/mapper/sparky_root
-else
-	echo "formatting root encrypted partition as ext4 file system..."
-	mkfs.ext4 -m 0 /dev/mapper/sparky_root
-fi
-# mount
-echo "$LOCAL95"
-mkdir -p /TARGET
-if [ "$FSTYPE" = "ext4" ]; then
-	echo "mounting root encrypted partition with ext4 file system..."
-	mount /dev/mapper/sparky_root /TARGET -o rw
-	#tune2fs -c 0 -i 0 /dev/mapper/sparky_root
-elif [ "$FSTYPE" = "btrfs" ]; then
-	echo "mounting root encrypted partition with btrfs file system..."
-	mount /dev/mapper/sparky_root /TARGET -o rw
-elif [ "$FSTYPE" = "xfs" ]; then
-	echo "mounting root encrypted partition with xfs file system..."
-	mount /dev/mapper/sparky_root /TARGET -o rw
-else
-	echo "mounting root encrypted partition with ext4 file system..."
-	mount /dev/mapper/sparky_root /TARGET -o rw
-fi
-sleep 1
-		
-bootpartmenu
-
-}
-
-nonencryptrootpartmenu () {
-
 # preper root partition
 echo "$LOCAL93 $TARGETPART $LOCAL86 $LOCAL91 ... $LOCAL92 ..."
 
@@ -1031,7 +910,7 @@ fi
 
 homepartmenu () {
 
-if [ "$HOMEENCRYPTASK" = "YES" ]; then
+if [ "$ENCRYPTASK" = "YES" ]; then
 encrypthomepartmenu
 else
 nonencrypthomepartmenu
@@ -1041,51 +920,51 @@ fi
 
 encrypthomepartmenu () {
 
-# home part encrypt luks1 formating
+# home part encrypt luks2 formating
 if [ "`mount | grep $HOMEPART`" ]; then
 	echo "$LOCAL94"
 	umount /dev/$HOMEPART
 fi
-echo "formatting home encrypted partition..."
-echo $ENCRYPTPASS | cryptsetup luksFormat --type luks1 -l ${#ENCRYPTPASS} -q -d - /dev/$HOMEPART
+echo "formatting encrypted partition..."
+echo $ENCRYPTPASS | cryptsetup luksFormat --type luks2 -l ${#ENCRYPTPASS} -q -d - /dev/$HOMEPART
 # create keyfile
 # echo $ENCRYPTPASS | cryptsetup luksAddKey /dev/$HOMEPART /etc/keys/$ENCRYPTKEYFILE -l ${#ENCRYPTPASS} -q -d -
 # open it
-echo "opening home encrypted partition..."
+echo "opening encrypted partition..."
 echo $ENCRYPTPASS | cryptsetup luksOpen /dev/$HOMEPART sparky_home -l ${#ENCRYPTPASS} -d -
 # format it
 if [ "$HFSTYPE" = "ext4" ]; then
 	#mke2fs -t $HFSTYPE -F /dev/mapper/sparky_home
-	echo "formatting home encrypted partition as ext4 file system..."
+	echo "formatting encrypted partition as ext4 file system..."
 	mkfs.ext4 -m 0 /dev/mapper/sparky_home
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	echo "formatting home encrypted partition as btrfs file system..."
+echo "formatting encrypted partition as btrfs file system..."
 	mkfs.btrfs -f /dev/mapper/sparky_home		
 elif [ "$HFSTYPE" = "xfs" ]; then
-	echo "formatting home encrypted partition as xfs file system..."
+	echo "formatting encrypted partition as xfs file system..."
 	mkfs.xfs -f /dev/mapper/sparky_home
 else
 	# if choosen noformat -> use ext4, can not be noformatted
 	HFSTYPE="ext4"
-	echo "formatting home encrypted partition as ext4 file system..."
+	echo "formatting encrypted partition as ext4 file system..."
 	mkfs.ext4 -m 0 /dev/mapper/sparky_home
 fi
 # mount
 echo "$LOCAL97"
 mkdir -p /TARGET/home
 if [ "$HFSTYPE" = "ext4" ]; then
-	echo "mounting home encrypted partition with ext4 file system..."
+	echo "mounting encrypted partition with ext4 file system..."
 	mount /dev/mapper/sparky_home /TARGET/home -o rw
 	#tune2fs -c 0 -i 0 /dev/mapper/sparky_home
 elif [ "$HFSTYPE" = "btrfs" ]; then
-	echo "mounting home encrypted partition with btrfs file system..."
+	echo "mounting encrypted partition with btrfs file system..."
 	mount /dev/mapper/sparky_home /TARGET/home -o rw
 elif [ "$HFSTYPE" = "xfs" ]; then
-	echo "mounting home encrypted partition with xfs file system..."
+	echo "mounting encrypted partition with xfs file system..."
 	mount /dev/mapper/sparky_home /TARGET/home -o rw
 else
 	# if choosen noformat -> use ext4, can not be noformatted
-	echo "mounting home encrypted partition with ext4 file system..."
+	echo "mounting encrypted partition with ext4 file system..."
 	mount /dev/mapper/sparky_home /TARGET/home -o rw
 	#tune2fs -c 0 -i 0 /dev/mapper/sparky_home
 fi
@@ -1224,8 +1103,7 @@ HFSTYPE=$HFSTYPE
 GRUBLOC=$GRUBLOC
 BOOTPART=$BOOTPART
 BOOTFSTYOE=$BOOTFSTYPE
-ROOTENCRYPTASK=$ROOTENCRYPTASK
-HOMEENCRYPTASK=$HOMEENCRYPTASK
+ENCRYPTASK=$ENCRYPTASK
 FOO
 
 echo "==============================================================" >> /var/log/sparkylinux-installer.log
@@ -1340,10 +1218,10 @@ if [ -f "$CHECKDEBSEFI" != "" ]; then
 dpkg -i /debs/*.deb
 else
 # try to install secure boot efi debs from debian server
-apt update && apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
+apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
 fi
 # try to fix missing deps
-apt update && apt install -f -y
+apt install -f -y
 FOO
 
 			echo "Installing secure boot support"
@@ -1397,27 +1275,6 @@ elif [ "$FSTYPE" = "xfs" ]; then
 	FSTABOPT="noatime,defaults"
 fi
 
-cat > /TARGET/etc/fstab <<FOO
-# /etc/fstab: static file system information.
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-# cdrom
-# $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
-FOO
-
-# add root to fstab, crypttab
-if [ "$ROOTENCRYPTASK" = "YES" ]; then
-	echo "# root /dev/$TARGETPART" >> /TARGET/etc/fstab
-	echo "/dev/mapper/sparky_root	/	$FSTYPE	$FSTABOPT	0	2" >> /TARGET/etc/fstab
-	# add entry to crypttab
-	echo "sparky_root	/dev/$TARGETPART	none	luks" >> /TARGET/etc/crypttab
-else
-	echo "# root /dev/$TARGETPART" >> /TARGET/etc/fstab
-	UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
-fi
-
-# home file system
 if [ "$HFSTYPE" = "ext4" ]; then
 	HFSTABOPT="defaults"
 elif [ "$HFSTYPE" = "btrfs" ]; then
@@ -1425,6 +1282,17 @@ elif [ "$HFSTYPE" = "btrfs" ]; then
 elif [ "$HFSTYPE" = "xfs" ]; then
 	HFSTABOPT="defaults,noatime"
 fi
+
+cat > /TARGET/etc/fstab <<FOO
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# root /dev/$TARGETPART
+UUID=$UUIDTARGETPART	/	$FSTYPE	$FSTABOPT	0	1
+# cdrom
+# $TARGETCDROM	/media/cdrom0	udf,iso9660	user,noauto,exec,utf8	0	0
+FOO
 
 # add swap part
 if [ "$SWAP" != "NoSwap" ]; then
@@ -1449,10 +1317,10 @@ fi
 # add home part on separated partition
 if [ "$HOMEPART" != "root" ]; then
 	echo "# home /dev/$HOMEPART" >> /TARGET/etc/fstab
-	if [ "$HOMEENCRYPTASK" = "YES" ]; then
+	if [ "$ENCRYPTASK" = "YES" ]; then
 		echo "/dev/mapper/sparky_home	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 		# add entry to crypttab too
-		echo "sparky_home	/dev/$HOMEPART	none	luks" >> /TARGET/etc/crypttab
+		echo "sparky_home	/dev/$HOMEPART	none	luks,timeout=30" >> /TARGET/etc/crypttab
 	else
 		echo "UUID=$UUIDHOMEPART	/home	$HFSTYPE	$HFSTABOPT	0	2" >> /TARGET/etc/fstab
 	fi
@@ -1612,7 +1480,7 @@ if [ "$CHECKDES" != "" ]; then
 	fi
 else
 	AUTOLOGIN="FALSE"
-	finishmenu
+	finishmenu	
 fi
 
 }
@@ -1668,28 +1536,21 @@ fi
 
 ## Preserve kernel options in the new grub system
 #NewGrubDefLine="$(cat /proc/cmdline | awk -F 'config ' '{print $2}' | awk -F ' BOOT' '{print $1}')"
-if [ "$ROOTENCRYPTASK" = "YES" ]; then
-	NewGrubDefLine="quiet cryptdevice=UUID=$UUIDTARGETPART:sparky_root root=/dev/mapper/sparky_root resume=UUID=$UUIDSWAP"
-else
-	NewGrubDefLine="quiet"
+if [ ! -d /TARGET/etc/plymouth ]; then
+	NewGrubDefLine=""
 fi
-#if [ ! -d /TARGET/etc/plymouth ]; then
-#	NewGrubDefLine="$EXTOPTS"
-#fi
-#if [ -d /TARGET/etc/plymouth ]; then
-#	#if [ "$HOMEENCRYPTASK" = "YES" ]; then
-#	#	 NewGrubDefLine="quiet"
-#	if [ "$ROOTENCRYPTASK" = "YES" ]; then
-#		NewGrubDefLine="$EXTOPTS"
-#	else
-#		NewGrubDefLine="$EXTOPTS splash"
-#	fi
-#fi
+if [ -d /TARGET/etc/plymouth ]; then
+	if [ "$ENCRYPTASK" = "YES" ]; then
+		 NewGrubDefLine="quiet"
+	else
+		NewGrubDefLine="$NewGrubDefLine"
+	fi
+fi
 
 OldGrubDefLine=$(grep -B 0  "GRUB_CMDLINE_LINUX_DEFAULT=" /TARGET/etc/default/grub)
-#OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /TARGET/etc/default/grub)
+OldGrubLine=$(grep -B 0  "GRUB_CMDLINE_LINUX=" /TARGET/etc/default/grub)
 sed -i -e "s/$OldGrubDefLine/GRUB_CMDLINE_LINUX_DEFAULT=\"$NewGrubDefLine\"/g" /TARGET/etc/default/grub
-#sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
+sed -i -e "s/$OldGrubLine/GRUB_CMDLINE_LINUX=\"\"/g" /TARGET/etc/default/grub
 if [ "$SETDELAY" != "" ]; then
 	if [ "$SETDELAY" = "No" ]; then
 		sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g" /TARGET/etc/default/grub
@@ -1701,27 +1562,23 @@ if [ "$SETDELAY" != "" ]; then
 		sed -i -e "s/GRUB_TIMEOUT=5/GRUB_TIMEOUT=$SETDELAY/g" /TARGET/etc/default/grub
 	fi
 fi
-# add root encrypt to grub
-if [ "$ROOTENCRYPTASK" = "YES" ]; then
-	echo "GRUB_ENABLE_CRYPTODISK=y" >> /TARGET/etc/default/grub
-fi
 
 # remove encrypt related debs if no needed
-#if [ -f /tmp/sparky-noencrypt ]; then
-#echo "removing encrypt related debs..."
-#sleep 1
-#cat > /TARGET/bin/removeencrypt <<FOO
+if [ -f /tmp/sparky-noencrypt ]; then
+echo "removing encrypt related debs..."
+sleep 1
+cat > /TARGET/bin/removeencrypt <<FOO
 #!/bin/bash
-#apt-get purge --yes lvm2
-#apt-get purge --yes cryptsetup cryptsetup-*
-#apt-get purge --yes systemd-cryptsetup
-#FOO
-#
-#chmod 755 /TARGET/bin/removeencrypt
-#chroot /TARGET /bin/removeencrypt
-#rm /TARGET/bin/removeencrypt
-#
-#fi
+apt-get purge --yes lvm2
+apt-get purge --yes cryptsetup cryptsetup-*
+apt-get purge --yes systemd-cryptsetup
+FOO
+
+chmod 755 /TARGET/bin/removeencrypt
+chroot /TARGET /bin/removeencrypt
+rm /TARGET/bin/removeencrypt
+
+fi
 
 # remove live packages
 echo "$LOCAL109 ... $LOCAL92 ..."
@@ -1777,13 +1634,9 @@ FOO
 	echo "$LOCAL111"
 	echo "$LOCAL112"
 	sleep 1
-	if [ "$HOMEENCRYPTASK" = "YES" ]; then
+	if [ "$ENCRYPTASK" = "YES" ]; then
 		umount /dev/mapper/sparky_home
 		cryptsetup close sparky_home
-	fi
-	if [ "$ROOTENCRYPTASK" = "YES" ]; then
-		umount /dev/mapper/sparky_root
-		cryptsetup close sparky_root
 	fi
 	umount -R /TARGET
 	sleep 1
@@ -1807,13 +1660,9 @@ FOO
 	echo "$LOCAL111"
 	echo "$LOCAL112"
 	sleep 1
-	if [ "$HOMEENCRYPTASK" = "YES" ]; then
+	if [ "$ENCRYPTASK" = "YES" ]; then
 		umount /dev/mapper/sparky_home
 		cryptsetup close sparky_home
-	fi
-	if [ "$ROOTENCRYPTASK" = "YES" ]; then
-		umount /dev/mapper/sparky_root
-		cryptsetup close sparky_root
 	fi
 	umount -R /TARGET
 	if [ "$FSTYPE" = "btrfs" ]; then
