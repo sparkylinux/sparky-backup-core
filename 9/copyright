@@ -1,0 +1,107 @@
+Upstream Author(s): 
+    Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+
+    The tool is forked from Remastersys & Remastersys-GUI
+    Oryginaly created by Tony Brijeski under GNU GPLv2
+    Copyright (C) 2007,2008,2009
+    
+    Files: *
+    Copyright (C) 2012-2024 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+    Under GNU GPLv2
+    
+    File: sparkybackup
+    Copyright (C) 2012-2020 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+    Copyright (C) 2015 Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
+    Under GNU GPLv2
+    
+    File: sparky-installer-dev
+    Copyright (C) 2020 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+    Copyright (C) 2020 darekem73
+    Under GNU GPLv2
+
+    Files: grub4.png, background4.png
+    Have been originally created by LiquidSky64, and based on his vortex.png file
+    Copyright (C) LiquidSky64
+    Copyright (C) Paweł Pijanowski 2015-2020
+    Under GPL-2+
+
+    Files: grub5.png, background5.png
+    Have been oryginally created by barti 2017 under CC ZERO 4.0 PL 
+    Copyright (C) 2017-2020 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+
+    Files: grub6.png, background6.png
+    Copyright (C) 2019-2020 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+    Under GNU GPLv3+
+
+    File: sparky48*.png 
+    is based on Sparky logo Copyright (C) 2012-2020 Paweł "pavroo" Pijanowski <pavroo@onet.eu>
+    
+    File: deluge.png 
+    is a part of deviant-oxygen icon set.
+    Credits go to:
+    * everaldo [Crystal Project - www.everaldo.com/crystal]
+    * chrispy [Oxygen-Refit - www.nanolx.org]
+    * rad-e8 [Minium Icons - www.rad-e8.com/]
+    * jaziel [misc icons - www.jaziel.deviantart.com]
+    * miguel cruz [drive icons - igancuhz.blogspot.com/]
+    * and others
+
+    File: de
+    Copyright (C) 2018 Det Bertling
+    Under GNU GPLv2
+
+    File: el
+    Copyright 2019 jidan
+    License: GNU GPL-3
+
+    File: es
+    Copyright 2021 Leonardo Muñoz
+    License: GNU GPL-3
+    
+    File: fr
+    Copyright (C) 2018 Jean-Albert Caire
+    License: GPL-2
+
+    File: hu
+    Copyright 2019 Nemomen
+    License: GNU GPL-3
+
+    Files: id_ID
+    Copyright (C) 2018 les kompie
+    License: GPL-2
+
+    File: it
+    Copyright (C) 2018 Carlo
+    Under GNU GPLv2
+
+    File: pt_BR
+    Copyright (C) 2018 Daniel Campos Ramos "Capitain_Jack" <Capitain_Jack@yahoo.com>
+    Under GNU GPLv2
+
+    File: pt_PT
+    Copyright (C) 2018 José Vieira <jvieira33@sapo.pt>
+    Under GNU GPLv2
+
+    File: ru
+    Copyright (C) 2018 Igor Klyushnyov <inklu@yandex.ru>
+    Copyright (C) 2019 ChourS2008
+    License: GPL-2
+
+License:
+
+    This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+ 
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+## Copyright (C) 2018 Paweł Pijanowski <pavroo@onet.eu>
+##
+## This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
+## This is free software, and you are welcome to redistribute it
+## under certain conditions; see COPYING for details.
+
+Sparky_LiveFix ()
+{
+	if [ -e /home/${LIVE_USERNAME}/.su-to-rootrc ]; then
+		rm -f /home/${LIVE_USERNAME}/.su-to-rootrc
+	fi
+	touch /home/${LIVE_USERNAME}/.su-to-rootrc
+	echo "SU_TO_ROOT_SU=sudo" > /home/${LIVE_USERNAME}/.su-to-rootrc
+	chown ${LIVE_USERNAME}:${LIVE_USERNAME} /home/${LIVE_USERNAME}/.su-to-rootrc
+	
+	if [ -e /home/${LIVE_USERNAME}/.config/openbox/autostart.sh ]; then
+		echo "sparky-setxkb &" >> /home/${LIVE_USERNAME}/.config/openbox/autostart.sh
+	fi
+}
+
+Sparky_LiveFix

@@ -1,0 +1,16 @@
+sparky-backup-core
+gdisk
+live-boot
+live-boot-doc
+live-boot-initramfs-tools
+live-config
+live-config-systemd
+live-installer
+live-tools
+xorriso
+python-geoip
+streamer
+isoquery
+memtest86+
+gparted
+mc

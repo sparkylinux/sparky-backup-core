@@ -1,0 +1,11 @@
+table Icon
+  Caption: Installation Guide
+  CaptionTip: Sparky OnLine Installation Guide
+  Icon: /home/live/.idesktop/application-info.png
+  Width: 48
+  Height: 48
+  X: 50
+  Y: 215
+  Command[0]: x-www-browser https://wiki.sparkylinux.org/doku.php/install
+end
+

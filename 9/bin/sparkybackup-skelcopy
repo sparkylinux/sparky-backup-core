@@ -1,0 +1,369 @@
+#!/bin/bash
+
+# remastersys-skelcopy script to copy user data to /etc/skel
+# Created by Tony "Fragadelic" Brijeski
+# Copyright 2011,2012 Under the GNU GPL2 License
+# Created November 23, 2011
+#
+# Forked for SparkyLinux by pavroo <pavroo@onet.eu> 2013/06/24
+# Copyright 2013-2022 Under the GNU GPL2 License
+# Last update 2022/07/04
+
+# get default's locale file
+DEFLOCDIR="/usr/share/sparky/sparky-backup-core"
+. $DEFLOCDIR/en
+
+testroot="`whoami`"
+if [ "$testroot" != "root" ]; then
+	echo "$LOCAL39 $LOCAL14"
+	exit 1
+fi
+
+SKELUSER="$1"
+if [ "$SKELUSER" = "" ]; then
+	echo "$LOCAL1: sparkybackup-skel-copy $LOCAL69"
+	echo "$LOCAL70"
+	exit 1
+fi
+
+SKELFOLDER=`grep "^$SKELUSER:" /etc/passwd | awk -F ":" '{print $6}'`
+
+if [ -d "$SKELFOLDER" ]; then
+	cd $SKELFOLDER
+	echo "$LOCAL71"
+	
+	if [ -d /etc/skel ]; then
+		rm -rf /etc/skel
+	fi
+	mkdir /etc/skel
+	
+	echo "$LOCAL72"
+	
+	if [ -f .xscreensaver ]; then
+		rsync -a .xscreensaver /etc/skel
+		sed -i -e "s/$SKELUSER//g" /etc/skel/.xscreensaver
+	fi
+
+	if [ -d .afterstep ]; then
+		rsync -a .afterstep* /etc/skel/
+	fi
+
+	if [ -f bashrc ]; then
+		rsync -a .bashrc /etc/skel/
+	fi
+	
+	if [ -f .bash_logout ]; then
+		rsync -a .bash_logout /etc/skel/
+	fi
+
+	if [ -d .cinnamon ]; then
+		rsync -a .cinnamon /etc/skel/
+	fi
+
+	if [ -d .config/autostart ]; then
+		rsync -a .config/autostart /etc/skel/.config/
+	fi
+
+	if [ -d .config/awesome ]; then
+		rsync -a .config/awesome /etc/skel/.config/
+	fi
+
+	if [ -d .config/bspwm ]; then
+		rsync -a .config/bspwm /etc/skel/.config/
+	fi
+
+	if [ -d .config/dconf ]; then
+		rsync -a .config/dconf /etc/skel/.config/
+	fi
+
+	if [ -d .config/fbpanel ]; then
+		rsync -a .config/fbpanel /etc/skel/.config/
+	fi
+
+	if [ -d .config/fontconfig ]; then
+		rsync -a .config/fontconfig /etc/skel/.config/
+	fi
+
+	if [ -d .config/gnome-control-center ]; then
+		rsync -a .config/gnome-control-center /etc/skel/.config/
+	fi
+
+	if [ -d .config/gtk-2.0 ]; then
+		rsync -a .config/gtk-2.0 /etc/skel/.config/
+	fi
+
+	if [ -d .config/gtk-3.0 ]; then
+		rsync -a .config/gtk-3.0 /etc/skel/.config/
+	fi
+
+	if [ -d .config/i3 ]; then
+		rsync -a .config/i3 /etc/skel/.config/
+	fi
+
+	if [ -f .config/kdeglobals ]; then
+		rsync -a rsync -a .config/kdeglobals /etc/skel/.config/
+	fi
+
+	if [ -f .config/kickoffrc ]; then
+		rsync -a .config/kickoffrc /etc/skel/.config/
+	fi
+
+	if [ -f .config/kscreenlockerrc ]; then
+		rsync -a .config/kscreenlockerrc /etc/skel/.config/
+	fi
+
+	if [ -f .config/ksplashrc ]; then
+		rsync -a .config/ksplashrc /etc/skel/.config/
+	fi
+
+	if [ -f .config/kwinrc ]; then
+		rsync -a .config/kwinrc /etc/skel/.config/
+	fi
+
+	if [ -d .config/lumina-desktop ]; then
+		rsync -a .config/lumina-desktop /etc/skel/.config/
+	fi
+
+	if [ -d .config/lxpanel ]; then
+		rsync -a .config/lxpanel /etc/skel/.config/
+	fi
+
+	if [ -d .config/lxqt ]; then
+		rsync -a .config/lxqt /etc/skel/.config/
+	fi
+
+	if [ -d .config/lxsession ]; then
+		rsync -a .config/lxsession /etc/skel/.config/
+	fi
+
+	if [ -d .config/marlin ]; then
+		rsync -a .config/marlin /etc/skel/.config/
+	fi
+
+	if [ -d .config/mate ]; then
+		rsync -a .config/mate /etc/skel/.config/
+	fi
+
+	if [ -d .config/mate-menu ]; then
+		rsync -a .config/mate-menu /etc/skel/.config/
+	fi
+	
+	if [ -d .config/menus ]; then
+		rsync -a .config/menus /etc/skel/.config/
+	fi
+
+	if [ -d .config/nautilus ]; then
+		rsync -a .config/nautilus /etc/skel/.config/
+	fi
+
+	if [ -d .config/nitrogen ]; then
+		rsync -a .config/nitrogen /etc/skel/.config/
+	fi
+
+	if [ -d .config/obmenu-generator ]; then
+		rsync -a .config/obmenu-generator /etc/skel/.config/
+
+		if [ -f /etc/skel/.config/obmenu-generator/cache.db ]; then
+			rm -f /etc/skel/.config/obmenu-generator/cache.db
+		fi
+
+		if [ -f /etc/skel/.config/obmenu-generator/config.pl ]; then
+			rm -f /etc/skel/.config/obmenu-generator/config.pl
+		fi
+
+		if [ -f /etc/skel/.config/obmenu-generator/icons.db ]; then
+			rm -f /etc/skel/.config/obmenu-generator/icons.db
+		fi
+	fi
+
+	if [ -d .config/openbox ]; then
+		rsync -a .config/openbox /etc/skel/.config/
+	fi
+
+	if [ -d .config/pcmanfm ]; then
+		rsync -a .config/pcmanfm /etc/skel/.config/
+	fi
+
+	if [ -d .config/pcmanfm-qt ]; then
+		rsync -a .config/pcmanfm-qt /etc/skel/.config/
+	fi
+
+	if [ -d .config/plank ]; then
+		rsync -a .config/plank /etc/skel/.config/
+	fi
+
+	if [ -f .config/plasma-org.kde.plasma.desktop-appletsrc ]; then
+		rsync -a .config/plasma-org.kde.plasma.desktop-appletsrc /etc/skel/.config/
+	fi
+
+	if [ -f .config/plasmarc ]; then
+		rsync -a .config/plasmarc /etc/skel/.config/
+	fi
+
+	if [ -d .config/qastools* ]; then
+		rsync -a .config/qastools /etc/skel/.config/
+	fi
+
+	if [ -f .config/QtProject.conf ]; then
+		rsync -a .config/QtProject.conf /etc/skel/.config/
+	fi
+
+	if [ -d .config/razor* ]; then
+		rsync -a .config/razor /etc/skel/.config/
+	fi
+
+	if [ -f .config/startupconfig ]; then
+		rsync -a .config/startupconfig /etc/skel/.config/
+	fi
+
+	if [ -d .config/sxhkd ]; then
+		rsync -a .config/sxhkd /etc/skel/.config/
+	fi
+
+	if [ -d .config/tint2 ]; then
+		rsync -a .config/tint2 /etc/skel/.config/
+	fi
+
+	if [ -d .config/volumeicon ]; then
+		rsync -a .config/volumeicon /etc/skel/.config/
+	fi
+
+	if [ -d .config/xfce4 ]; then
+		rsync -a .config/xfce4 /etc/skel/.config/
+	fi
+
+	if [ -f .config/Trolltech.conf ]; then
+		rsync -a .config/Trolltech.conf /etc/skel/.config/
+	fi
+
+	if [ -f .dmrc ]; then
+		rsync -a .dmrc /etc/skel/
+	fi
+
+	if [ -d .e ]; then
+		rsync -a .e /etc/skel/
+	fi
+
+	if [ -d .elementary ]; then
+		rsync -a .elementary /etc/skel/
+	fi
+
+	if [ -d .fluxbox ]; then
+		rsync -a .fluxbox /etc/skel/
+	fi
+
+	#rsync -a .fonts.conf* /etc/skel/
+
+	if [ -d .fvwm ]; then
+		rsync -a .fvwm* /etc/skel/
+	fi
+
+	if [ -d .config/fvwm ]; then
+		rsync -a .config/fvwm* /etc/skel/.config/
+	fi
+
+	#rsync -a .gconf /etc/skel/
+
+	if [ -d .GNUstep ]; then
+		rsync -a .GNUstep /etc/skel/
+	fi
+
+	if [ -f .gtkrc* ]; then
+		rsync -a .gtkrc* /etc/skel/
+	fi
+
+	if [ -f .gtkrc-2.0* ]; then
+		rsync -a .gtkrc-2.0* /etc/skel/
+	fi
+
+	if [ -d .icewm ]; then
+		rsync -a .icewm* /etc/skel/
+	fi
+
+	if [ -f .jwmrc ]; then
+		rsync -a .jwmrc /etc/skel/
+	fi
+
+	if [ -d .kde/share ]; then
+		rsync -a .kde/share /etc/skel/.kde
+	fi
+
+	if [ -d .kde/Autostart ]; then
+		rsync -a .kde/Autostart /etc/skel/.kde
+	fi
+
+	if [ -d .pekwm ]; then
+		rsync -a .pekwm /etc/skel/
+	fi
+
+	if [ -f .profile ]; then
+		rsync -a .profile /etc/skel/
+	fi
+
+	if [ -d .qt ]; then
+		rsync -a .qt /etc/skel/
+	fi
+
+	if [ -d .razor ]; then
+		rsync -a .razor /etc/skel/
+	fi
+
+	if [ -f .su-to-rootrc ]; then
+		rsync -a .su-to-rootrc /etc/skel/
+	fi
+
+	if [ -d .trinity ]; then
+		rsync -a .trinity /etc/skel/
+	fi
+
+	if [ -f .wbar ]; then
+		rsync -a .wbar* /etc/skel/
+	fi
+
+	if [ -f .xsession ]; then
+		rsync -a .xsession* /etc/skel/
+	fi
+
+	if [ -f .xinitrc ]; then
+		rsync -a .xinitrc* /etc/skel/
+	fi
+
+	if [ -f /etc/skel/.config/gtk-3.0/bookmarks ]; then
+		rm -f /etc/skel/.config/gtk-3.0/bookmarks
+	fi
+
+	if [ -f /etc/skel/.gconf/system/networking ]; then
+		rm -rf /etc/skel/.gconf/system/networking
+	fi
+
+	if [ -f /etc/skel/.kde/share/apps/klipper ]; then
+		rm -rf /etc/skel/.kde/share/apps/klipper
+	fi
+
+	if [ -f /etc/skel/.kde/share/apps/nepomuk ]; then
+		rm -rf /etc/skel/.kde/share/apps/nepomuk
+	fi
+
+	if [ -d /etc/skel/.kde/share/apps/RecentDocuments ]; then
+		rm -rf /etc/skel/.kde/share/apps/RecentDocuments/*
+	fi
+	
+	if [ -d /etc/skel/.gnome2/keyrings ]; then
+		for i in /etc/skel/.gnome2/keyrings/*
+		do
+			rm $i
+		done
+	fi
+	
+	find /etc/skel/ | grep "$SKELUSER" | xargs rm -rf '{}'
+	find /etc/skel/ -name "*socket*" | xargs rm -rf '{}'
+	find /etc/skel/ -name "*cache*" | xargs rm -rf '{}'
+	#grep -l "$SKELUSER" /etc/skel | xargs rm -rf '{}'
+	chown -R root:root /etc/skel
+	#chmod -R 755 /etc/skel
+
+else
+
+	echo "$1 $LOCAL73 $LOCAL14"
+	exit 1
+fi
