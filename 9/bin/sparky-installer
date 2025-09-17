@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2025 Under the GNU GPL2 License
-# Last update 2025/03/27 by pavroo
+# Last update 2025/09/17 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -78,7 +78,7 @@ DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 
 # inform about missing efi debs in offline dir on the live iso, so internet connection is required, unless you CAN NOT boot Sparky after installation
 if [ "$TESTEFI" != "" ]; then
-	if [ ! -d /lib/live/mount/medium/offline ] || [ ! -d /run/live/medium/offline ]; then
+	if [ ! -d /run/live/medium/offline ]; then
 		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL139\n\n$LOCAL140" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
@@ -87,7 +87,7 @@ if [ "$TESTEFI" != "" ]; then
 fi
 
 # the first dialog window text
-if [ "$CHECKMINI" != "" ] || [ -f /run/live/medium/live/minimal ] ||  [ -f /lib/live/mount/medium/live/minimal ]; then
+if [ "$CHECKMINI" != "" ] || [ -f /run/live/medium/live/minimal ]; then
 	INSTALLTEXT1="$LOCAL1 $LOCAL3 $LOCAL4 $LOCAL5\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n\n$LOCAL7\n$LOCAL8"
 else
 	INSTALLTEXT1="$LOCAL2\n$LOCAL6\nsudo apt update\nsudo apt install sparky-backup-core\n$LOCAL7\n$LOCAL8"
@@ -1169,9 +1169,9 @@ if [ "$TESTEFI" != "" ]; then
 	chmod +x /TARGET/usr/sbin/grub-probe
 	mkdir -p /TARGET/debs
 	mkdir -p /TARGET/boot/efi/EFI/sparky
-	if [ -d /lib/live/mount/medium/offline ]; then
-		cp /lib/live/mount/medium/offline/* /TARGET/debs/
-	elif [ -d /run/live/medium/offline ]; then
+	#if [ -d /lib/live/mount/medium/offline ]; then
+	#	cp /lib/live/mount/medium/offline/* /TARGET/debs/
+	if [ -d /run/live/medium/offline ]; then
 		cp /run/live/medium/offline/* /TARGET/debs/
 	fi
 	
@@ -1204,9 +1204,9 @@ FOO
 	# install secure boot support if needed
 	if [ -f /sys/firmware/efi/efivars/SecureBoot-* ]; then
 		mkdir -p /TARGET/debs
-		if [ -d /lib/live/mount/medium/offlinesigned ]; then
-			cp /lib/live/mount/medium/offlinesigned/* /TARGET/debs/
-		elif [ -d /run/live/medium/offlinesigned ]; then
+		#if [ -d /lib/live/mount/medium/offlinesigned ]; then
+		#	cp /lib/live/mount/medium/offlinesigned/* /TARGET/debs/
+		if [ -d /run/live/medium/offlinesigned ]; then
 			cp /run/live/medium/offlinesigned/* /TARGET/debs/
 		fi
 		
@@ -1447,7 +1447,7 @@ desktopmenu
 desktopmenu () {
 
 # install your favorite desktop of your choice
-if [ -f /lib/live/mount/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
+if [ -f /run/live/medium/live/minimal ] || [ "$CHECKMINI" != "" ]; then
 	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL104\n\n$LOCAL105\nsparky-backup-desktop $LOCAL106 sparky-desktop-data \n$LOCAL107\n\n$LOCAL108" $HEIGHT $WIDTH
 	if [ $? = 0 ]; then
 		DESKTOPCHOOSE="yes"
