@@ -7,10 +7,10 @@
 # Originally Created February 12th, 2007
 #
 # Forked for SparkyLinux as 'Sparky Backup System' by pavroo <pavroo@onet.eu> 2013/06/17
-# Copyright 2013-2024 under the GNU GPL2 License
+# Copyright 2013-2026 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2024/04/06 by pavroo
+# Last update 2026/01/08 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -539,6 +539,7 @@ function cdfs {
 	CHECKBUDGIEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep budgie`
 	CHECKCDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cde`
 	CHECKCINNAMONISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cinnamon`
+	CHECKCOSMICISO=`cat /etc/sparkybackup/sparkybackup.conf | grep cosmic`
 	CHECKDRACOISO=`cat /etc/sparkybackup/sparkybackup.conf | grep draco`
 	CHECKEDEXISO=`cat /etc/sparkybackup/sparkybackup.conf | grep edex`
 	CHECKEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep enlightenment`
@@ -546,11 +547,13 @@ function cdfs {
 	CHECKGAMEOVERISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gameover`
 	CHECKGNOMEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep gnome`
 	CHECKGRAPHENEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep graphene`
+	CHECKHYPRLANDISO=`cat /etc/sparkybackup/sparkybackup.conf | grep hyprland`
 	CHECKI3ISO=`cat /etc/sparkybackup/sparkybackup.conf | grep i3`
 	CHECKICEWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep icewm`
 	CHECKJADEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep jade`
 	CHECKJWMISO=`cat /etc/sparkybackup/sparkybackup.conf | grep jwm`
 	CHECKKDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep kde`
+	CHECKLABWCISO=`cat /etc/sparkybackup/sparkybackup.conf | grep labwc`
 	CHECKLUMINAISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lumina`
 	CHECKLXDEISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxde`
 	CHECKLXQTISO=`cat /etc/sparkybackup/sparkybackup.conf | grep lxqt`
@@ -597,6 +600,9 @@ function cdfs {
 	elif [ "$CHECKCINNAMONISO" != "" ]
 	then
 		LIVEVERSION="Cinnamon"
+	elif [ "$CHECKCOSMICISO" != "" ]
+	then
+		LIVEVERSION="COSMIC"
 	elif [ "$CHECKDRACOISO" != "" ]
 	then
 		LIVEVERSION="Draco"
@@ -618,6 +624,9 @@ function cdfs {
 	elif [ "$CHECKGRAPHENEISO" != "" ]
 	then
 		LIVEVERSION="Graphene"
+	elif [ "$CHECKHYPRLANDISO" != "" ]
+	then
+		LIVEVERSION="Hyprland"
 	elif [ "$CHECKI3ISO" != "" ]
 	then
 		LIVEVERSION="i3"
@@ -633,6 +642,9 @@ function cdfs {
 	elif [ "$CHECKKDEISO" != "" ]
 	then
 		LIVEVERSION="KDE"
+	elif [ "$CHECKLABWCISO" != "" ]
+	then
+		LIVEVERSION="Labwc"
 	elif [ "$CHECKLUMINAISO" != "" ]
 	then
 		LIVEVERSION="Lumina"
