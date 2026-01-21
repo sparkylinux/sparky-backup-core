@@ -7,8 +7,8 @@
 #
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
-# Copyright 2013-2025 Under the GNU GPL2 License
-# Last update 2025/09/17 by pavroo
+# Copyright 2013-2026 Under the GNU GPL2 License
+# Last update 2026/01/21 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -146,12 +146,13 @@ else
 fi
 
 # choose the drive to partition
-DRIVES=`lsblk -l | grep 'disk' | awk '{print $1}'`
-for i in $DRIVES; do
-	partdrive="$i"
-	partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
-	partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
-done
+DRIVES=`lsblk -l | grep 'disk' | awk '{print $1, $4}'`
+#for i in $DRIVES; do
+#	partdrive="$i"
+#	partdrivesize=`grep -m 1 "$i" /proc/partitions | awk '{print $3}'`
+#	partdrivemenu="$partdrivemenu $partdrive $partdrivesize"
+#done
+partdrivemenu="$partdrivemenu $DRIVES"
 
 $DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"$LOCAL19\n$LOCAL20" $HEIGHT $WIDTH $MENUHEIGHT Exit "$LOCAL21" $partdrivemenu 2>/tmp/choice.$$
 if [ "$?" = "0" ]; then
