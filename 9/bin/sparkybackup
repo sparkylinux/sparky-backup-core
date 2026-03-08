@@ -10,7 +10,7 @@
 # Copyright 2013-2026 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2026/01/08 by pavroo
+# Last update 2026/03/08 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -844,12 +844,19 @@ function cdfs {
 	if [ -f /home/offline/efibootmgr* ]
 	then
 		rsync -a /home/offline $WORKDIR/ISOTMP/
-
-		# extra debs to install secure boot support
-		if [ -d /home/offlinesigned ]
-		then
-			rsync -a /home/offlinesigned $WORKDIR/ISOTMP/
-		fi
+	fi
+	if [ -d /home/32offline/ ]
+	then
+		rsync -a /home/32offline $WORKDIR/ISOTMP/
+	fi
+	if [ -d /home/64offline/ ]
+	then
+		rsync -a /home/64offline $WORKDIR/ISOTMP/
+	fi
+	# extra debs to install secure boot support
+	if [ -d /home/offlinesigned ]
+	then
+		rsync -a /home/offlinesigned $WORKDIR/ISOTMP/
 	fi
 
 	# do not show pacman's desktop's pref in openbox editions

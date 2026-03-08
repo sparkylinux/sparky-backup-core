@@ -8,7 +8,9 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2026 Under the GNU GPL2 License
-# Last update 2026/01/21 by pavroo
+# Last update 2026/03/08 by pavroo
+
+# efi: cat /sys/firmware/efi/fw_platform_size : 64/32
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -1155,109 +1157,204 @@ mount -o bind /dev/shm /TARGET/dev/shm
 mount -o bind /dev/pts /TARGET/dev/pts
 mount -o bind /sys /TARGET/sys
 mount -o bind /run /TARGET/run
-if [ -d /sys/firmware/efi/efivars ]; then
-	mount -B /sys/firmware/efi/efivars /TARGET/sys/firmware/efi/efivars
-fi
 rm -f /TARGET/etc/fstab
 rm -f /TARGET/etc/profile.d/zz-live.sh
 mv /TARGET/etc/resolv.conf /TARGET/etc/resolv.conf.bak
 cp -f /etc/resolv.conf /TARGET/etc/resolv.conf
 
+postinstallefimenu
+}
+
+
+postinstallefimenu () {
+
+if [ "$TESTEFI" = "" ]; then
+	postinstallnextmenu
+fi
 # install grub-efi if needed
-if [ "$TESTEFI" != "" ]; then
-	mv /TARGET/usr/sbin/grub-probe /TARGET/usr/sbin/grub-probe.bak
-	echo "exit 0" > /TARGET/usr/sbin/grub-probe
-	chmod +x /TARGET/usr/sbin/grub-probe
-	mkdir -p /TARGET/debs
-	mkdir -p /TARGET/boot/efi/EFI/sparky
-	#if [ -d /lib/live/mount/medium/offline ]; then
-	#	cp /lib/live/mount/medium/offline/* /TARGET/debs/
-	if [ -d /run/live/medium/offline ]; then
-		cp /run/live/medium/offline/* /TARGET/debs/
-	fi
+if [ -d /sys/firmware/efi/efivars ]; then
+	mount -B /sys/firmware/efi/efivars /TARGET/sys/firmware/efi/efivars
+fi
+# choose efi arch 64 or 32
+$DIALOG $TITLE"$TITLETEXT" $MENU $TEXT"Choose GRUB EFI arch (64bit default for most machines)" $HEIGHT $WIDTH $MENUHEIGHT \
+GRUBEFI64 "64bit EFI (default)" \
+GRUBEFI32 "32bit EFI (if you know what you are doing)" 2>/tmp/choice.$$
+
+GRUBEFIVER=`cat /tmp/choice.$$`
+
+if [ "$GRUBEFIVER" != "" ]; then
+	GRUBEFIVER=$GRUBEFIVER
+else
+	GRUBEFIVER="GRUBEFI64"
+fi
+rm /tmp/choice.$$
+
+# preperation
+mv /TARGET/usr/sbin/grub-probe /TARGET/usr/sbin/grub-probe.bak
+echo "exit 0" > /TARGET/usr/sbin/grub-probe
+chmod +x /TARGET/usr/sbin/grub-probe
+mkdir -p /TARGET/boot/efi/EFI/sparky
 	
+if [ "$GRUBEFIVER" = "GRUBEFI32" ]; then
+	postinstallefi32menu
+else
+	postinstallefi64menu
+fi
+}
+
+postinstallefi32menu () {
+if [ -d /run/live/medium/offline ]; then
+	mkdir -p /TARGET/debs32/
+	cp /run/live/medium/offline/* /TARGET/debs32/
+fi
+if [ -d /run/live/medium/32offline ]; then
+	cp /run/live/medium/32offline/* /TARGET/debs32/
+	DEBSOFFLINE="ok"
+else
+	DEBSOFFLINE="false"
+fi
+
+if [ "$DEBSOFFLINE" = "ok" ]; then
+
+### install 32bit grub efi debs offline
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
-CHECKDEBSEFI=`ls /debs | grep .deb`
-if [ -f "$CHECKDEBSEFI" != "" ]; then
-dpkg -i /debs/*.deb
-else
-# try to install efi debs from debian server
-apt update && apt install -y efibootmgr grub-efi grub-efi-amd64 grub-efi-amd64-bin libefivar1t64 libefiboot1t64
-fi
+dpkg -i /debs32/*.deb
 apt autoremove -y
 FOO
-	chmod +x /TARGET/tmp/efi-install
-	echo "Installing grub-efi"
-	chroot /TARGET /tmp/efi-install
-	rm -f /TARGET/tmp/efi-install
-	rm -rf /TARGET/debs
-	rm -f /TARGET/usr/sbin/grub-probe
-	mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
-	if [ ! -d /TARGET/usr/share/doc/grub-efi ]; then
-		echo "Installation grub-efi failed"
-		echo "Installation grub-efi failed" >> /var/log/sparkylinux-installer.log
-	else
-		echo "Installation grub-efi ok"
-		echo "Installation grub-efi ok" >> /var/log/sparkylinux-installer.log
+
+else
+
+### install 32bit grub efi debs online
+cat > /TARGET/tmp/efi-install << FOO
+#!/bin/bash
+apt update && apt install -y efibootmgr grub-efi-ia32 grub-efi-ia32-bin grub-efi-ia32-unsigned libefivar1t64 libefiboot1t64
+apt autoremove -y
+FOO
+
+fi
+	
+chmod +x /TARGET/tmp/efi-install
+echo "Installing 32bit grub-efi"
+chroot /TARGET /tmp/efi-install
+rm -f /TARGET/tmp/efi-install
+rm -rf /TARGET/debs32
+rm -f /TARGET/usr/sbin/grub-probe
+mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
+if [ ! -d /TARGET/usr/share/doc/grub-efi-ia32 ]; then
+	echo "Installation grub-efi 32bit failed"
+	echo "Installation grub-efi 32bit failed" >> /var/log/sparkylinux-installer.log
+else
+	echo "Installation grub-efi 32bit ok"
+	echo "Installation grub-efi 32bit ok" >> /var/log/sparkylinux-installer.log
+fi
+
+postinstallnextmenu
+
+}
+
+postinstallefi64menu () {
+if [ -d /run/live/medium/offline ]; then
+	mkdir -p /TARGET/debs64/
+	cp /run/live/medium/offline/* /TARGET/debs64/
+fi
+if [ -d /run/live/medium/64offline ]; then
+	cp /run/live/medium/64offline/* /TARGET/debs64/
+	DEBSOFFLINE="ok"
+else
+	DEBSOFFLINE="false"
+fi
+
+if [ "$DEBSOFFLINE" = "ok" ]; then
+
+### install 64bit grub efi debs offline	
+cat > /TARGET/tmp/efi-install << FOO
+#!/bin/bash
+dpkg -i /debs64/*.deb
+apt autoremove -y
+FOO
+
+else
+
+### install 64bit grub efi debs online
+cat > /TARGET/tmp/efi-install << FOO
+#!/bin/bash
+apt update && apt install -y efibootmgr grub-efi grub-efi-amd64 grub-efi-amd64-bin grub-efi-amd64-unsigned libefivar1t64 libefiboot1t64
+apt autoremove -y
+FOO
+
+fi
+	
+chmod +x /TARGET/tmp/efi-install
+echo "Installing 64 bit grub-efi"
+chroot /TARGET /tmp/efi-install
+rm -f /TARGET/tmp/efi-install
+rm -rf /TARGET/debs64
+rm -f /TARGET/usr/sbin/grub-probe
+mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
+if [ ! -d /TARGET/usr/share/doc/grub-efi ]; then
+	echo "Installation grub-efi 64bit failed"
+	echo "Installation grub-efi 64bit failed" >> /var/log/sparkylinux-installer.log
+else
+	echo "Installation grub-efi 64bit ok"
+	echo "Installation grub-efi 64bit ok" >> /var/log/sparkylinux-installer.log
+fi
+
+### install secure boot support if needed
+if [ -f /sys/firmware/efi/efivars/SecureBoot-* ]; then
+	mkdir -p /TARGET/debs
+	if [ -d /run/live/medium/offlinesigned ]; then
+		cp /run/live/medium/offlinesigned/* /TARGET/debs/
 	fi
 
-	# install secure boot support if needed
-	if [ -f /sys/firmware/efi/efivars/SecureBoot-* ]; then
-		mkdir -p /TARGET/debs
-		#if [ -d /lib/live/mount/medium/offlinesigned ]; then
-		#	cp /lib/live/mount/medium/offlinesigned/* /TARGET/debs/
-		if [ -d /run/live/medium/offlinesigned ]; then
-			cp /run/live/medium/offlinesigned/* /TARGET/debs/
-		fi
-		
-		#if [ -d /TARGET/debs ]; then
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
 CHECKDEBSEFI=`ls /debs | grep .deb`
 if [ -f "$CHECKDEBSEFI" != "" ]; then
 dpkg -i /debs/*.deb
 else
-# try to install secure boot efi debs from debian server
+# try to install secure boot efi 64 bit debs from debian server
 apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
 fi
 # try to fix missing deps
 apt install -f -y
 FOO
 
-			echo "Installing secure boot support"
-			echo "Installing secure boot support" >> /var/log/sparkylinux-installer.log
-			chmod +x /TARGET/tmp/signed-install
-			chroot /TARGET /tmp/signed-install
-			rm -f /TARGET/tmp/signed-install
-			rm -rf /TARGET/debs
-			mkdir -p /TARGET/boot/efi/EFI/debian
-			cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
-			if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
-				echo "Installation grub-efi-amd64-signed failed"
-				echo "Installation grub-efi-amd64-signed failed" >> /var/log/sparkylinux-installer.log
-			else
-				echo "Installation grub-efi-amd64-signed ok"
-				echo "Installation grub-efi-amd64-signed ok" >> /var/log/sparkylinux-installer.log
-			fi
-			if [ ! -d /TARGET/usr/share/doc/mokutil ]; then
-				echo "Installation mokutil failed"
-				echo "Installation mokutil failed" >> /var/log/sparkylinux-installer.log
-			else
-				echo "Installation mokutil ok"
-				echo "Installation mokutil ok" >> /var/log/sparkylinux-installer.log
-			fi
-			if [ ! -d /TARGET/usr/share/doc/shim-signed ]; then
-				echo "Installation shim-signed failed"
-				echo "Installation shim-signed failed" >> /var/log/sparkylinux-installer.log
-			else
-				echo "Installation shim-signed ok"
-				echo "Installation shim-signed ok" >> /var/log/sparkylinux-installer.log
-			fi
-		#fi
+	echo "Installing 64 bit secure boot support"
+	echo "Installing 64 bit secure boot support" >> /var/log/sparkylinux-installer.log
+	chmod +x /TARGET/tmp/signed-install
+	chroot /TARGET /tmp/signed-install
+	rm -f /TARGET/tmp/signed-install
+	rm -rf /TARGET/debs
+	mkdir -p /TARGET/boot/efi/EFI/debian
+	cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
+	if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
+		echo "Installation grub-efi-amd64-signed failed"
+		echo "Installation grub-efi-amd64-signed failed" >> /var/log/sparkylinux-installer.log
+	else
+		echo "Installation grub-efi-amd64-signed ok"
+		echo "Installation grub-efi-amd64-signed ok" >> /var/log/sparkylinux-installer.log
+	fi
+	if [ ! -d /TARGET/usr/share/doc/mokutil ]; then
+		echo "Installation mokutil failed"
+		echo "Installation mokutil failed" >> /var/log/sparkylinux-installer.log
+	else
+		echo "Installation mokutil ok"
+		echo "Installation mokutil ok" >> /var/log/sparkylinux-installer.log
+	fi
+	if [ ! -d /TARGET/usr/share/doc/shim-signed ]; then
+		echo "Installation shim-signed failed"
+		echo "Installation shim-signed failed" >> /var/log/sparkylinux-installer.log
+	else
+		echo "Installation shim-signed ok"
+		echo "Installation shim-signed ok" >> /var/log/sparkylinux-installer.log
 	fi
 fi
 
+postinstallnextmenu
+}
+
+postinstallnextmenu () {
 # create a new fstab by uuid
 UUIDTARGETPART=`blkid | grep $TARGETPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
 UUIDHOMEPART=`blkid | grep $HOMEPART: | awk '{print $2}' | cut -f2 -d"=" | sed -e 's/"//g'`
