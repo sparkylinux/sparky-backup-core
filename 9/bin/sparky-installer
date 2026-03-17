@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2026 Under the GNU GPL2 License
-# Last update 2026/03/08 by pavroo
+# Last update 2026/03/14 by pavroo
 
 # efi: cat /sys/firmware/efi/fw_platform_size : 64/32
 
@@ -1220,6 +1220,7 @@ if [ "$DEBSOFFLINE" = "ok" ]; then
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 dpkg -i /debs32/*.deb
+apt update && apt install -f -y
 apt autoremove -y
 FOO
 
@@ -1229,6 +1230,7 @@ else
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 apt update && apt install -y efibootmgr grub-efi-ia32 grub-efi-ia32-bin grub-efi-ia32-unsigned libefivar1t64 libefiboot1t64
+apt install -f -y
 apt autoremove -y
 FOO
 
@@ -1271,6 +1273,7 @@ if [ "$DEBSOFFLINE" = "ok" ]; then
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 dpkg -i /debs64/*.deb
+apt update && apt install -f -y
 apt autoremove -y
 FOO
 
@@ -1280,6 +1283,7 @@ else
 cat > /TARGET/tmp/efi-install << FOO
 #!/bin/bash
 apt update && apt install -y efibootmgr grub-efi grub-efi-amd64 grub-efi-amd64-bin grub-efi-amd64-unsigned libefivar1t64 libefiboot1t64
+apt install -f -y
 apt autoremove -y
 FOO
 
@@ -1312,12 +1316,14 @@ cat > /TARGET/tmp/signed-install << FOO
 CHECKDEBSEFI=`ls /debs | grep .deb`
 if [ -f "$CHECKDEBSEFI" != "" ]; then
 dpkg -i /debs/*.deb
+apt update && apt install -f -y
 else
 # try to install secure boot efi 64 bit debs from debian server
-apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
+apt update && apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
+apt install -f -y
 fi
 # try to fix missing deps
-apt install -f -y
+# apt install -f -y
 FOO
 
 	echo "Installing 64 bit secure boot support"
