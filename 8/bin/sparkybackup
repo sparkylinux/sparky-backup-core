@@ -28,7 +28,7 @@ TEXT=""
 MENU="--menu"
 YESNO="--yesno "
 MSGBOX="--msgbox "
-TITLETEXT="Sparky Backup Core"
+TITLETEXT="Sparky Backup Core 64bit"
 
 # exit_with_message usage: exit_with_message "message text" exit_code
 function exit_with_message {

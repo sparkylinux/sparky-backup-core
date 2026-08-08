@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2026 Under the GNU GPL2 License
-# Last update 2026/01/21 by pavroo
+# Last update 2026/08/08 by pavroo
 
 # auto menu path: main disk autopart fixset user rootpass host grub set fix swappart rootpart efipart log copy postinstall desktop autologin finish
 # manual menu path: main disk manualpart partition fixset user rootpass host grub set fix swappart rootpart homepart bootpart efipart log copy postinstall desktop autologin finish
@@ -33,7 +33,7 @@ YESNO="--yesno "
 MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
-TITLETEXT="Sparky (Advanced) Installer"
+TITLETEXT="Sparky (Advanced) Installer 64bit"
 # AUTO_DISK_SIZE="16106127360"   #kb: 1024x1024x1024x15 = 15GB (minimum)
 
 # check iso image version
@@ -57,7 +57,8 @@ else
 fi
 
 # if NOT Live system just quit, do nothing
-testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+#testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+testmode=`ls /home | grep live`
 if [ "$testmode" != "" ]; then
 	echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
 	exit 1
@@ -1183,7 +1184,7 @@ if [ -f "$CHECKDEBSEFI" != "" ]; then
 dpkg -i /debs/*.deb
 else
 # try to install efi debs from debian server
-apt update && apt install -y efibootmgr grub-efi grub-efi-amd64 grub-efi-amd64-bin libefivar1t64 libefiboot1t64
+apt update && apt install -y efibootmgr grub-efi grub-efi-amd64 grub-efi-amd64-bin grub-efi-amd64-unsigned libefivar1t64 libefiboot1t64 libpopt0
 fi
 apt autoremove -y
 FOO
