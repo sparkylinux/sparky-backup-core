@@ -10,7 +10,7 @@
 # Copyright 2013-2026 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2026/03/08 by pavroo
+# Last update 2026/08/31 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -183,7 +183,7 @@ case $1 in
 		echo "$LOCAL60"
 		echo "$LOCAL61"
 		echo "1. $LOCAL62"
-		echo "efibootmgr, grub-efi, grub-efi-amd64 ($LOCAL63 ia32), grub-efi-amd64-bin ($LOCAL63 ia32), libefivar1, libefiboot1"
+		echo "efibootmgr, grub-efi, grub-efi-amd64, grub-efi-amd64-bin, grub-efi-amd64-unsigned, libefivar1, libefiboot1, libpopt0"
 		echo ""
 		echo "2. $LOCAL64 /home/offline"
 		echo ""
@@ -835,6 +835,12 @@ function cdfs {
 	# and run the advanced installtion in live environment
 	CHECKMINIMALISO=`cat /etc/sparkybackup/sparkybackup.conf | grep minimal`
 	if [ "$CHECKMINIMALISO" != "" ]
+	then
+		cp /usr/lib/sparkybackup/live/minimal $WORKDIR/ISOTMP/live/minimal
+	fi
+	# put minimal file to labwc iso as well
+	CHECKLABWCISO=`cat /etc/sparkybackup/sparkybackup.conf | grep labwc`
+	if [ "$CHECKLABWCISO" != "" ]
 	then
 		cp /usr/lib/sparkybackup/live/minimal $WORKDIR/ISOTMP/live/minimal
 	fi

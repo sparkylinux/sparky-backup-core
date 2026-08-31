@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2026 Under the GNU GPL2 License
-# Last update 2026/03/14 by pavroo
+# Last update 2026/08/31.1 64bit by pavroo
 
 # efi: cat /sys/firmware/efi/fw_platform_size : 64/32
 
@@ -35,20 +35,20 @@ YESNO="--yesno "
 MSGBOX="--msgbox "
 PASSWORD="--passwordbox "
 PARTITIONPROG="cfdisk"
-TITLETEXT="Sparky (Advanced) Installer"
+TITLETEXT="Sparky (Advanced) Installer 64bit"
 # AUTO_DISK_SIZE="16106127360"   #kb: 1024x1024x1024x15 = 15GB (minimum)
 
 # check iso image version
-if [ -f /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf ]; then
-CHECKMINI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-CHECKMINICLI=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
-CHECKISOVER=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
-CHECKRESCUE=`cat /lib/live/mount/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+CHECKMINI=`cat /etc/sparkybackup/sparkybackup.conf | grep minimal`
+CHECKLABWC=`cat /etc/sparkybackup/sparkybackup.conf | grep labwc`
+CHECKMINICLI=`cat /etc/sparkybackup/sparkybackup.conf | grep cli`
+CHECKISOVER=`cat /etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
+CHECKRESCUE=`cat /etc/sparkybackup/sparkybackup.conf | grep rescue`
+
+if [ "$CHECKMINI" != "" ] || [ "$CHECKLABWC" != "" ]; then
+	CHECKMINI="minimal"
 else
-CHECKMINI=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep minimal`
-CHECKMINICLI=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep cli`
-CHECKISOVER=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep CUSTOMISO`
-CHECKRESCUE=`cat /run/live/rootfs/filesystem.squashfs/etc/sparkybackup/sparkybackup.conf | grep rescue`
+	CHECKMINI=""
 fi
 
 # check efi
@@ -60,6 +60,7 @@ fi
 
 # if NOT Live system just quit, do nothing
 testmode=`grep "1000" /etc/passwd | grep -v "Live"`
+#testmode=`ls /home | grep live`
 if [ "$testmode" != "" ]; then
 	echo "It is NOT Live system! The Live Installer has to be launched in Live environment only. Exiting now..."
 	exit 1
