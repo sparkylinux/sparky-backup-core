@@ -1133,6 +1133,16 @@ copymenu () {
 # copy the live system to the hd
 echo "$LOCAL101 ... $LOCAL92 ..."
 
+# a kept home that already has the new user's folder: keep its settings, or take this edition's
+KEEPSETTINGS="yes"
+INSTALLDATE=`date +%Y-%m-%d_%H-%M-%S`
+if [ "$HFSTYPE" = "noformat" ] && [ -d /TARGET/home/$TARGETUSER ]; then
+	$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL147 /home/$TARGETUSER?\n\n$LOCAL148" $HEIGHT $WIDTH
+	if [ "$?" != "0" ]; then
+		KEEPSETTINGS="no"
+	fi
+fi
+
 if [ "$HFSTYPE" = "noformat" ]; then
 	rsync -a -h --info=progress2 --no-inc-recursive / /TARGET --ignore-existing --exclude=/{TARGET,home,live,cdrom,mnt,proc,run,sys,media,lib/live/mount}
 else
@@ -1695,7 +1705,13 @@ if [ -d /etc/skel ]; then
 	if [ ! -d /home/$TARGETUSER ]; then
 		mkdir -p /home/$TARGETUSER
 	fi
-	rsync -ar --ignore-existing . /home/$TARGETUSER
+	if [ "$KEEPSETTINGS" = "no" ]; then
+		mkdir -p /home/$TARGETUSER/dotfiles_backup_$INSTALLDATE
+		find /home/$TARGETUSER -mindepth 1 -maxdepth 1 -name '.*' -exec mv -t /home/$TARGETUSER/dotfiles_backup_$INSTALLDATE {} +
+		rsync -ar . /home/$TARGETUSER
+	else
+		rsync -ar --ignore-existing . /home/$TARGETUSER
+	fi
 	chown -R $TARGETUSER:$TARGETUSER /home/$TARGETUSER
 fi
 apt-get purge --yes sparky-backup-*
