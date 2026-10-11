@@ -10,7 +10,7 @@
 # Copyright 2013-2026 under the GNU GPL2 License
 # Additional coding be Piotr "MoroS" Mrożek <dnadesigned@gmail.com>
 #
-# Last update 2026/08/31 by pavroo
+# Last update 2026/09/21 by pavroo
 
 . /etc/sparkybackup/sparkybackup.version
 
@@ -644,7 +644,7 @@ function cdfs {
 		LIVEVERSION="KDE"
 	elif [ "$CHECKLABWCISO" != "" ]
 	then
-		LIVEVERSION="Labwc"
+		LIVEVERSION="MinimalGUI Labwc"
 	elif [ "$CHECKLUMINAISO" != "" ]
 	then
 		LIVEVERSION="Lumina"
@@ -847,23 +847,24 @@ function cdfs {
 
 	# make sure you have all the efi grub related files and libs in 'offline' dir:
 	# efibootmgr, libefiboot1, libefivar1, grub-efi, grub-efi-amd-64|grub-efi-ia32, grub-efi-amd64-bin|grub-efi-ia32-bin
-	if [ -f /home/offline/efibootmgr* ]
-	then
-		rsync -a /home/offline $WORKDIR/ISOTMP/
-	fi
-	if [ -d /home/32offline/ ]
-	then
-		rsync -a /home/32offline $WORKDIR/ISOTMP/
-	fi
-	if [ -d /home/64offline/ ]
-	then
-		rsync -a /home/64offline $WORKDIR/ISOTMP/
-	fi
+	# starting from v2026.09 installation of efi debs from online repo server only
+	#if [ -f /home/offline/efibootmgr* ]
+	#then
+	#	rsync -a /home/offline $WORKDIR/ISOTMP/
+	#fi
+	#if [ -d /home/32offline/ ]
+	#then
+	#	rsync -a /home/32offline $WORKDIR/ISOTMP/
+	#fi
+	#if [ -d /home/64offline/ ]
+	#then
+	#	rsync -a /home/64offline $WORKDIR/ISOTMP/
+	#fi
 	# extra debs to install secure boot support
-	if [ -d /home/offlinesigned ]
-	then
-		rsync -a /home/offlinesigned $WORKDIR/ISOTMP/
-	fi
+	#if [ -d /home/offlinesigned ]
+	#then
+	#	rsync -a /home/offlinesigned $WORKDIR/ISOTMP/
+	#fi
 
 	# do not show pacman's desktop's pref in openbox editions
 	if [ -f /usr/bin/openbox-session ] && [ -f /usr/bin/idesk ] && [ -f /usr/share/applications/pcmanfm-desktop-pref.desktop ]

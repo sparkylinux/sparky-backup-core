@@ -1,7 +1,7 @@
 # English localization file for Sparky Advanced Installer.
 # Copyright 2018 Paweł "pavroo" Pijanowski <pavroo@onet.eu> 2018/03/24
 # Under the GNU GPL v2
-# Last update 2024/01/23 by pavroo
+# Last update 2026/09/22 by pavroo
 LOCAL1="The Advanced Installer lets you install the live system to your hard drive."
 LOCAL2="The Advanced Installer lets you install the live system to your hard drive as it is."
 LOCAL3="It also lets you install your favorite desktop with"
@@ -140,5 +140,11 @@ LOCAL135="Mounting the TARGET boot partition now"
 LOCAL136="Do you want to set separated root password?"
 LOCAL137="Yes, I need separated root password"
 LOCAL138="No, I will use user password instead"
-LOCAL139="Missing efi debs in offline dir on the live iso! Internet connection is required, unless you CAN NOT boot Sparky after installation."
-LOCAL140="Click OK to continue or No to break the installation."
+LOCAL139="Internet connection is required to install UEFI support, unless you CAN NOT boot Sparky after installation."
+LOCAL140="Click OK to continue or NO to stop the installation."
+LOCAL141="Auto partitioning, full disk, 15GB minimum"
+LOCAL142="Manual partitioning, do it yourself"
+LOCAL143="The disk you have choosen is smaller than 15GB, exiting..."
+LOCAL144="This will delete the entire selected drive and all data."
+LOCAL145="Would you like to encrypt your home partition?"
+LOCAL146="Please enter the password for disk encryption"

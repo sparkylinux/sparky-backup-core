@@ -8,7 +8,7 @@
 # sparky-installer has been forked
 # for SparkyLinux by pavroo <pavroo@onet.eu> 2013/08/04
 # Copyright 2013-2026 Under the GNU GPL2 License
-# Last update 2026/08/31.1 64bit by pavroo
+# Last update 2026/10/11 64bit by pavroo
 
 # efi: cat /sys/firmware/efi/fw_platform_size : 64/32
 
@@ -81,12 +81,12 @@ DEFLOCDIR="/usr/share/sparky/sparky-advanced-installer"
 
 # inform about missing efi debs in offline dir on the live iso, so internet connection is required, unless you CAN NOT boot Sparky after installation
 if [ "$TESTEFI" != "" ]; then
-	if [ ! -d /run/live/medium/offline ]; then
+	#if [ ! -d /run/live/medium/offline ]; then
 		$DIALOG $TITLE"$TITLETEXT" $YESNO $TEXT"$LOCAL139\n\n$LOCAL140" $HEIGHT $WIDTH
 		if [ $? != 0 ]; then
 			exit 0
 		fi
-	fi
+	#fi
 fi
 
 # the first dialog window text
@@ -1204,28 +1204,28 @@ fi
 }
 
 postinstallefi32menu () {
-if [ -d /run/live/medium/offline ]; then
-	mkdir -p /TARGET/debs32/
-	cp /run/live/medium/offline/* /TARGET/debs32/
-fi
-if [ -d /run/live/medium/32offline ]; then
-	cp /run/live/medium/32offline/* /TARGET/debs32/
-	DEBSOFFLINE="ok"
-else
-	DEBSOFFLINE="false"
-fi
+#if [ -d /run/live/medium/offline ]; then
+#	mkdir -p /TARGET/debs32/
+#	cp /run/live/medium/offline/* /TARGET/debs32/
+#fi
+#if [ -d /run/live/medium/32offline ]; then
+#	cp /run/live/medium/32offline/* /TARGET/debs32/
+#	DEBSOFFLINE="ok"
+#else
+#	DEBSOFFLINE="false"
+#fi
 
-if [ "$DEBSOFFLINE" = "ok" ]; then
-
+#if [ "$DEBSOFFLINE" = "ok" ]; then
+#
 ### install 32bit grub efi debs offline
-cat > /TARGET/tmp/efi-install << FOO
-#!/bin/bash
-dpkg -i /debs32/*.deb
-apt update && apt install -f -y
-apt autoremove -y
-FOO
+#cat > /TARGET/tmp/efi-install << FOO
+##!/bin/bash
+#dpkg -i /debs32/*.deb
+#apt update && apt install -f -y
+#apt autoremove -y
+#FOO
 
-else
+#else
 
 ### install 32bit grub efi debs online
 cat > /TARGET/tmp/efi-install << FOO
@@ -1235,13 +1235,13 @@ apt install -f -y
 apt autoremove -y
 FOO
 
-fi
+#fi
 	
 chmod +x /TARGET/tmp/efi-install
 echo "Installing 32bit grub-efi"
 chroot /TARGET /tmp/efi-install
 rm -f /TARGET/tmp/efi-install
-rm -rf /TARGET/debs32
+#rm -rf /TARGET/debs32
 rm -f /TARGET/usr/sbin/grub-probe
 mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
 if [ ! -d /TARGET/usr/share/doc/grub-efi-ia32 ]; then
@@ -1257,28 +1257,28 @@ postinstallnextmenu
 }
 
 postinstallefi64menu () {
-if [ -d /run/live/medium/offline ]; then
-	mkdir -p /TARGET/debs64/
-	cp /run/live/medium/offline/* /TARGET/debs64/
-fi
-if [ -d /run/live/medium/64offline ]; then
-	cp /run/live/medium/64offline/* /TARGET/debs64/
-	DEBSOFFLINE="ok"
-else
-	DEBSOFFLINE="false"
-fi
+#if [ -d /run/live/medium/offline ]; then
+#	mkdir -p /TARGET/debs64/
+#	cp /run/live/medium/offline/* /TARGET/debs64/
+#fi
+#if [ -d /run/live/medium/64offline ]; then
+#	cp /run/live/medium/64offline/* /TARGET/debs64/
+#	DEBSOFFLINE="ok"
+#else
+#	DEBSOFFLINE="false"
+#fi
 
-if [ "$DEBSOFFLINE" = "ok" ]; then
+#if [ "$DEBSOFFLINE" = "ok" ]; then
 
 ### install 64bit grub efi debs offline	
-cat > /TARGET/tmp/efi-install << FOO
-#!/bin/bash
-dpkg -i /debs64/*.deb
-apt update && apt install -f -y
-apt autoremove -y
-FOO
+#cat > /TARGET/tmp/efi-install << FOO
+##!/bin/bash
+#dpkg -i /debs64/*.deb
+#apt update && apt install -f -y
+#apt autoremove -y
+#FOO
 
-else
+#else
 
 ### install 64bit grub efi debs online
 cat > /TARGET/tmp/efi-install << FOO
@@ -1288,13 +1288,13 @@ apt install -f -y
 apt autoremove -y
 FOO
 
-fi
+#fi
 	
 chmod +x /TARGET/tmp/efi-install
 echo "Installing 64 bit grub-efi"
 chroot /TARGET /tmp/efi-install
 rm -f /TARGET/tmp/efi-install
-rm -rf /TARGET/debs64
+#rm -rf /TARGET/debs64
 rm -f /TARGET/usr/sbin/grub-probe
 mv /TARGET/usr/sbin/grub-probe.bak /TARGET/usr/sbin/grub-probe
 if [ ! -d /TARGET/usr/share/doc/grub-efi ]; then
@@ -1307,24 +1307,23 @@ fi
 
 ### install secure boot support if needed
 if [ -f /sys/firmware/efi/efivars/SecureBoot-* ]; then
-	mkdir -p /TARGET/debs
-	if [ -d /run/live/medium/offlinesigned ]; then
-		cp /run/live/medium/offlinesigned/* /TARGET/debs/
-	fi
+	#mkdir -p /TARGET/debs
+	#if [ -d /run/live/medium/offlinesigned ]; then
+	#	cp /run/live/medium/offlinesigned/* /TARGET/debs/
+	#fi
 
 cat > /TARGET/tmp/signed-install << FOO
 #!/bin/bash
-CHECKDEBSEFI=`ls /debs | grep .deb`
-if [ -f "$CHECKDEBSEFI" != "" ]; then
-dpkg -i /debs/*.deb
-apt update && apt install -f -y
-else
+#CHECKDEBSEFI=`ls /debs | grep .deb`
+#if [ -f "$CHECKDEBSEFI" != "" ]; then
+#dpkg -i /debs/*.deb
+#apt update && apt install -f -y
+#else
 # try to install secure boot efi 64 bit debs from debian server
-apt update && apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 linux-image-amd64-signed-template mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
+apt update && apt install -y fwupd fwupd-amd64-signed grub-efi-amd64-signed grub-efi-amd64-signed-template libjcat1 mokutil shim-helpers-amd64-signed shim-helpers-amd64-signed-template shim-signed shim-signed-common shim-unsigned
 apt install -f -y
-fi
-# try to fix missing deps
-# apt install -f -y
+apt autoremove -y
+#fi
 FOO
 
 	echo "Installing 64 bit secure boot support"
@@ -1332,7 +1331,7 @@ FOO
 	chmod +x /TARGET/tmp/signed-install
 	chroot /TARGET /tmp/signed-install
 	rm -f /TARGET/tmp/signed-install
-	rm -rf /TARGET/debs
+	#rm -rf /TARGET/debs
 	mkdir -p /TARGET/boot/efi/EFI/debian
 	cp /TARGET/boot/efi/EFI/sparky/* /TARGET/boot/efi/EFI/debian/
 	if [ ! -d /TARGET/usr/share/doc/grub-efi-amd64-signed ]; then
