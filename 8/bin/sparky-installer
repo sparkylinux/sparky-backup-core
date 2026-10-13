@@ -1592,7 +1592,7 @@ if [ -d /etc/skel ]; then
 	if [ ! -d /home/$TARGETUSER ]; then
 		mkdir -p /home/$TARGETUSER
 	fi
-	rsync -ar . /home/$TARGETUSER
+	rsync -ar --ignore-existing . /home/$TARGETUSER
 	chown -R $TARGETUSER:$TARGETUSER /home/$TARGETUSER
 fi
 apt-get purge --yes sparky-backup-*
